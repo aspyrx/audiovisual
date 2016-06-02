@@ -1,5 +1,5 @@
 /*
- * app.jsx - Bootstraps the React app using React Router.
+ * app.js - Bootstraps the React app using React Router.
  */
 
 import React, {Component} from 'react';
