@@ -1,0 +1,21 @@
+:local(.audiovisual) {
+    flex: 1;
+    transform: scaleY(-1);
+
+    @color-bg-default: fade(white, 0%);
+    background-color: @color-bg-default;
+    &:not(.kick) {
+        transition: background-color 0.3s ease;
+    }
+
+    &.kick {
+        @color-bg-kick: fade(white, 3%);
+        background-color: @color-bg-kick;
+    }
+
+    .bar {
+        fill: white;
+        transform-origin: 0 0;
+        transition: all 0.05s ease;
+    }
+}

@@ -20,6 +20,9 @@ module.exports = {
         root: path.resolve(__dirname, 'src'),
         extensions: ['', '.js', '.jsx'],
         modulesDirectories: ['node_modules']
+        alias: {
+            dancer: 'dancer/dancer'
+        }
     },
     node: {
         fs: 'empty'
@@ -68,6 +71,14 @@ module.exports = {
             {
                 test: /\.png$/,
                 loader: 'url?limit=10000&mimetype=image/png'
+            },
+            {
+                test: /\.mp3$/,
+                loader: 'url?limit=10000&mimetype=audio/mpeg'
+            },
+            {
+                include: require.resolve('dancer/dancer'),
+                loader: 'exports?window.Dancer'
             }
         ]
     },
