@@ -33,7 +33,7 @@ export default class Audiovisual extends Component {
         this.state = { kick: false, amp };
 
         this.onClick = this.onClick.bind(this);
-        let updatesSkipped = 0;
+        let updatesSkipped = SKIP_UPDATES;
 
         this.dancer = new Dancer();
         this.dancer.createKick({
