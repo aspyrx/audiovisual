@@ -1,0 +1,12 @@
+{
+    "libs": [
+        "browser",
+        "ecma6"
+    ],
+    "loadEagerly": [],
+    "plugins": {
+        "modules": {},
+        "es_modules": {},
+        "webpack": {}
+    }
+}
