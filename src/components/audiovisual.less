@@ -1,27 +1,15 @@
 :local(.audiovisual) {
-    flex: 1;
-    postiion: relative;
-
-    @color-bg-default: fade(white, 0%);
-    background-color: @color-bg-default;
     &:not(.kick) {
         transition: background-color 0.3s ease;
     }
 
-    &.kick {
-        @color-bg-kick: fade(white, 3%);
-        background-color: @color-bg-kick;
-    }
-
     .freq {
         position: absolute;
-        background-color: white;
         transition: all 0.1s ease;
     }
 
     .wave {
         position: absolute;
-        background-color: rgb(0%, 50%, 100%);
         transition: all 0.1s ease;
     }
 }

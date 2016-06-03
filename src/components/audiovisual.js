@@ -16,17 +16,41 @@ export default class Audiovisual extends Component {
     static get propTypes() {
         return {
             className: PropTypes.string,
-            src: PropTypes.string.isRequired,
-            numFreq: PropTypes.number.isRequired,
-            numWave: PropTypes.number.isRequired,
-            playing: PropTypes.bool
+            src: PropTypes.string,
+            playing: PropTypes.bool,
+            numFreq: PropTypes.number,
+            numWave: PropTypes.number,
+            freqColor: PropTypes.string,
+            waveColor: PropTypes.string,
+            kickOn: PropTypes.bool,
+            kickFreq: PropTypes.arrayOf(PropTypes.number),
+            kickThreshold: PropTypes.number,
+            kickDecay: PropTypes.number,
+            kickColor: PropTypes.string,
+            bgColor: PropTypes.string
         };
+    }
+
+    static get defaultProps() {
+        return {
+            playing: false,
+            numFreq: 64,
+            numWave: 64,
+            freqColor: 'white',
+            waveColor: 'rgb(0%, 50%, 100%)',
+            kickOn: true,
+            kickFreq: [0, 15],
+            kickThreshold: 0.4,
+            kickDecay: 0.02,
+            kickColor: 'rgba(100%, 100%, 100%, 0.03)',
+            bgColor: 'transparent'
+        }
     }
 
     constructor(props) {
         super();
 
-        const { numFreq, numWave } = props;
+        let { numFreq, numWave, kickOn, kickFreq, kickThreshold, kickDecay } = props;
         const freq = new Array(numFreq);
         for (let i = 0; i < numFreq; i++) {
             freq[i] = 0;
@@ -42,9 +66,10 @@ export default class Audiovisual extends Component {
         let updatesSkipped = SKIP_UPDATES;
 
         this.dancer = new Dancer();
-        this.dancer.createKick({
-            frequency: [0, 4],
-            threshold: 0.4,
+        this.kick = this.dancer.createKick({
+            frequency: kickFreq,
+            threshold: kickThreshold,
+            decay: kickDecay,
             onKick: () => {
                 if (this.state.kick) {
                     window.clearTimeout(this.kickTimer);
@@ -54,7 +79,12 @@ export default class Audiovisual extends Component {
 
                 this.kickTimer = window.setTimeout(() => this.setState({ kick: false }), 50);
             }
-        }).on();
+        });
+
+        if (kickOn) {
+            this.kick.on();
+        }
+
         this.dancer.bind('update', () => {
             if (updatesSkipped !== SKIP_UPDATES) {
                 updatesSkipped++;
@@ -108,7 +138,7 @@ export default class Audiovisual extends Component {
     }
 
     componentWillReceiveProps(props) {
-        const { numFreq, numWave, playing } = props;
+        const { numFreq, numWave, kickOn, kickFreq, kickThreshold, kickDecay, playing } = props;
         if (numFreq !== this.props.numFreq) {
             const freq = new Array(numFreq);
             for (let i = 0; i < numFreq; i++) {
@@ -127,6 +157,23 @@ export default class Audiovisual extends Component {
            this.setState({ wave });
         }
 
+        if (kickFreq !== this.props.kickFreq
+            || kickThreshold !== this.props.kickThreshold
+            || kickDecay !== this.props.kickDecay
+            || kickOn !== this.props.kickOn) {
+            this.kick.set({
+                frequency: kickFreq,
+                threshold: kickThreshold,
+                decay: kickDecay
+            });
+
+            if (kickOn) {
+                this.kick.on();
+            } else {
+                this.kick.off();
+            }
+        }
+
         if (this.dancer.isLoaded()) {
             if (playing) {
                 this.dancer.play();
@@ -141,9 +188,14 @@ export default class Audiovisual extends Component {
     }
 
     render() {
-        const {className, src, numWave, numFreq} = this.props;
+        const {className, src, numFreq, numWave, freqColor, waveColor, kickColor, bgColor } = this.props;
+        if (!src) {
+            return (<div className={classes}></div>);
+        }
+
         const {kick, freq, wave} = this.state;
         const classes = classNames(styles.audiovisual, className, { kick });
+        const style = { backgroundColor: kick ? kickColor : bgColor };
         const audioRef = audio => {
             if (audio
                 && (!this.dancer.isLoaded() || this.dancer.source !== audio)) {
@@ -152,7 +204,7 @@ export default class Audiovisual extends Component {
         }
 
         return (
-            <div className={classes}>
+            <div className={classes} style={style}>
                 <audio src={src} ref={audioRef} />
                 {wave.map((mag, i) => {
                     const width = 100 / numWave;
@@ -160,11 +212,10 @@ export default class Audiovisual extends Component {
                         height: '0.5%',
                         width: `${width}%`,
                         left: `${i * width}%`,
-                        top: `${49.75 - mag * 30}%`
+                        top: `${49.75 - mag * 30}%`,
+                        backgroundColor: waveColor
                     };
-                    return (
-                        <div className="wave" key={i} style={style} />
-                    );
+                    return (<div className="wave" key={i} style={style}></div>);
                 })}
                 {freq.map((mag, i) => {
                     const width = 100 / numFreq;
@@ -172,11 +223,10 @@ export default class Audiovisual extends Component {
                         bottom: 0,
                         width: `${width}%`,
                         left: `${i * width}%`,
-                        height: `${mag * 90}%`
+                        height: `${mag * 90}%`,
+                        backgroundColor: freqColor
                     };
-                    return (
-                        <div className="freq" key={i} style={style} />
-                    );
+                    return (<div className="freq" key={i} style={style}></div>);
                 })}
             </div>
         );
