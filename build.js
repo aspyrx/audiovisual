@@ -27,14 +27,16 @@ const webpackBuildFinished = (err, stats) => {
 if (process.argv.length > 2) {
     if (process.argv[2] === 'watch') {
         webpack(webpackConfig).watch({}, webpackBuildFinished);
+        return;
     } else if (process.argv[2] === 'live') {
         const webpackDevServer = require('webpack-dev-server');
         webpackConfig.entry.app.unshift('webpack-dev-server/client?http://localhost:8080/', 'webpack/hot/dev-server');
         webpackConfig.plugins.unshift(new webpack.HotModuleReplacementPlugin());
         const server = new webpackDevServer(webpack(webpackConfig), { hot: true, compress: true, stats: { colors: true, timings: true, cached: false }});
         server.listen(8080, "localhost");
+        return;
     }
-} else {
-    webpack(webpackConfig).run(webpackBuildFinished);
 }
+
+webpack(webpackConfig).run(webpackBuildFinished);
 

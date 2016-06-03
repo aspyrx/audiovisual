@@ -19,7 +19,7 @@ module.exports = {
     resolve: {
         root: path.resolve(__dirname, 'src'),
         extensions: ['', '.js', '.jsx'],
-        modulesDirectories: ['node_modules']
+        modulesDirectories: ['node_modules'],
         alias: {
             dancer: 'dancer/dancer'
         }
