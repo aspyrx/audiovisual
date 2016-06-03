@@ -13,7 +13,9 @@ export default class Index extends Component {
 
         this.state = {
             src: 'audio/Monstercat 016 - Expedition/18. Astronaut - Rain.mp3',
-            playing: false
+            playing: false,
+            numFreq: 16,
+            numWave: 16
         };
 
         this.onClick = this.onClick.bind(this);
@@ -33,10 +35,9 @@ export default class Index extends Component {
     }
 
     render() {
-        const {src, playing} = this.state;
         return (
             <div className={styles.container} onClick={this.onClick}>
-                <Audiovisual className="audiovisual" src={src} playing={playing} />
+                <Audiovisual className="audiovisual" {...this.state} />
             </div>
         );
     }

@@ -8,13 +8,8 @@ import Dancer from 'dancer/dancer';
 
 import styles from './audiovisual.less';
 
-const NUM_SPECTRUM = 512;
-const NUM_WAVEFORM = 1024;
-const NUM_FREQ = 32;
-const NUM_WAVE = 32;
 const FREQ_INITIAL = 1;
 const FREQ_EXP = 1.4;
-const WAVE_STEP = NUM_WAVEFORM / NUM_WAVE;
 const SKIP_UPDATES = 2;
 
 export default class Audiovisual extends Component {
@@ -22,20 +17,23 @@ export default class Audiovisual extends Component {
         return {
             className: PropTypes.string,
             src: PropTypes.string.isRequired,
+            numFreq: PropTypes.number.isRequired,
+            numWave: PropTypes.number.isRequired,
             playing: PropTypes.bool
         };
     }
 
-    constructor() {
+    constructor(props) {
         super();
 
-        const freq = new Array(NUM_FREQ);
-        for (let i = 0; i < NUM_FREQ; i++) {
+        const { numFreq, numWave } = props;
+        const freq = new Array(numFreq);
+        for (let i = 0; i < numFreq; i++) {
             freq[i] = 0;
         }
 
-        const wave = new Array(NUM_WAVE);
-        for (let i = 0; i < NUM_WAVE; i++) {
+        const wave = new Array(numWave);
+        for (let i = 0; i < numWave; i++) {
             wave[i] = 0;
         }
 
@@ -83,10 +81,12 @@ export default class Audiovisual extends Component {
             }
 
             const { freq, wave } = this.state;
+            const { numFreq, numWave } = this.props;
 
             const spectrum = this.dancer.getSpectrum();
+            const numSpectrum = spectrum.length;
             let lo = 0, hi = FREQ_INITIAL, step = FREQ_INITIAL;
-            for (let i = 0; i < NUM_FREQ && hi <= NUM_SPECTRUM; i++) {
+            for (let i = 0; i < numFreq && hi <= numSpectrum; i++) {
                 freq[i] = max(spectrum, lo, hi);
                 step = Math.floor(step * FREQ_EXP);
                 lo = hi;
@@ -94,9 +94,11 @@ export default class Audiovisual extends Component {
             }
 
             const waveform = this.dancer.getWaveform();
-            for (let i = 0; i < NUM_WAVE; i++) {
-                wave[i] = average(waveform, i * WAVE_STEP, (i + 1) * WAVE_STEP);
+            const waveStep = waveform.length / numWave;
+            for (let i = 0; i < numWave; i++) {
+                wave[i] = average(waveform, i * waveStep, (i + 1) * waveStep);
             }
+
             this.setState({ freq, wave });
         }).bind('loaded', () => {
             if (this.props.playing) {
@@ -106,8 +108,27 @@ export default class Audiovisual extends Component {
     }
 
     componentWillReceiveProps(props) {
+        const { numFreq, numWave, playing } = props;
+        if (numFreq !== this.props.numFreq) {
+            const freq = new Array(numFreq);
+            for (let i = 0; i < numFreq; i++) {
+                freq[i] = 0;
+            }
+
+            this.setState({ freq });
+        }
+
+        if (numWave !== this.props.numWave) {
+            const wave = new Array(numWave);
+            for (let i = 0; i < numWave; i++) {
+                wave[i] = 0;
+            }
+
+           this.setState({ wave });
+        }
+
         if (this.dancer.isLoaded()) {
-            if (props.playing) {
+            if (playing) {
                 this.dancer.play();
             } else {
                 this.dancer.pause();
@@ -120,7 +141,7 @@ export default class Audiovisual extends Component {
     }
 
     render() {
-        const {className, src} = this.props;
+        const {className, src, numWave, numFreq} = this.props;
         const {kick, freq, wave} = this.state;
         const classes = classNames(styles.audiovisual, className, { kick });
         const audioRef = audio => {
@@ -134,7 +155,7 @@ export default class Audiovisual extends Component {
             <div className={classes}>
                 <audio src={src} ref={audioRef} />
                 {wave.map((mag, i) => {
-                    const width = 100 / NUM_WAVE;
+                    const width = 100 / numWave;
                     const style = {
                         height: '0.5%',
                         width: `${width}%`,
@@ -146,12 +167,12 @@ export default class Audiovisual extends Component {
                     );
                 })}
                 {freq.map((mag, i) => {
-                    const width = 100 / NUM_FREQ;
+                    const width = 100 / numFreq;
                     const style = {
                         bottom: 0,
                         width: `${width}%`,
                         left: `${i * width}%`,
-                        height: `${mag * 100}%`
+                        height: `${mag * 90}%`
                     };
                     return (
                         <div className="freq" key={i} style={style} />
