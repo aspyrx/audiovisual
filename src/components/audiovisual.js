@@ -6,14 +6,15 @@ import React, {Component, PropTypes} from 'react';
 import classNames from 'classnames';
 import Dancer from 'dancer';
 
-import music from '../music/[Electro] - Astronaut - Rain [Monstercat EP Release].mp3';
+import music from '../music/Muzzy - Kill the Silence [Monstercat Release].mp3';
 import styles from './audiovisual.less';
 
-/* eslint no-console: "off" */
-
-const NUM_FREQS = 512;
-const NUM_AMPS = 64;
-const AMP_STEP = NUM_FREQS / NUM_AMPS;
+const NUM_SPECTRUM = 512;
+const NUM_WAVEFORM = 1024;
+const NUM_FREQ = 64;
+const NUM_WAVE = 32;
+const FREQ_STEP = NUM_SPECTRUM / NUM_FREQ;
+const WAVE_STEP = NUM_WAVEFORM / NUM_WAVE;
 const SKIP_UPDATES = 2;
 
 export default class Audiovisual extends Component {
@@ -25,12 +26,18 @@ export default class Audiovisual extends Component {
 
     constructor() {
         super();
-        const amp = new Array(NUM_AMPS);
-        for (let i = 0; i < NUM_AMPS; i++) {
-            amp[i] = 0;
+
+        const freq = new Array(NUM_FREQ);
+        for (let i = 0; i < NUM_FREQ; i++) {
+            freq[i] = 0;
         }
 
-        this.state = { kick: false, amp };
+        const wave = new Array(NUM_WAVE);
+        for (let i = 0; i < NUM_WAVE; i++) {
+            wave[i] = 0;
+        }
+
+        this.state = { kick: false, freq, wave };
 
         this.onClick = this.onClick.bind(this);
         let updatesSkipped = SKIP_UPDATES;
@@ -55,17 +62,34 @@ export default class Audiovisual extends Component {
                 return;
             }
             updatesSkipped = 0;
-            const freq = this.dancer.getSpectrum();
-            const amp = this.state.amp.map((curr, i) => {
+
+            const { freq, wave } = this.state;
+            const spectrum = this.dancer.getSpectrum();
+            for (let i in freq) {
                 let max = 0;
-                for (let j = i; j <= i * AMP_STEP; j++) {
-                    if (freq[i] > max) {
-                        max = freq[j];
+                for (let j = i; j <= i * FREQ_STEP; j++) {
+                    if (spectrum[i] > max) {
+                        max = spectrum[j];
                     }
                 }
-                return max;
-            });
-            this.setState({ amp });
+                max -= 1;
+                freq[i] = -(max) * (max) + 1;
+            }
+
+            const waveform = this.dancer.getWaveform();
+            for (let i in wave) {
+                let max = 0;
+                for (let j = i; j <= i * WAVE_STEP; j++) {
+                    if (waveform[i] > max) {
+                        max = waveform[j];
+                    }
+                }
+                // max -= 1;
+                // wave[i] = -(max) * (max) + 1;
+                wave[i] = max;
+            }
+
+            this.setState({ freq, wave });
         }).load({ src: music });
     }
 
@@ -85,19 +109,32 @@ export default class Audiovisual extends Component {
 
     render() {
         const {className} = this.props;
-        const {kick, amp} = this.state;
+        const {kick, freq, wave} = this.state;
         const classes = classNames(styles.audiovisual, className, { kick });
         return (
             <svg className={classes} onClick={this.onClick} viewBox="0 0 100 100" preserveAspectRatio="none">
-                {amp.map((mag, i) => {
+                {wave.map((mag, i) => {
+                    const width = 100 / NUM_WAVE;
                     const props = {
                         key: i,
-                        width: 100 / NUM_AMPS,
-                        x: i * 100 / NUM_AMPS,
+                        width: width,
+                        x: i * width,
+                        style: { transform: `translate(0, ${mag * 50}px)` }
+                    };
+                    return (
+                        <rect className="wave" y="50" height="1" {...props} />
+                    );
+                })}
+                {freq.map((mag, i) => {
+                    const width = 100 / NUM_FREQ;
+                    const props = {
+                        key: i,
+                        width: width,
+                        x: i * width,
                         style: { transform: `scale(1, ${mag})` }
                     };
                     return (
-                        <rect className="bar" y="0" height="100" {...props} />
+                        <rect className="freq" y="0" height="100" {...props} />
                     );
                 })}
             </svg>
