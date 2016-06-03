@@ -12,6 +12,7 @@ function listFilesRecursive(startPath, ext) {
         if (fs.statSync(filePath).isDirectory()) {
             fs.readdirSync(filePath).map(name => addFiles(path.join(filePath, name)));
         } else if (path.extname(filePath) === ext) {
+            filePath = filePath.replace(path.sep, '/');
             console.log(filePath);
             allFiles.push(filePath);
         }
@@ -22,8 +23,8 @@ function listFilesRecursive(startPath, ext) {
     return allFiles;
 }
 
-const audioFilePath = path.resolve('./audio.json');
-const audioDir = path.resolve('./audio');
+const audioFilePath = 'audio.json';
+const audioDir = 'audio';
 const audioExt = '.mp3';
 let audio = [];
 try {
