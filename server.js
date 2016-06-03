@@ -1,3 +1,5 @@
+'use strict';
+
 /* eslint-env node */
 /* eslint no-console: "off" */
 
@@ -21,7 +23,7 @@ function listFilesRecursive(startPath, ext) {
 }
 
 const audioFilePath = path.resolve('./audio.json');
-const audioDir = path.resolve('./audio/Monstercat');
+const audioDir = path.resolve('./audio');
 const audioExt = '.mp3';
 let audio = [];
 try {
