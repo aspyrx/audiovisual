@@ -41,7 +41,7 @@ export default class Audiovisual extends Component {
             kickOn: true,
             kickFreq: [0, 15],
             kickThreshold: 0.4,
-            kickDecay: 0.02,
+            kickDecay: 0.1,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent'
         }
@@ -117,7 +117,7 @@ export default class Audiovisual extends Component {
             const numSpectrum = spectrum.length;
             let lo = 0, hi = FREQ_INITIAL, step = FREQ_INITIAL;
             for (let i = 0; i < numFreq && hi <= numSpectrum; i++) {
-                freq[i] = max(spectrum, lo, hi);
+                freq[i] = Math.min(max(spectrum, lo, hi), 1.0);
                 step = Math.floor(step * FREQ_EXP);
                 lo = hi;
                 hi += step;
@@ -223,7 +223,7 @@ export default class Audiovisual extends Component {
                         bottom: 0,
                         width: `${width}%`,
                         left: `${i * width}%`,
-                        height: `${mag * 90}%`,
+                        height: `${mag * 80}%`,
                         backgroundColor: freqColor
                     };
                     return (<div className="freq" key={i} style={style}></div>);

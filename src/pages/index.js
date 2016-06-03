@@ -11,14 +11,21 @@ export default class Index extends Component {
     constructor() {
         super();
 
-        this.state = {};
+        this.state = {
+            shuffle: true,
+            hist: [0],
+            histIndex: 0
+        };
 
         const req = new XMLHttpRequest();
         req.onreadystatechange = () => {
             if (req.readyState === XMLHttpRequest.DONE && req.status === 200) {
                 const audio = JSON.parse(req.responseText);
-                if (audio instanceof Array) {
-                    this.setState({ audio, src: audio[339] });
+                if (audio instanceof Array && audio.length > 0) {
+                    this.setState({ audio });
+                    if (this.state.shuffle) {
+                        this.nextSong();
+                    }
                 }
             }
         }
@@ -29,6 +36,10 @@ export default class Index extends Component {
         document.addEventListener('keydown', (event) => {
             if (event.key.match(/^( |k)$/)) {
                 this.togglePlayback();
+            } else if (event.key.match(/^(ArrowLeft|j)$/)) {
+                this.prevSong();
+            } else if (event.key.match(/^(ArrowRight|l)$/)) {
+                this.nextSong();
             }
         });
     }
@@ -37,17 +48,42 @@ export default class Index extends Component {
         this.setState({ playing: !this.state.playing });
     }
 
+    toggleShuffle() {
+        this.setState({ shuffle: !this.state.shuffle });
+    }
+
+    nextSong() {
+        const { hist, histIndex, shuffle, audio } = this.state;
+        if (audio instanceof Array) {
+            if (histIndex > 0) {
+                this.setState({ histIndex: histIndex - 1 });
+            } else {
+                hist.unshift(shuffle
+                    ? Math.round(Math.random() * audio.length)
+                    : ((hist[histIndex] + 1) % audio.length));
+                this.setState({ hist });
+            }
+        }
+    }
+
+    prevSong() {
+        const { hist, histIndex, audio } = this.state;
+        if (audio instanceof Array) {
+            this.setState({ histIndex: (histIndex + 1) % hist.length });
+        }
+    }
+
     onClick() {
         this.togglePlayback();
     }
 
     render() {
-        const { audio, ...props } = this.state;
-        /* eslint no-console: "off" */
+        const { audio, hist, histIndex, ...props } = this.state;
         if (!(audio instanceof Array)) {
             return (<div className={styles.container}></div>);
         }
 
+        props.src = audio[hist[histIndex]];
         return (
             <div className={styles.container} onClick={this.onClick}>
                 <Audiovisual className="audiovisual" {...props} />
