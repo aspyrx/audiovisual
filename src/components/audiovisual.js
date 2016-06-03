@@ -6,12 +6,11 @@ import React, {Component, PropTypes} from 'react';
 import classNames from 'classnames';
 import Dancer from 'dancer';
 
-import music from '../music/Muzzy - Kill the Silence [Monstercat Release].mp3';
 import styles from './audiovisual.less';
 
 const NUM_SPECTRUM = 512;
 const NUM_WAVEFORM = 1024;
-const NUM_FREQ = 64;
+const NUM_FREQ = 32;
 const NUM_WAVE = 32;
 const FREQ_STEP = NUM_SPECTRUM / NUM_FREQ;
 const WAVE_STEP = NUM_WAVEFORM / NUM_WAVE;
@@ -20,11 +19,13 @@ const SKIP_UPDATES = 2;
 export default class Audiovisual extends Component {
     static get propTypes() {
         return {
-            className: PropTypes.string
+            className: PropTypes.string,
+            src: PropTypes.string.isRequired,
+            playing: PropTypes.bool
         };
     }
 
-    constructor() {
+    constructor(props) {
         super();
 
         const freq = new Array(NUM_FREQ);
@@ -39,7 +40,6 @@ export default class Audiovisual extends Component {
 
         this.state = { kick: false, freq, wave };
 
-        this.onClick = this.onClick.bind(this);
         let updatesSkipped = SKIP_UPDATES;
 
         this.dancer = new Dancer();
@@ -78,33 +78,36 @@ export default class Audiovisual extends Component {
 
             const waveform = this.dancer.getWaveform();
             for (let i in wave) {
-                let max = 0;
+                let sum = 0;
                 for (let j = i; j <= i * WAVE_STEP; j++) {
-                    if (waveform[i] > max) {
-                        max = waveform[j];
-                    }
+                    sum += waveform[j];
                 }
-                // max -= 1;
-                // wave[i] = -(max) * (max) + 1;
-                wave[i] = max;
+                wave[i] = sum / WAVE_STEP;
             }
-
             this.setState({ freq, wave });
-        }).load({ src: music });
+        }).load({ src: props.src });
+
+        if (props.playing) {
+            this.dancer.play();
+        }
+    }
+
+    componentWillReceiveProps(props) {
+        if (props.music) {
+            this.dancer.pause().load(props.src);
+        }
+
+        if (this.dancer.isLoaded()) {
+            if (props.playing) {
+                this.dancer.play();
+            } else {
+                this.dancer.pause();
+            }
+        }
     }
 
     componentWillUnmount() {
         window.clearTimeout(this.kickTimer);
-    }
-
-    onClick() {
-        if (this.dancer.isLoaded()) {
-            if (this.dancer.isPlaying()) {
-                this.dancer.pause();
-            } else {
-                this.dancer.play();
-            }
-        }
     }
 
     render() {
@@ -112,17 +115,17 @@ export default class Audiovisual extends Component {
         const {kick, freq, wave} = this.state;
         const classes = classNames(styles.audiovisual, className, { kick });
         return (
-            <svg className={classes} onClick={this.onClick} viewBox="0 0 100 100" preserveAspectRatio="none">
+            <svg className={classes} viewBox="0 0 100 100" preserveAspectRatio="none">
                 {wave.map((mag, i) => {
                     const width = 100 / NUM_WAVE;
                     const props = {
                         key: i,
                         width: width,
                         x: i * width,
-                        style: { transform: `translate(0, ${mag * 50}px)` }
+                        style: { transform: `translate(0, ${mag * 25}px)` }
                     };
                     return (
-                        <rect className="wave" y="50" height="1" {...props} />
+                        <rect className="wave" y="50" height="0.5" {...props} />
                     );
                 })}
                 {freq.map((mag, i) => {
