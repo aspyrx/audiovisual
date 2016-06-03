@@ -14,8 +14,8 @@ export default class Index extends Component {
         this.state = {
             src: 'audio/Monstercat 016 - Expedition/18. Astronaut - Rain.mp3',
             playing: false,
-            numFreq: 16,
-            numWave: 16
+            numFreq: 64,
+            numWave: 64
         };
 
         this.onClick = this.onClick.bind(this);
