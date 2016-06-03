@@ -18,11 +18,8 @@ module.exports = {
     },
     resolve: {
         root: path.resolve(__dirname, 'src'),
-        extensions: ['', '.js', '.jsx'],
+        extensions: ['', '.js'],
         modulesDirectories: ['node_modules'],
-        alias: {
-            dancer: 'dancer/dancer'
-        }
     },
     node: {
         fs: 'empty'
@@ -33,12 +30,16 @@ module.exports = {
     module: {
         preLoaders: [
             {
-                test: /\.jsx?$/,
+                test: /\.js$/,
                 exclude: /node_modules/,
                 loader: 'eslint'
             }
         ],
         loaders: [
+            {
+                include: require.resolve('dancer/dancer'),
+                loader: 'exports?window.Dancer'
+            },
             {
                 test: /\.css$/,
                 loader: ExtractTextPlugin.extract('style', 'css')
@@ -48,37 +49,9 @@ module.exports = {
                 loader: ExtractTextPlugin.extract('style', 'css!less')
             },
             {
-                test: /\.jsx?$/,
+                test: /\.js$/,
                 exclude: /node_modules/,
                 loader: 'babel'
-            },
-            {
-                test: /\.woff\d?(\?.+)?$/,
-                loader: 'url?limit=10000&minetype=application/font-woff'
-            },
-            {
-                test: /\.ttf(\?.+)?$/,
-                loader: 'url?limit=10000&minetype=application/octet-stream'
-            },
-            {
-                test: /\.eot(\?.+)?$/,
-                loader: 'url?limit=10000'
-            },
-            {
-                test: /\.svg(\?.+)?$/,
-                loader: 'url?limit=10000&minetype=image/svg+xml'
-            },
-            {
-                test: /\.png$/,
-                loader: 'url?limit=10000&mimetype=image/png'
-            },
-            {
-                test: /\.mp3$/,
-                loader: 'url?limit=10000&mimetype=audio/mpeg'
-            },
-            {
-                include: require.resolve('dancer/dancer'),
-                loader: 'exports?window.Dancer'
             }
         ]
     },

@@ -7,14 +7,12 @@ import React, {Component} from 'react';
 import Audiovisual from '../components/audiovisual.js';
 import styles from './index.less';
 
-/* eslint no-console: "off" */
-
 export default class Index extends Component {
     constructor() {
         super();
 
         this.state = {
-            src: 'audio/Monstercat 001 - Launch Week/Feint - Atlas.mp3',
+            src: 'audio/Monstercat 016 - Expedition/18. Astronaut - Rain.mp3',
             playing: false
         };
 
