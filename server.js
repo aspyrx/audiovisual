@@ -6,37 +6,39 @@
 const fs = require('fs');
 const path = require('path');
 
-function listFilesRecursive(startPath, ext) {
+function listFilesRecursive(startPath, prefix, match) {
     const allFiles = [];
     function addFiles(filePath) {
         if (fs.statSync(filePath).isDirectory()) {
             fs.readdirSync(filePath).map(name => addFiles(path.join(filePath, name)));
-        } else if (path.extname(filePath) === ext) {
-            filePath = filePath.replace(path.sep, '/');
+        } else if (filePath.match(match)) {
+            filePath = filePath.replace(startPath, prefix).replace(path.sep, '/');
             console.log(filePath);
             allFiles.push(filePath);
         }
     }
 
-    console.log(`Searching ${startPath} for ${ext} files...`);
+    console.log(`Searching ${startPath} files matching ${match}`);
     addFiles(startPath);
     return allFiles;
 }
 
-const audioFilePath = 'audio.json';
-const audioDir = 'audio';
-const audioExt = '.mp3';
-let audio = [];
+const audioFilePath = path.resolve('./audio.json');
+const audioFileUrl = '/audio.json';
+const audioDir = path.resolve('./audio');
+const audioDirUrl = '/audio';
+const audioMatch = /.mp3$/;
+let audioString = '[]';
 try {
     const audioFile = fs.openSync(audioFilePath, 'wx');
-    audio = listFilesRecursive(audioDir, '.mp3');
+    audioString = JSON.stringify(listFilesRecursive(audioDir, audioDirUrl, audioMatch));
     console.log('Writing ' + audioFilePath);
-    fs.writeSync(audioFile, JSON.stringify(audio), 0, 'utf8');
+    fs.writeSync(audioFile, audioString, 0, 'utf8');
     fs.closeSync(audioFile);
 } catch (err) {
     if (err.code === 'EEXIST') {
         console.log('Using existing audio.json');
-        audio = JSON.parse(fs.readFileSync('./audio.json', 'utf8'));
+        audioString = fs.readFileSync('./audio.json', 'utf8');
     } else {
         throw err;
     }
@@ -45,9 +47,9 @@ try {
 const express = require('express');
 const app = express();
 
+app.get(audioFileUrl, (req, res) => res.type('json').send(audioString));
 app.use(express.static('dist'));
-app.use('/audio.json', express.static(audioFilePath));
-app.use('/audio', express.static(audioDir));
+app.use(audioDirUrl, express.static(audioDir));
 
 app.listen(10102, () => console.log('audiovisual server listening on *:10102'));
 
