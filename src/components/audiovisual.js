@@ -3,6 +3,7 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import classNames from 'classnames';
 import Dancer from 'dancer/dancer';
 
@@ -11,6 +12,8 @@ import styles from './audiovisual.less';
 const FREQ_INITIAL = 1;
 const FREQ_EXP = 1.4;
 const SKIP_UPDATES = 2;
+
+/* eslint no-console: "off" */
 
 export default class Audiovisual extends Component {
     static get propTypes() {
@@ -27,7 +30,8 @@ export default class Audiovisual extends Component {
             kickThreshold: PropTypes.number,
             kickDecay: PropTypes.number,
             kickColor: PropTypes.string,
-            bgColor: PropTypes.string
+            bgColor: PropTypes.string,
+            textColor: PropTypes.string
         };
     }
 
@@ -43,14 +47,15 @@ export default class Audiovisual extends Component {
             kickThreshold: 0.4,
             kickDecay: 0.1,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
-            bgColor: 'transparent'
+            bgColor: 'transparent',
+            textColor: 'rgba(100%, 100%, 100%, 0.5)'
         }
     }
 
     constructor(props) {
         super();
 
-        let { numFreq, numWave, kickOn, kickFreq, kickThreshold, kickDecay } = props;
+        let { numFreq, numWave } = props;
         const freq = new Array(numFreq);
         for (let i = 0; i < numFreq; i++) {
             freq[i] = 0;
@@ -61,12 +66,17 @@ export default class Audiovisual extends Component {
             wave[i] = 0;
         }
 
-        this.state = { kick: false, freq, wave };
+        this.state = { kicking: false, freq, wave };
+    }
 
-        let updatesSkipped = SKIP_UPDATES;
+    createDancer(audio, props) {
+        if (this.dancer) {
+            return;
+        }
 
-        this.dancer = new Dancer();
-        this.kick = this.dancer.createKick({
+        let { kickOn, kickFreq, kickThreshold, kickDecay } = props;
+        const dancer = new Dancer();
+        const kick = dancer.createKick({
             frequency: kickFreq,
             threshold: kickThreshold,
             decay: kickDecay,
@@ -74,18 +84,15 @@ export default class Audiovisual extends Component {
                 if (this.state.kick) {
                     window.clearTimeout(this.kickTimer);
                 } else {
-                    this.setState({ kick: true });
+                    this.setState({ kicking: true });
                 }
 
-                this.kickTimer = window.setTimeout(() => this.setState({ kick: false }), 50);
+                this.kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
             }
         });
 
-        if (kickOn) {
-            this.kick.on();
-        }
-
-        this.dancer.bind('update', () => {
+        let updatesSkipped = SKIP_UPDATES;
+        dancer.bind('update', () => {
             if (updatesSkipped !== SKIP_UPDATES) {
                 updatesSkipped++;
                 return;
@@ -113,7 +120,7 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const spectrum = this.dancer.getSpectrum();
+            const spectrum = dancer.getSpectrum();
             const numSpectrum = spectrum.length;
             let lo = 0, hi = FREQ_INITIAL, step = FREQ_INITIAL;
             for (let i = 0; i < numFreq && hi <= numSpectrum; i++) {
@@ -123,7 +130,7 @@ export default class Audiovisual extends Component {
                 hi += step;
             }
 
-            const waveform = this.dancer.getWaveform();
+            const waveform = dancer.getWaveform();
             const waveStep = waveform.length / numWave;
             for (let i = 0; i < numWave; i++) {
                 wave[i] = average(waveform, i * waveStep, (i + 1) * waveStep);
@@ -132,10 +139,22 @@ export default class Audiovisual extends Component {
             this.setState({ freq, wave });
         }).bind('loaded', () => {
             if (this.props.playing) {
-                this.dancer.play();
+                dancer.play();
+            } else {
+                dancer.pause();
             }
         });
+
+        if (kickOn) {
+            kick.on();
+        }
+
+        dancer.load(audio);
+
+        this.dancer = dancer;
+        this.kick = kick;
     }
+
 
     componentWillReceiveProps(props) {
         const { numFreq, numWave, kickOn, kickFreq, kickThreshold, kickDecay, playing } = props;
@@ -157,28 +176,25 @@ export default class Audiovisual extends Component {
            this.setState({ wave });
         }
 
-        if (kickFreq !== this.props.kickFreq
-            || kickThreshold !== this.props.kickThreshold
-            || kickDecay !== this.props.kickDecay
-            || kickOn !== this.props.kickOn) {
-            this.kick.set({
+        const { kick, dancer } = this;
+        if (kick && (kickFreq !== this.props.kickFreq
+                     || kickThreshold !== this.props.kickThreshold
+                     || kickDecay !== this.props.kickDecay
+                     || kickOn !== this.props.kickOn)) {
+            kick.set({
                 frequency: kickFreq,
                 threshold: kickThreshold,
                 decay: kickDecay
             });
 
-            if (kickOn) {
-                this.kick.on();
-            } else {
-                this.kick.off();
-            }
+            kickOn ? kick.on() : kick.off();
         }
 
-        if (this.dancer.isLoaded()) {
+        if (dancer && dancer.isLoaded()) {
             if (playing) {
-                this.dancer.play();
+                dancer.play();
             } else {
-                this.dancer.pause();
+                dancer.pause();
             }
         }
     }
@@ -188,46 +204,75 @@ export default class Audiovisual extends Component {
     }
 
     render() {
-        const {className, src, numFreq, numWave, freqColor, waveColor, kickColor, bgColor } = this.props;
+        const { className, src, playing, numFreq, numWave,
+            freqColor, waveColor, kickColor, bgColor, textColor } = this.props;
         if (!src) {
             return (<div className={classes}></div>);
         }
 
-        const {kick, freq, wave} = this.state;
-        const classes = classNames(styles.audiovisual, className, { kick });
-        const style = { backgroundColor: kick ? kickColor : bgColor };
+        const filename = src.match(/[^/]*$/)[0];
+        const {kicking, freq, wave} = this.state;
+        const classes = classNames(styles.audiovisual, className, { kicking });
+        const style = { backgroundColor: kicking ? kickColor : bgColor };
         const audioRef = audio => {
-            if (audio
-                && (!this.dancer.isLoaded() || this.dancer.source !== audio)) {
-                this.dancer.load(audio);
+            if (audio) {
+                this.createDancer(audio, this.props);
             }
-        }
+        };
+
+        const playIndicator = playing
+            ? (<div className="play fadeOutScale"
+                style={{ borderLeftColor: textColor }}></div>)
+            : null;
+        const pauseIndicator = playing
+            ? null
+            : (<div className="pause fadeOutScale"
+                style={{
+                    borderLeftColor: textColor,
+                    borderRightColor: textColor
+                }}></div>);
 
         return (
             <div className={classes} style={style}>
                 <audio src={src} ref={audioRef} />
-                {wave.map((mag, i) => {
-                    const width = 100 / numWave;
-                    const style = {
-                        height: '0.5%',
-                        width: `${width}%`,
-                        left: `${i * width}%`,
-                        top: `${49.75 - mag * 30}%`,
-                        backgroundColor: waveColor
-                    };
-                    return (<div className="wave" key={i} style={style}></div>);
-                })}
-                {freq.map((mag, i) => {
-                    const width = 100 / numFreq;
-                    const style = {
-                        bottom: 0,
-                        width: `${width}%`,
-                        left: `${i * width}%`,
-                        height: `${mag * 80}%`,
-                        backgroundColor: freqColor
-                    };
-                    return (<div className="freq" key={i} style={style}></div>);
-                })}
+                <div className="waves">
+                    {wave.map((mag, i) => {
+                        const width = 100 / numWave;
+                        const style = {
+                            height: '0.5%',
+                            width: `${width}%`,
+                            left: `${i * width}%`,
+                            top: `${49.75 - mag * 30}%`,
+                            backgroundColor: waveColor
+                        };
+                        return (<div className="wave" key={i} style={style}></div>);
+                    })}
+                </div>
+                <div className="freqs">
+                    {freq.map((mag, i) => {
+                        const width = 100 / numFreq;
+                        const style = {
+                            bottom: 0,
+                            width: `${width}%`,
+                            left: `${i * width}%`,
+                            height: `${mag * 80}%`,
+                            backgroundColor: freqColor
+                        };
+                        return (<div className="freq" key={i} style={style}></div>);
+                    })}
+                </div>
+                <div className="info" style={{ color: textColor }}>
+                    <span className="filename">{filename}</span>
+                </div>
+                <ReactCSSTransitionGroup transitionName="fadeOutScale"
+                    transitionAppear={true}
+                    transitionAppearTimeout={500}
+                    transitionEnter={true}
+                    transitionEnterTimeout={500}
+                    transitionLeave={false}>
+                    {playIndicator}
+                    {pauseIndicator}
+                </ReactCSSTransitionGroup>
             </div>
         );
     }

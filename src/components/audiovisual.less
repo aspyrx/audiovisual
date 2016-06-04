@@ -2,8 +2,14 @@
     position: relative;
     overflow: hidden;
 
-    &:not(.kick) {
+    &:not(.kicking) {
         transition: background-color 0.3s ease;
+    }
+
+    .info {
+        position: absolute;
+        margin: 1%;
+        font-size: 12px;
     }
 
     .freq {
@@ -14,5 +20,50 @@
     .wave {
         position: absolute;
         transition: all 0.1s ease;
+    }
+
+    .fadeOutScale {
+        visibility: hidden;
+
+        &.fadeOutScale-appear, &.fadeOutScale-enter {
+            visibility: visible;
+            opacity: 1;
+            transform: scale(1, 1);
+
+            &.fadeOutScale-appear-active, &.fadeOutScale-enter-active {
+                opacity: 0;
+                transform: scale(1.5, 1.5);
+                transition: all 0.5s ease;
+            }
+        }
+    }
+
+
+    .play {
+        @play-height: 10vh;
+        @play-width: 0.8666 * @play-height;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -@play-height / 2;
+        margin-left: -@play-width / 2;
+        width: 0;
+        height: 0;
+        border-top: @play-height / 2 solid transparent;
+        border-bottom: @play-height / 2 solid transparent;
+        border-left: @play-width solid;
+    }
+
+    .pause {
+        @pause-size: 10vh;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        margin-top: -@pause-size / 2;
+        margin-left: -@pause-size / 2;
+        width: @pause-size / 4;
+        height: @pause-size;
+        border-left: @pause-size / 4 solid;
+        border-right: @pause-size / 4 solid;
     }
 }

@@ -3,6 +3,7 @@
  */
 
 import React, {Component} from 'react';
+import KeyHandler, {KEYDOWN} from 'react-key-handler';
 
 import Audiovisual from '../components/audiovisual.js';
 import styles from './index.less';
@@ -33,15 +34,10 @@ export default class Index extends Component {
         req.send();
 
         this.onClick = this.onClick.bind(this);
-        document.addEventListener('keydown', (event) => {
-            if (event.key.match(/^( |k)$/)) {
-                this.togglePlayback();
-            } else if (event.key.match(/^(ArrowLeft|j)$/)) {
-                this.prevSong();
-            } else if (event.key.match(/^(ArrowRight|l)$/)) {
-                this.nextSong();
-            }
-        });
+        this.togglePlayback = this.togglePlayback.bind(this);
+        this.toggleShuffle = this.toggleShuffle.bind(this);
+        this.nextSong = this.nextSong.bind(this);
+        this.prevSong = this.prevSong.bind(this);
     }
 
     togglePlayback() {
@@ -84,8 +80,22 @@ export default class Index extends Component {
         }
 
         props.src = audio[hist[histIndex]];
+        const { togglePlayback, toggleShuffle, nextSong, prevSong } = this;
+        const keyHandlers = [
+            ['Space', togglePlayback],
+            ['ArrowLeft', prevSong],
+            ['ArrowRight', nextSong],
+            ['k', togglePlayback],
+            ['j', prevSong],
+            ['l', nextSong],
+            ['s', toggleShuffle]
+        ].map(([key, handler], i) => (
+            <KeyHandler key={i} keyEventName={KEYDOWN} keyValue={key} onKeyHandle={handler} />
+        ));
+
         return (
             <div className={styles.container} onClick={this.onClick}>
+                {keyHandlers}
                 <Audiovisual className="audiovisual" {...props} />
             </div>
         );
