@@ -12,7 +12,7 @@ function listFilesRecursive(startPath, prefix, match) {
         if (fs.statSync(filePath).isDirectory()) {
             fs.readdirSync(filePath).map(name => addFiles(path.join(filePath, name)));
         } else if (filePath.match(match)) {
-            filePath = filePath.replace(startPath, prefix).replace(path.sep, '/');
+            filePath = filePath.replace(startPath, prefix).replace(/\\/g, '/');
             console.log(filePath);
             allFiles.push(filePath);
         }

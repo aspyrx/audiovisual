@@ -82,7 +82,7 @@ export default class Index extends Component {
         props.src = audio[hist[histIndex]];
         const { togglePlayback, toggleShuffle, nextSong, prevSong } = this;
         const keyHandlers = [
-            ['Space', togglePlayback],
+            [' ', togglePlayback],
             ['ArrowLeft', prevSong],
             ['ArrowRight', nextSong],
             ['k', togglePlayback],

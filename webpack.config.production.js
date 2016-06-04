@@ -37,10 +37,6 @@ module.exports = {
         ],
         loaders: [
             {
-                include: require.resolve('dancer/dancer'),
-                loader: 'exports?window.Dancer'
-            },
-            {
                 test: /\.css$/,
                 loader: ExtractTextPlugin.extract('style', 'css')
             },

@@ -1,19 +1,18 @@
 /*
- * audiovisual.js - React component that uses dancer.js to visualise audio
+ * audiovisual.js - React component that visualises audio.
  */
 
 import React, {Component, PropTypes} from 'react';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import classNames from 'classnames';
-import Dancer from 'dancer/dancer';
 
+import Spectral from './spectral.js';
 import styles from './audiovisual.less';
+
+const Float32Array = window.Float32Array;
 
 const FREQ_INITIAL = 1;
 const FREQ_EXP = 1.4;
-const SKIP_UPDATES = 2;
-
-/* eslint no-console: "off" */
 
 export default class Audiovisual extends Component {
     static get propTypes() {
@@ -38,14 +37,14 @@ export default class Audiovisual extends Component {
     static get defaultProps() {
         return {
             playing: false,
-            numFreq: 64,
-            numWave: 64,
+            numFreq: 32,
+            numWave: 32,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
             kickFreq: [0, 15],
             kickThreshold: 0.4,
-            kickDecay: 0.1,
+            kickDecay: 0.05,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.5)'
@@ -57,47 +56,42 @@ export default class Audiovisual extends Component {
 
         let { numFreq, numWave } = props;
         const freq = new Array(numFreq);
-        for (let i = 0; i < numFreq; i++) {
-            freq[i] = 0;
-        }
-
         const wave = new Array(numWave);
-        for (let i = 0; i < numWave; i++) {
-            wave[i] = 0;
-        }
-
         this.state = { kicking: false, freq, wave };
     }
 
-    createDancer(audio, props) {
-        if (this.dancer) {
+    initSpectral(audio) {
+        if (this.spectral) {
             return;
         }
 
-        let { kickOn, kickFreq, kickThreshold, kickDecay } = props;
-        const dancer = new Dancer();
-        const kick = dancer.createKick({
-            frequency: kickFreq,
-            threshold: kickThreshold,
-            decay: kickDecay,
-            onKick: () => {
-                if (this.state.kick) {
-                    window.clearTimeout(this.kickTimer);
-                } else {
-                    this.setState({ kicking: true });
-                }
+        const spectral = Spectral(audio, 1024);
+        this.spectral = spectral;
 
-                this.kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
+        /*
+        const onKick = () => {
+            if (this.state.kick) {
+                window.clearTimeout(this.kickTimer);
+            } else {
+                this.setState({ kicking: true });
+            }
+
+            this.kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
+        }
+        */
+
+        const { waveformSize, spectrumSize } = spectral;
+        const waveform = new Float32Array(waveformSize);
+        const spectrum = new Float32Array(spectrumSize);
+        spectral.addEventListener('canplay', () => {
+            if (this.props.playing) {
+                spectral.play();
             }
         });
-
-        let updatesSkipped = SKIP_UPDATES;
-        dancer.bind('update', () => {
-            if (updatesSkipped !== SKIP_UPDATES) {
-                updatesSkipped++;
+        spectral.addScriptListener(() => {
+            if (spectral.paused) {
                 return;
             }
-            updatesSkipped = 0;
 
             const average = (arr, lo, hi) => {
                 let sum = 0;
@@ -107,95 +101,44 @@ export default class Audiovisual extends Component {
                 return sum / (hi - lo);
             }
 
-            const max = (arr, lo, hi) => {
-                let max = -Infinity;
-                for (let i = lo; i < hi; i++) {
-                    if (arr[i] > max) {
-                        max = arr[i];
-                    }
-                }
-                return max;
-            }
-
+            spectral.getWaveform(waveform);
+            spectral.getSpectrum(spectrum);
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const spectrum = dancer.getSpectrum();
-            const numSpectrum = spectrum.length;
             let lo = 0, hi = FREQ_INITIAL, step = FREQ_INITIAL;
-            for (let i = 0; i < numFreq && hi <= numSpectrum; i++) {
-                freq[i] = Math.min(max(spectrum, lo, hi), 1.0);
+            for (let i = 0; i < numFreq && hi <= spectrumSize; i++) {
+                freq[i] = 1 - Math.min((average(spectrum, lo, hi) - 30) / -100, 1);
                 step = Math.floor(step * FREQ_EXP);
                 lo = hi;
                 hi += step;
             }
 
-            const waveform = dancer.getWaveform();
-            const waveStep = waveform.length / numWave;
+            const waveStep = waveformSize / numWave;
             for (let i = 0; i < numWave; i++) {
-                wave[i] = average(waveform, i * waveStep, (i + 1) * waveStep);
+                const [lo, hi] = [i * waveStep, (i + 1) * waveStep];
+                wave[i] = average(waveform, lo, hi);
             }
 
             this.setState({ freq, wave });
-        }).bind('loaded', () => {
-            if (this.props.playing) {
-                dancer.play();
-            } else {
-                dancer.pause();
-            }
         });
-
-        if (kickOn) {
-            kick.on();
-        }
-
-        dancer.load(audio);
-
-        this.dancer = dancer;
-        this.kick = kick;
     }
 
 
     componentWillReceiveProps(props) {
-        const { numFreq, numWave, kickOn, kickFreq, kickThreshold, kickDecay, playing } = props;
+        const { src, playing, numFreq, numWave } = props;
+        if (playing !== this.props.playing || src !== this.props.src) {
+            playing ? this.spectral.play() : this.spectral.pause();
+        }
+
         if (numFreq !== this.props.numFreq) {
             const freq = new Array(numFreq);
-            for (let i = 0; i < numFreq; i++) {
-                freq[i] = 0;
-            }
-
             this.setState({ freq });
         }
 
         if (numWave !== this.props.numWave) {
             const wave = new Array(numWave);
-            for (let i = 0; i < numWave; i++) {
-                wave[i] = 0;
-            }
-
-           this.setState({ wave });
-        }
-
-        const { kick, dancer } = this;
-        if (kick && (kickFreq !== this.props.kickFreq
-                     || kickThreshold !== this.props.kickThreshold
-                     || kickDecay !== this.props.kickDecay
-                     || kickOn !== this.props.kickOn)) {
-            kick.set({
-                frequency: kickFreq,
-                threshold: kickThreshold,
-                decay: kickDecay
-            });
-
-            kickOn ? kick.on() : kick.off();
-        }
-
-        if (dancer && dancer.isLoaded()) {
-            if (playing) {
-                dancer.play();
-            } else {
-                dancer.pause();
-            }
+            this.setState({ wave });
         }
     }
 
@@ -204,19 +147,24 @@ export default class Audiovisual extends Component {
     }
 
     render() {
-        const { className, src, playing, numFreq, numWave,
-            freqColor, waveColor, kickColor, bgColor, textColor } = this.props;
+        const { src } = this.props;
         if (!src) {
             return (<div className={classes}></div>);
         }
 
-        const filename = src.match(/[^/]*$/)[0];
+        const {
+            className, playing, numFreq, numWave,
+            freqColor, waveColor, kickColor, bgColor, textColor
+        } = this.props;
         const {kicking, freq, wave} = this.state;
+
+        const filename = src.match(/[^/]*$/)[0];
         const classes = classNames(styles.audiovisual, className, { kicking });
         const style = { backgroundColor: kicking ? kickColor : bgColor };
+
         const audioRef = audio => {
             if (audio) {
-                this.createDancer(audio, this.props);
+                this.initSpectral(audio);
             }
         };
 
