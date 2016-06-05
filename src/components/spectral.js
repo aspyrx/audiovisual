@@ -20,7 +20,7 @@ export default function Spectral(audio, bufsize) {
     analyser.smoothingTimeConstant = 0.7;
 
     const scriptListeners = [];
-    script.onaudioprocess = (event) => {
+    script.onaudioprocess = window.onaudioprocess = (event) => {
         for (let callback of scriptListeners) {
             callback(event);
         }
