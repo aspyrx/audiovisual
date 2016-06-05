@@ -124,7 +124,6 @@ export default class Audiovisual extends Component {
         });
     }
 
-
     componentWillReceiveProps(props) {
         const { src, playing, numFreq, numWave } = props;
         if (playing !== this.props.playing || src !== this.props.src) {
@@ -154,7 +153,7 @@ export default class Audiovisual extends Component {
 
         const {
             className, playing, numFreq, numWave,
-            freqColor, waveColor, kickColor, bgColor, textColor
+            freqColor, waveColor, kickColor, bgColor, textColor, ...props
         } = this.props;
         const {kicking, freq, wave} = this.state;
 
@@ -182,7 +181,7 @@ export default class Audiovisual extends Component {
 
         return (
             <div className={classes} style={style}>
-                <audio src={src} ref={audioRef} />
+                <audio src={src} ref={audioRef} {...props} />
                 <div className="waves">
                     {wave.map((mag, i) => {
                         const width = 100 / numWave;

@@ -80,6 +80,10 @@ export default class Index extends Component {
         }
 
         props.src = audio[hist[histIndex]];
+        props.onEnded = () => {
+            this.nextSong();
+        }
+
         const { togglePlayback, toggleShuffle, nextSong, prevSong } = this;
         const keyHandlers = [
             [' ', togglePlayback],
