@@ -3,7 +3,7 @@
  * from the specified HTML5 <audio> element.
  */
 
-const AudioContext = window.AudioContext || window.webkitAudioContext;
+const AudioContext = window.AudioContext;
 
 export default function Spectral(audio, bufsize) {
     if (!(audio instanceof HTMLMediaElement)) {
@@ -12,7 +12,7 @@ export default function Spectral(audio, bufsize) {
 
     const context = new AudioContext();
     const analyser = context.createAnalyser();
-    const script = context.createScriptProcessor(bufsize, 2, 0);
+    const script = context.createScriptProcessor(bufsize, 1, 1);
     const gain = context.createGain();
     const source = context.createMediaElementSource(audio);
 
@@ -25,10 +25,11 @@ export default function Spectral(audio, bufsize) {
         }
     }
 
-    gain.connect(context.destination);
-    analyser.connect(script);
     source.connect(analyser);
     source.connect(gain);
+    analyser.connect(script);
+    script.connect(context.destination);
+    gain.connect(context.destination);
 
     Object.defineProperties(audio, {
         addScriptListener: {
