@@ -30,7 +30,7 @@ export default class Index extends Component {
                 }
             }
         }
-        req.open('GET', '/audio.json');
+        req.open('GET', '/files.json');
         req.send();
 
         this.onClick = this.onClick.bind(this);

@@ -35,6 +35,3 @@ node_modules
 # Build folder
 dist
 
-# Audio folder and info
-audio
-audio.json
