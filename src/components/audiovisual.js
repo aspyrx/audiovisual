@@ -11,9 +11,6 @@ import styles from './audiovisual.less';
 
 const Float32Array = window.Float32Array;
 
-const FREQ_INITIAL = 1;
-const FREQ_EXP = 1.4;
-
 export default class Audiovisual extends Component {
     static get propTypes() {
         return {
@@ -27,7 +24,6 @@ export default class Audiovisual extends Component {
             kickOn: PropTypes.bool,
             kickFreq: PropTypes.arrayOf(PropTypes.number),
             kickThreshold: PropTypes.number,
-            kickDecay: PropTypes.number,
             kickColor: PropTypes.string,
             bgColor: PropTypes.string,
             textColor: PropTypes.string
@@ -42,9 +38,8 @@ export default class Audiovisual extends Component {
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
-            kickFreq: [0, 15],
-            kickThreshold: 0.4,
-            kickDecay: 0.05,
+            kickFreq: [3, 9],
+            kickThreshold: -38,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.5)'
@@ -68,8 +63,24 @@ export default class Audiovisual extends Component {
         const spectral = Spectral(audio, 1024);
         this.spectral = spectral;
 
-        /*
-        const onKick = () => {
+        const average = (arr, lo, hi) => {
+            if (lo === hi) {
+                return arr[lo];
+            }
+
+            let sum = 0;
+            for (let i = lo; i < hi; i++) {
+                sum += arr[i];
+            }
+            return sum / (hi - lo);
+        }
+
+        const testKick = (spectrum) => {
+            const { kickOn, kickFreq, kickThreshold } = this.props;
+            if (!kickOn || average(spectrum, kickFreq[0], kickFreq[1]) < kickThreshold) {
+                return;
+            }
+
             if (this.state.kick) {
                 window.clearTimeout(this.kickTimer);
             } else {
@@ -78,27 +89,13 @@ export default class Audiovisual extends Component {
 
             this.kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
         }
-        */
 
         const { waveformSize, spectrumSize } = spectral;
         const waveform = new Float32Array(waveformSize);
         const spectrum = new Float32Array(spectrumSize);
-        spectral.addEventListener('canplay', () => {
-            if (this.props.playing) {
-                spectral.play();
-            }
-        });
-        spectral.addScriptListener(() => {
+        const onUpdate = () => {
             if (spectral.paused) {
                 return;
-            }
-
-            const average = (arr, lo, hi) => {
-                let sum = 0;
-                for (let i = lo; i < hi; i++) {
-                    sum += arr[i];
-                }
-                return sum / (hi - lo);
             }
 
             spectral.getWaveform(waveform);
@@ -106,12 +103,12 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            let lo = 0, hi = FREQ_INITIAL, step = FREQ_INITIAL;
-            for (let i = 0; i < numFreq && hi <= spectrumSize; i++) {
+            const freqStep = (i, m = numFreq, n = spectrumSize) =>
+                Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1));
+
+            for (let i = 0; i < numFreq; i++) {
+                const [lo, hi] = [freqStep(i), freqStep(i + 1)];
                 freq[i] = 1 - Math.min((average(spectrum, lo, hi) - 30) / -100, 1);
-                step = Math.floor(step * FREQ_EXP);
-                lo = hi;
-                hi += step;
             }
 
             const waveStep = waveformSize / numWave;
@@ -120,8 +117,16 @@ export default class Audiovisual extends Component {
                 wave[i] = average(waveform, lo, hi);
             }
 
+            testKick(spectrum);
             this.setState({ freq, wave });
+        }
+
+        spectral.addEventListener('canplay', () => {
+            if (this.props.playing) {
+                spectral.play();
+            }
         });
+        spectral.addScriptListener(onUpdate);
     }
 
     componentWillReceiveProps(props) {
