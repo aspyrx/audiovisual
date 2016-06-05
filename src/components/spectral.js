@@ -16,7 +16,7 @@ export default function Spectral(audio, bufsize) {
     const source = context.createMediaElementSource(audio);
 
     analyser.fftSize = bufsize;
-    analyser.smoothingTimeConstant = 0.7;
+    analyser.smoothingTimeConstant = 0;
 
     source.connect(analyser);
     analyser.connect(gain);

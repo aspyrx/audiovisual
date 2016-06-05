@@ -144,7 +144,7 @@ export default class Audiovisual extends Component {
         spectral.addEventListener('timeupdate', () => {
             this.setState({ progress: spectral.currentTime / spectral.duration });
         });
-        this.updateTimer = window.setInterval(onUpdate, 80);
+        this.updateTimer = window.setInterval(onUpdate, 60);
     }
 
     componentWillReceiveProps(props) {
