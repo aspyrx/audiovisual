@@ -24,6 +24,7 @@ export default class Audiovisual extends Component {
             kickOn: PropTypes.bool,
             kickFreq: PropTypes.arrayOf(PropTypes.number),
             kickThreshold: PropTypes.number,
+            kickDecay: PropTypes.number,
             kickColor: PropTypes.string,
             bgColor: PropTypes.string,
             textColor: PropTypes.string
@@ -40,19 +41,25 @@ export default class Audiovisual extends Component {
             kickOn: true,
             kickFreq: [3, 9],
             kickThreshold: -38,
+            kickDecay: -0.05,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent',
-            textColor: 'rgba(100%, 100%, 100%, 0.5)'
+            textColor: 'rgba(100%, 100%, 100%, 0.8)'
         }
     }
 
     constructor(props) {
         super();
 
-        let { numFreq, numWave } = props;
+        let { numFreq, numWave, kickThreshold } = props;
         const freq = new Array(numFreq);
         const wave = new Array(numWave);
-        this.state = { kicking: false, freq, wave };
+        this.state = {
+            kicking: false,
+            progress: 0,
+            currentKickThreshold: kickThreshold,
+            freq, wave
+        };
     }
 
     initSpectral(audio) {
@@ -64,7 +71,7 @@ export default class Audiovisual extends Component {
         this.spectral = spectral;
 
         const average = (arr, lo, hi) => {
-            if (lo === hi) {
+            if (hi - lo <= 1) {
                 return arr[lo];
             }
 
@@ -76,11 +83,19 @@ export default class Audiovisual extends Component {
         }
 
         const testKick = (spectrum) => {
-            const { kickOn, kickFreq, kickThreshold } = this.props;
-            if (!kickOn || average(spectrum, kickFreq[0], kickFreq[1]) < kickThreshold) {
+            const { kickOn, kickFreq, kickDecay } = this.props;
+            if (!kickOn) {
                 return;
             }
 
+            const { kickCurrentThreshold } = this.state;
+            const mag = average(spectrum, kickFreq[0], kickFreq[1]);
+            if (mag < kickCurrentThreshold) {
+                this.setState({ kickCurrentThreshold: kickCurrentThreshold + kickDecay });
+                return;
+            }
+
+            this.setState({ kickCurrentThreshold: mag });
             if (this.state.kick) {
                 window.clearTimeout(this.kickTimer);
             } else {
@@ -104,11 +119,11 @@ export default class Audiovisual extends Component {
             const { numFreq, numWave } = this.props;
 
             const freqStep = (i, m = numFreq, n = spectrumSize) =>
-                Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1));
+                Math.min(Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
 
             for (let i = 0; i < numFreq; i++) {
                 const [lo, hi] = [freqStep(i), freqStep(i + 1)];
-                freq[i] = 1 - Math.min((average(spectrum, lo, hi) - 30) / -100, 1);
+                freq[i] = 1 - ((average(spectrum, lo, hi) + 30) / -70);
             }
 
             const waveStep = waveformSize / numWave;
@@ -126,11 +141,14 @@ export default class Audiovisual extends Component {
                 spectral.play();
             }
         });
+        spectral.addEventListener('timeupdate', () => {
+            this.setState({ progress: spectral.currentTime / spectral.duration });
+        });
         spectral.addScriptListener(onUpdate);
     }
 
     componentWillReceiveProps(props) {
-        const { src, playing, numFreq, numWave } = props;
+        const { src, playing, numFreq, numWave, kickThreshold } = props;
         if (playing !== this.props.playing || src !== this.props.src) {
             playing ? this.spectral.play() : this.spectral.pause();
         }
@@ -143,6 +161,10 @@ export default class Audiovisual extends Component {
         if (numWave !== this.props.numWave) {
             const wave = new Array(numWave);
             this.setState({ wave });
+        }
+
+        if (kickThreshold !== this.props.kickThreshold) {
+            this.setState({ kickCurrentThreshold: kickThreshold });
         }
     }
 
@@ -160,11 +182,15 @@ export default class Audiovisual extends Component {
             className, playing, numFreq, numWave,
             freqColor, waveColor, kickColor, bgColor, textColor, ...props
         } = this.props;
-        const {kicking, freq, wave} = this.state;
+        const {kicking, progress, freq, wave} = this.state;
 
         const filename = src.match(/[^/]*$/)[0];
         const classes = classNames(styles.audiovisual, className, { kicking });
         const style = { backgroundColor: kicking ? kickColor : bgColor };
+        const progressStyle = {
+            backgroundColor: textColor,
+            width: `${progress * 100}%`
+        };
 
         const audioRef = audio => {
             if (audio) {
@@ -187,6 +213,7 @@ export default class Audiovisual extends Component {
         return (
             <div className={classes} style={style}>
                 <audio src={src} ref={audioRef} {...props} />
+                <div className="progress" style={progressStyle}></div>
                 <div className="waves">
                     {wave.map((mag, i) => {
                         const width = 100 / numWave;
@@ -207,7 +234,7 @@ export default class Audiovisual extends Component {
                             bottom: 0,
                             width: `${width}%`,
                             left: `${i * width}%`,
-                            height: `${mag * 80}%`,
+                            height: `${mag * 30}%`,
                             backgroundColor: freqColor
                         };
                         return (<div className="freq" key={i} style={style}></div>);
