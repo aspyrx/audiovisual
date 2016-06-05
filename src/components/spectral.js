@@ -12,29 +12,20 @@ export default function Spectral(audio, bufsize) {
 
     const context = new AudioContext();
     const analyser = context.createAnalyser();
-    const script = context.createScriptProcessor(bufsize, 1, 1);
     const gain = context.createGain();
     const source = context.createMediaElementSource(audio);
 
     analyser.fftSize = bufsize;
     analyser.smoothingTimeConstant = 0.7;
 
-    const scriptListeners = [];
-    script.onaudioprocess = window.onaudioprocess = (event) => {
-        for (let callback of scriptListeners) {
-            callback(event);
-        }
-    }
-
     source.connect(analyser);
-    source.connect(gain);
-    analyser.connect(script);
-    script.connect(context.destination);
+    analyser.connect(gain);
     gain.connect(context.destination);
 
     Object.defineProperties(audio, {
-        addScriptListener: {
-            value: (callback) => scriptListeners.push(callback)
+        gain: {
+            set: val => this.gain.gain.value = val,
+            get: () => this.gain.gain.value
         },
         waveformSize: {
             get: () => analyser.frequencyBinCount

@@ -35,7 +35,7 @@ export default class Audiovisual extends Component {
         return {
             playing: false,
             numFreq: 32,
-            numWave: 32,
+            numWave: 64,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
@@ -144,7 +144,7 @@ export default class Audiovisual extends Component {
         spectral.addEventListener('timeupdate', () => {
             this.setState({ progress: spectral.currentTime / spectral.duration });
         });
-        spectral.addScriptListener(onUpdate);
+        this.updateTimer = window.setInterval(onUpdate, 80);
     }
 
     componentWillReceiveProps(props) {
@@ -170,6 +170,7 @@ export default class Audiovisual extends Component {
 
     componentWillUnmount() {
         window.clearTimeout(this.kickTimer);
+        window.clearTimeout(this.updateTimer);
     }
 
     render() {
