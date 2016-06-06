@@ -2,6 +2,7 @@
 
 const path = require('path');
 const webpack = require('webpack');
+const autoprefixer = require('autoprefixer');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ExtractTextPlugin = require('extract-text-webpack-plugin');
 
@@ -27,6 +28,7 @@ module.exports = {
     eslint: {
         configFile: path.join(__dirname, '.eslintrc.json')
     },
+    postcss: () => [autoprefixer],
     module: {
         preLoaders: [
             {
@@ -38,11 +40,11 @@ module.exports = {
         loaders: [
             {
                 test: /\.css$/,
-                loader: ExtractTextPlugin.extract('style', 'css')
+                loader: ExtractTextPlugin.extract('style', 'css!postcss')
             },
             {
                 test: /\.less$/,
-                loader: ExtractTextPlugin.extract('style', 'css!less')
+                loader: ExtractTextPlugin.extract('style', 'css!postcss!less')
             },
             {
                 test: /\.js$/,

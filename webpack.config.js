@@ -1,6 +1,7 @@
 /* eslint-env node */
 
 const path = require('path');
+const autoprefixer = require('autoprefixer');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
@@ -25,6 +26,7 @@ module.exports = {
     eslint: {
         configFile: path.join(__dirname, '.eslintrc.json')
     },
+    postcss: () => [autoprefixer],
     module: {
         preLoaders: [
             {
@@ -36,11 +38,11 @@ module.exports = {
         loaders: [
             {
                 test: /\.css$/,
-                loaders: ['style', 'css']
+                loaders: ['style', 'css', 'postcss']
             },
             {
                 test: /\.less$/,
-                loaders: ['style', 'css', 'less']
+                loaders: ['style', 'css', 'postcss', 'less']
             },
             {
                 test: /\.js$/,

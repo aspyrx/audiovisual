@@ -185,7 +185,6 @@ export default class Audiovisual extends Component {
         } = this.props;
         const {kicking, progress, freq, wave} = this.state;
 
-        const filename = src.match(/[^/]*$/)[0];
         const classes = classNames(styles.audiovisual, className, { kicking });
         const style = { backgroundColor: kicking ? kickColor : bgColor };
         const progressStyle = {
@@ -240,9 +239,6 @@ export default class Audiovisual extends Component {
                         };
                         return (<div className="freq" key={i} style={style}></div>);
                     })}
-                </div>
-                <div className="info" style={{ color: textColor }}>
-                    <span className="filename">{filename}</span>
                 </div>
                 <ReactCSSTransitionGroup transitionName="fadeOutScale"
                     transitionAppear={true}

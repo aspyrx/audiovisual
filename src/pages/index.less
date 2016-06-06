@@ -1,13 +1,112 @@
 :local(.container) {
     height: 100vh;
-    display: flex;
-    flex-flow: row wrap;
     position: relative;
+    font-size: 16px;
+    display: flex;
 
-    background-color: lighten(black, 10%);
+    @color-text: fade(white, 80%);
+    @color-bg: lighten(black, 10%);
+    background-color: @color-bg;
+    color: @color-text;
 
     .audiovisual {
         flex: 1;
+    }
+
+    input[type="text"] {
+        background: none;
+        color: @color-text;
+        width: 100%;
+        border: none;
+        border-bottom: 1px solid @color-text;
+    }
+
+    .info {
+        display: flex;
+        flex-flow: column nowrap;
+        position: absolute;
+        top: 0;
+        left: 0;
+        bottom: 0;
+        margin: 1%;
+
+        user-select: none;
+
+        .file {
+            span {
+                margin: 0 4px;
+                cursor: pointer;
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
+
+        .files {
+            flex: 1;
+            display: flex;
+            margin: 10px 0;
+            padding: 10px;
+            overflow: auto;
+            background-color: fade(black, 50%);
+            border-radius: 10px;
+
+            table {
+                flex: 1;
+                tbody {
+                    tr {
+                        td {
+                            padding: 4px;
+                            cursor: pointer;
+                            &:hover {
+                                text-decoration: underline;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .controls {
+        user-select: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 1%;
+
+        .playback {
+            text-align: right;
+            span {
+                margin: 0 4px;
+                cursor: pointer;
+                &:hover {
+                    text-decoration: underline;
+                }
+            }
+        }
+
+        .help {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: fade(black, 50%);
+            border-radius: 10px;
+            table {
+                border-collapse: collapse;
+
+                tbody {
+                    tr {
+                        &:not(:last-child) {
+                            border-bottom: 1px solid @color-text;
+                        }
+
+                        td {
+                            padding: 4px;
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 

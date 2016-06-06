@@ -21,6 +21,7 @@
   },
   "homepage": "https://github.com/aspyrx/audiovisual#readme",
   "dependencies": {
+    "autoprefixer": "^6.3.6",
     "babel-core": "^6.9.0",
     "babel-loader": "^6.2.4",
     "babel-plugin-transform-object-rest-spread": "^6.8.0",
@@ -37,6 +38,7 @@
     "less": "^2.7.1",
     "less-loader": "^2.2.3",
     "normalize.css": "^4.1.1",
+    "postcss-loader": "^0.9.1",
     "progress": "^1.1.8",
     "react": "^15.0.2",
     "react-addons-css-transition-group": "^15.1.0",

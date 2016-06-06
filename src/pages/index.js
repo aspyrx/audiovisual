@@ -13,7 +13,11 @@ export default class Index extends Component {
         super();
 
         this.state = {
+            playing: false,
             shuffle: true,
+            showingHelp: false,
+            showingFiles: false,
+            filter: '',
             hist: [0],
             histIndex: 0
         };
@@ -33,9 +37,11 @@ export default class Index extends Component {
         req.open('GET', '/files.json');
         req.send();
 
-        this.onClick = this.onClick.bind(this);
         this.togglePlayback = this.togglePlayback.bind(this);
         this.toggleShuffle = this.toggleShuffle.bind(this);
+        this.toggleHelp = this.toggleHelp.bind(this);
+        this.toggleFiles = this.toggleFiles.bind(this);
+        this.setSong = this.setSong.bind(this);
         this.nextSong = this.nextSong.bind(this);
         this.prevSong = this.prevSong.bind(this);
     }
@@ -46,6 +52,22 @@ export default class Index extends Component {
 
     toggleShuffle() {
         this.setState({ shuffle: !this.state.shuffle });
+    }
+
+    toggleHelp() {
+        this.setState({ showingHelp: !this.state.showingHelp });
+    }
+
+    toggleFiles() {
+        this.setState({ showingFiles: !this.state.showingFiles });
+    }
+
+    setSong(songIndex) {
+        const { hist, audio } = this.state;
+        if (audio instanceof Array) {
+            hist.unshift(songIndex);
+            this.setState({ hist, histIndex: 0 });
+        }
     }
 
     nextSong() {
@@ -69,22 +91,29 @@ export default class Index extends Component {
         }
     }
 
-    onClick() {
-        this.togglePlayback();
-    }
-
     render() {
-        const { audio, hist, histIndex, ...props } = this.state;
+        const {
+            showingHelp, showingFiles, shuffle, audio,
+            hist, histIndex, filter, ...avProps
+        } = this.state;
+        const { playing } = this.state;
         if (!(audio instanceof Array)) {
             return (<div className={styles.container}></div>);
         }
 
-        props.src = audio[hist[histIndex]];
-        props.onEnded = () => {
+        const src = audio[hist[histIndex]];
+        const filename = src.match(/[^/]*$/)[0];
+
+        avProps.src = src;
+        avProps.onEnded = () => {
             this.nextSong();
         }
 
-        const { togglePlayback, toggleShuffle, nextSong, prevSong } = this;
+        const {
+            togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
+            setSong, nextSong, prevSong
+        } = this;
+
         const keyHandlers = [
             [' ', togglePlayback],
             ['ArrowLeft', prevSong],
@@ -97,10 +126,92 @@ export default class Index extends Component {
             <KeyHandler key={i} keyEventName={KEYDOWN} keyValue={key} onKeyHandle={handler} />
         ));
 
+        const stopEventPropagation = event => event.stopPropagation();
         return (
-            <div className={styles.container} onClick={this.onClick}>
+            <div className={styles.container} onClick={togglePlayback}>
                 {keyHandlers}
-                <Audiovisual className="audiovisual" {...props} />
+                <Audiovisual className="audiovisual" {...avProps} />
+                <div className="info" onClick={stopEventPropagation}>
+                    <div className="file">
+                        <span className="filename" onClick={toggleFiles}>
+                            {filename}
+                        </span>
+                    </div>
+                    { showingFiles
+                        ? (<div className="files">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <td>
+                                            <input type="text"
+                                                placeholder="search"
+                                                onChange={event => {
+                                                    this.setState({
+                                                        filter: event.target.value
+                                                    });
+                                                }} />
+                                        </td>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {audio.map((src, i) => {
+                                        return src.toLowerCase().includes(filter)
+                                            ? (<tr key={i}>
+                                                <td onClick={() => setSong(i)}>
+                                                    {src}
+                                                </td>
+                                            </tr>)
+                                            : null;
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>)
+                        : null
+                    }
+                </div>
+                <div className="controls" onClick={stopEventPropagation}>
+                    <div className="playback">
+                        <span onClick={toggleShuffle}>
+                            {shuffle ? 'S' : '=' }
+                        </span>
+                        <span onClick={prevSong}>⏪</span>
+                        <span onClick={togglePlayback}>
+                            { playing ? '◼' : '►' }
+                        </span>
+                        <span onClick={nextSong}>⏩</span>
+                        <span onMouseOver={toggleHelp}
+                            onMouseOut={toggleHelp}
+                            onClick={toggleHelp}>?</span>
+                    </div>
+                    { showingHelp
+                        ? (<div className="help" onClick={toggleHelp}>
+                            <table>
+                                <tbody>
+                                    <tr>
+                                        <td>J, ←</td>
+                                        <td>previous song</td>
+                                    </tr>
+                                    <tr>
+                                        <td>K, space, click</td>
+                                        <td>play/pause</td>
+                                    </tr>
+                                    <tr>
+                                        <td>L, →</td>
+                                        <td>next song</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S</td>
+                                        <td>shuffle on/off</td>
+                                    </tr>
+                                    <tr>
+                                        <td colSpan="2">Click the filename to select a song.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>)
+                        : null
+                    }
+                </div>
             </div>
         );
     }
