@@ -139,32 +139,22 @@ export default class Index extends Component {
                     </div>
                     { showingFiles
                         ? (<div className="files">
-                            <table>
-                                <thead>
-                                    <tr>
-                                        <td>
-                                            <input type="text"
-                                                placeholder="search"
-                                                onChange={event => {
-                                                    this.setState({
-                                                        filter: event.target.value
-                                                    });
-                                                }} />
-                                        </td>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {audio.map((src, i) => {
-                                        return src.toLowerCase().includes(filter)
-                                            ? (<tr key={i}>
-                                                <td onClick={() => setSong(i)}>
-                                                    {src}
-                                                </td>
-                                            </tr>)
-                                            : null;
-                                    })}
-                                </tbody>
-                            </table>
+                            <input type="text"
+                                placeholder="search"
+                                onChange={event => {
+                                    this.setState({
+                                        filter: event.target.value
+                                    });
+                                }} />
+                            <div className="filesContainer">
+                                {audio.map((src, i) => {
+                                    return src.toLowerCase().includes(filter)
+                                        ? (<p key={i} onClick={() => setSong(i)}>
+                                            {src}
+                                        </p>)
+                                        : null;
+                                })}
+                            </div>
                         </div>)
                         : null
                     }

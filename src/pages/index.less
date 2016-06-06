@@ -45,23 +45,22 @@
         .files {
             flex: 1;
             display: flex;
+            flex-flow: column nowrap;
             margin: 10px 0;
             padding: 10px;
             overflow: auto;
+
             background-color: fade(black, 50%);
             border-radius: 10px;
 
-            table {
+            .filesContainer {
                 flex: 1;
-                tbody {
-                    tr {
-                        td {
-                            padding: 4px;
-                            cursor: pointer;
-                            &:hover {
-                                text-decoration: underline;
-                            }
-                        }
+                overflow: auto;
+                p {
+                    margin: 4px;
+                    cursor: pointer;
+                    &:hover {
+                        text-decoration: underline;
                     }
                 }
             }
