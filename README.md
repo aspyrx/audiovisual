@@ -3,8 +3,8 @@ An audio visualizer built using React.
 
 ## Usage
 1. Clone the repo.
-2. Install the dependencies: `npm install`
-3. Start the server: `npm start [options]`
+2. Install the dependencies: `npm install` or `[ied](https://github.com/alexanderGugel/ied) install && ied run dist`
+3. Start the server: `node . [options]`
     - You'll need to specify the folder containing the files to serve, using the `--f` option.
     - The first time you run the server (and any time you want to rescan the folder), you'll need to use the `--s` option.
         - This will create a file named `.files.json` in the root of the folder containing a list of all matched files.
@@ -21,3 +21,4 @@ An audio visualizer built using React.
 - `--[no]r`: Whether to scan recursively for files. (default: `false`)
 - `--[no]v`: Output verbose information. (default: `false`)
 - `--p`: Port on which to serve the site. (default: 10102)
+
