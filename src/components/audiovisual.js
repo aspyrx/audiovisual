@@ -55,9 +55,11 @@ export default class Audiovisual extends Component {
         const freq = new Array(numFreq);
         const wave = new Array(numWave);
         this.state = {
+            updating: false,
             kicking: false,
             progress: 0,
             currentKickThreshold: kickThreshold,
+            unmountHandlers: [],
             freq, wave
         };
     }
@@ -69,6 +71,7 @@ export default class Audiovisual extends Component {
 
         const spectral = Spectral(audio, 1024);
         this.spectral = spectral;
+        const { unmountHandlers } = this.state;
 
         const average = (arr, lo, hi) => {
             if (hi - lo <= 1) {
@@ -82,6 +85,7 @@ export default class Audiovisual extends Component {
             return sum / (hi - lo);
         }
 
+        let kickTimer;
         const testKick = (spectrum) => {
             const { kickOn, kickFreq, kickDecay } = this.props;
             if (!kickOn) {
@@ -97,19 +101,25 @@ export default class Audiovisual extends Component {
 
             this.setState({ kickCurrentThreshold: mag });
             if (this.state.kick) {
-                window.clearTimeout(this.kickTimer);
+                window.clearTimeout(kickTimer);
             } else {
                 this.setState({ kicking: true });
             }
 
-            this.kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
+            kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
         }
+
+        unmountHandlers.push(() => {
+            if (this.state.kicking) {
+                window.clearTimeout(kickTimer);
+            }
+        });
 
         const { waveformSize, spectrumSize } = spectral;
         const waveform = new Float32Array(waveformSize);
         const spectrum = new Float32Array(spectrumSize);
         const onUpdate = () => {
-            if (spectral.paused) {
+            if (spectral.paused || !this.state.updating) {
                 return;
             }
 
@@ -136,6 +146,24 @@ export default class Audiovisual extends Component {
             this.setState({ freq, wave });
         }
 
+        const updateRate = 60;
+        let updateTimer;
+        const cancelUpdates = () => {
+            if (this.state.updating) {
+                window.clearInterval(updateTimer);
+                this.setState({ updating: false });
+            }
+        };
+        const startUpdates = () => {
+            if (!this.state.updating) {
+                updateTimer = window.setInterval(onUpdate, updateRate);
+                this.setState({ updating: true });
+            }
+        };
+
+        unmountHandlers.push(cancelUpdates);
+        startUpdates();
+
         spectral.addEventListener('canplay', () => {
             if (this.props.playing) {
                 spectral.play();
@@ -144,7 +172,8 @@ export default class Audiovisual extends Component {
         spectral.addEventListener('timeupdate', () => {
             this.setState({ progress: spectral.currentTime / spectral.duration });
         });
-        this.updateTimer = window.setInterval(onUpdate, 60);
+
+        this.setState({ unmountHandlers });
     }
 
     componentWillReceiveProps(props) {
@@ -169,8 +198,9 @@ export default class Audiovisual extends Component {
     }
 
     componentWillUnmount() {
-        window.clearTimeout(this.kickTimer);
-        window.clearTimeout(this.updateTimer);
+        for (let callback of this.state.unmountHandlers) {
+            callback();
+        }
     }
 
     render() {
