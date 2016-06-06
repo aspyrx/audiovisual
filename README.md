@@ -21,4 +21,3 @@ An audio visualizer built using React.
 - `--[no]r`: Whether to scan recursively for files. (default: `false`)
 - `--[no]v`: Output verbose information. (default: `false`)
 - `--p`: Port on which to serve the site. (default: 10102)
-- 
