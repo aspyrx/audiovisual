@@ -3,7 +3,8 @@ An audio visualizer built using React.
 
 ## Usage
 1. Clone the repo.
-2. Install the dependencies: `npm install` or `[ied](https://github.com/alexanderGugel/ied) install && ied run dist`
+2. Install the dependencies: `npm install`
+    - Or with [ied](https://github.com/alexanderGugel/ied): `ied install && ied run dist`
 3. Start the server: `node . [options]`
     - You'll need to specify the folder containing the files to serve, using the `--f` option.
     - The first time you run the server (and any time you want to rescan the folder), you'll need to use the `--s` option.
