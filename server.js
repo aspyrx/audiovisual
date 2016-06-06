@@ -14,6 +14,7 @@ flags.defineString('mflags', 'i', 'Flags to use in regular expression matching.'
 flags.defineBoolean('s', false, 'Scan the files directory for new files.');
 flags.defineBoolean('r', false, 'Whether to scan recursively for files.');
 flags.defineBoolean('v', false, 'Output verbose information.');
+flags.defineString('p', 10102, 'Port on which to serve the site.');
 
 flags.parse();
 
@@ -93,5 +94,6 @@ app.get(filesDirUrl + '/*', (req, res) => {
     }
 });
 
-app.listen(10102, () => console.log('audiovisual server listening on *:10102'));
+const port = flags.get('p');
+app.listen(port, () => console.log(`audiovisual server listening on *:${port}`));
 
