@@ -161,14 +161,14 @@ export default class Index extends Component {
                 </div>
                 <div className="controls" onClick={stopEventPropagation}>
                     <div className="playback">
-                        <span onClick={toggleShuffle}>
-                            {shuffle ? 'S' : '=' }
+                        <span onClick={toggleShuffle} title="shuffle on/off">
+                            {shuffle ? 'S' : 's' }
                         </span>
-                        <span onClick={prevSong}>⏪</span>
-                        <span onClick={togglePlayback}>
+                        <span onClick={prevSong} title="previous song">⏪</span>
+                        <span onClick={togglePlayback} title="play/pause">
                             { playing ? '◼' : '►' }
                         </span>
-                        <span onClick={nextSong}>⏩</span>
+                        <span onClick={nextSong} title="next song">⏩</span>
                         <span onMouseOver={toggleHelp}
                             onMouseOut={toggleHelp}
                             onClick={toggleHelp}>?</span>
