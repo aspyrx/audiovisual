@@ -53,10 +53,11 @@ export default class Audiovisual extends Component {
     constructor(props) {
         super();
 
-        let { numFreq, numWave, kickThreshold } = props;
+        let { playing, numFreq, numWave, kickThreshold } = props;
         const freq = new Float32Array(numFreq);
         const wave = new Float32Array(numWave);
         this.state = {
+            playing: playing,
             updating: false,
             kicking: false,
             progress: 0,
@@ -176,6 +177,12 @@ export default class Audiovisual extends Component {
         spectral.addEventListener('timeupdate', () => {
             this.setState({ progress: spectral.currentTime / spectral.duration });
         });
+        spectral.addEventListener('play', () => {
+            this.setState({ playing: true });
+        });
+        spectral.addEventListener('pause', () => {
+            this.setState({ playing: false });
+        });
 
         this.setState({ unmountHandlers });
     }
@@ -186,7 +193,7 @@ export default class Audiovisual extends Component {
             numFreq, numWave, kickThreshold
         } = props;
 
-        if (playing !== this.props.playing || src !== this.props.src) {
+        if (playing !== this.state.playing || src !== this.props.src) {
             playing ? this.spectral.play() : this.spectral.pause();
         }
 
@@ -222,10 +229,10 @@ export default class Audiovisual extends Component {
         }
 
         const {
-            className, playing, numFreq, numWave,
+            className, numFreq, numWave,
             freqColor, waveColor, kickColor, bgColor, textColor, ...props
         } = this.props;
-        const {kicking, progress, freq, wave} = this.state;
+        const {playing, kicking, progress, freq, wave} = this.state;
 
         const classes = classNames(styles.audiovisual, className, { kicking });
         const style = { backgroundColor: kicking ? kickColor : bgColor };
