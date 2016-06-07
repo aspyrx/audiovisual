@@ -54,8 +54,8 @@ export default class Audiovisual extends Component {
         super();
 
         let { numFreq, numWave, kickThreshold } = props;
-        const freq = new Array(numFreq);
-        const wave = new Array(numWave);
+        const freq = new Float32Array(numFreq);
+        const wave = new Float32Array(numWave);
         this.state = {
             updating: false,
             kicking: false,
@@ -195,12 +195,12 @@ export default class Audiovisual extends Component {
         }
 
         if (numFreq !== this.props.numFreq) {
-            const freq = new Array(numFreq);
+            const freq = new Float32Array(numFreq);
             this.setState({ freq });
         }
 
         if (numWave !== this.props.numWave) {
-            const wave = new Array(numWave);
+            const wave = new Float32Array(numWave);
             this.setState({ wave });
         }
 
@@ -257,26 +257,28 @@ export default class Audiovisual extends Component {
                 <audio src={src} ref={audioRef} {...props} />
                 <div className="progress" style={progressStyle}></div>
                 <div className="waves">
-                    {wave.map((mag, i) => {
+                    {Array.prototype.map.call(wave, (mag, i) => {
                         const width = 100 / numWave;
+                        const top = 49.75 - mag * 30;
                         const style = {
                             height: '0.5%',
                             width: `${width}%`,
                             left: `${i * width}%`,
-                            top: `${49.75 - mag * 30}%`,
+                            top: `${top}%`,
                             backgroundColor: waveColor
                         };
                         return (<div className="wave" key={i} style={style}></div>);
                     })}
                 </div>
                 <div className="freqs">
-                    {freq.map((mag, i) => {
+                    {Array.prototype.map.call(freq, (mag, i) => {
                         const width = 100 / numFreq;
+                        const height = mag * 30;
                         const style = {
                             bottom: 0,
                             width: `${width}%`,
                             left: `${i * width}%`,
-                            height: `${mag * 30}%`,
+                            height: `${height}%`,
                             backgroundColor: freqColor
                         };
                         return (<div className="freq" key={i} style={style}></div>);
