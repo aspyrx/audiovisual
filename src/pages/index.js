@@ -17,6 +17,7 @@ export default class Index extends Component {
             shuffle: true,
             showingHelp: false,
             showingFiles: false,
+            updating: true,
             filter: '',
             hist: [0],
             histIndex: 0
@@ -41,6 +42,7 @@ export default class Index extends Component {
         this.toggleShuffle = this.toggleShuffle.bind(this);
         this.toggleHelp = this.toggleHelp.bind(this);
         this.toggleFiles = this.toggleFiles.bind(this);
+        this.toggleUpdating = this.toggleUpdating.bind(this);
         this.setSong = this.setSong.bind(this);
         this.nextSong = this.nextSong.bind(this);
         this.prevSong = this.prevSong.bind(this);
@@ -60,6 +62,10 @@ export default class Index extends Component {
 
     toggleFiles() {
         this.setState({ showingFiles: !this.state.showingFiles });
+    }
+
+    toggleUpdating() {
+        this.setState({ updating: !this.state.updating });
     }
 
     setSong(songIndex) {
@@ -96,7 +102,7 @@ export default class Index extends Component {
             showingHelp, showingFiles, shuffle, audio,
             hist, histIndex, filter, ...avProps
         } = this.state;
-        const { playing } = this.state;
+        const { playing, updating } = this.state;
         if (!(audio instanceof Array)) {
             return (<div className={styles.container}></div>);
         }
@@ -111,7 +117,7 @@ export default class Index extends Component {
 
         const {
             togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
-            setSong, nextSong, prevSong
+            toggleUpdating, setSong, nextSong, prevSong
         } = this;
 
         const keyHandlers = [
@@ -121,7 +127,8 @@ export default class Index extends Component {
             ['k', togglePlayback],
             ['j', prevSong],
             ['l', nextSong],
-            ['s', toggleShuffle]
+            ['s', toggleShuffle],
+            ['v', toggleUpdating]
         ].map(([key, handler], i) => (
             <KeyHandler key={i} keyEventName={KEYDOWN} keyValue={key} onKeyHandle={handler} />
         ));
@@ -161,12 +168,15 @@ export default class Index extends Component {
                 </div>
                 <div className="controls" onClick={stopEventPropagation}>
                     <div className="playback">
+                        <span onClick={toggleUpdating} title="visualisation on/off">
+                            { updating ? 'V' : 'v' }
+                        </span>
                         <span onClick={toggleShuffle} title="shuffle on/off">
-                            {shuffle ? '≊' : '≇' }
+                            {shuffle ? 'S' : 's' }
                         </span>
                         <span onClick={prevSong} title="previous song">≪</span>
                         <span onClick={togglePlayback} title="play/pause">
-                            { playing ? '⊳' : '⊡' }
+                            { playing ? '►' : ' ‖ ' }
                         </span>
                         <span onClick={nextSong} title="next song">≫</span>
                         <span onMouseOver={toggleHelp}
@@ -192,6 +202,10 @@ export default class Index extends Component {
                                     <tr>
                                         <td>S</td>
                                         <td>shuffle on/off</td>
+                                    </tr>
+                                    <tr>
+                                        <td>V</td>
+                                        <td>visualisation on/off</td>
                                     </tr>
                                     <tr>
                                         <td colSpan="2">Click the filename to select a song.</td>

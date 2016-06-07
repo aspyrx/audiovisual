@@ -17,6 +17,7 @@ export default class Audiovisual extends Component {
             className: PropTypes.string,
             src: PropTypes.string,
             playing: PropTypes.bool,
+            updating: PropTypes.bool,
             numFreq: PropTypes.number,
             numWave: PropTypes.number,
             freqColor: PropTypes.string,
@@ -34,6 +35,7 @@ export default class Audiovisual extends Component {
     static get defaultProps() {
         return {
             playing: false,
+            updating: true,
             numFreq: 32,
             numWave: 64,
             freqColor: 'white',
@@ -148,21 +150,23 @@ export default class Audiovisual extends Component {
 
         const updateRate = 60;
         let updateTimer;
-        const cancelUpdates = () => {
+        this.cancelUpdates = () => {
             if (this.state.updating) {
                 window.clearInterval(updateTimer);
                 this.setState({ updating: false });
             }
         };
-        const startUpdates = () => {
+        this.startUpdates = () => {
             if (!this.state.updating) {
                 updateTimer = window.setInterval(onUpdate, updateRate);
                 this.setState({ updating: true });
             }
         };
 
-        unmountHandlers.push(cancelUpdates);
-        startUpdates();
+        unmountHandlers.push(this.cancelUpdates);
+        if (this.props.updating) {
+            this.startUpdates();
+        }
 
         spectral.addEventListener('canplay', () => {
             if (this.props.playing) {
@@ -177,9 +181,17 @@ export default class Audiovisual extends Component {
     }
 
     componentWillReceiveProps(props) {
-        const { src, playing, numFreq, numWave, kickThreshold } = props;
+        const {
+            src, playing, updating,
+            numFreq, numWave, kickThreshold
+        } = props;
+
         if (playing !== this.props.playing || src !== this.props.src) {
             playing ? this.spectral.play() : this.spectral.pause();
+        }
+
+        if (updating !== this.props.updating && this.spectral) {
+            updating ? this.startUpdates() : this.cancelUpdates();
         }
 
         if (numFreq !== this.props.numFreq) {
