@@ -14,6 +14,7 @@ export default class Index extends Component {
 
         this.state = {
             playing: false,
+            repeat: false,
             shuffle: true,
             showingHelp: false,
             showingFiles: false,
@@ -39,6 +40,7 @@ export default class Index extends Component {
         req.send();
 
         this.togglePlayback = this.togglePlayback.bind(this);
+        this.toggleRepeat = this.toggleRepeat.bind(this);
         this.toggleShuffle = this.toggleShuffle.bind(this);
         this.toggleHelp = this.toggleHelp.bind(this);
         this.toggleFiles = this.toggleFiles.bind(this);
@@ -50,6 +52,10 @@ export default class Index extends Component {
 
     togglePlayback() {
         this.setState({ playing: !this.state.playing });
+    }
+
+    toggleRepeat() {
+        this.setState({ repeat: !this.state.repeat });
     }
 
     toggleShuffle() {
@@ -77,9 +83,11 @@ export default class Index extends Component {
     }
 
     nextSong() {
-        const { hist, histIndex, shuffle, audio } = this.state;
+        const { hist, histIndex, repeat, shuffle, audio } = this.state;
         if (audio instanceof Array) {
-            if (histIndex > 0) {
+            if (repeat) {
+                this.setState({ playing: true });
+            } else if (histIndex > 0) {
                 this.setState({ histIndex: histIndex - 1 });
             } else {
                 hist.unshift(shuffle
@@ -99,7 +107,7 @@ export default class Index extends Component {
 
     render() {
         const {
-            showingHelp, showingFiles, shuffle, audio,
+            showingHelp, showingFiles, shuffle, repeat, audio,
             hist, histIndex, filter, ...avProps
         } = this.state;
         const { playing, updating } = this.state;
@@ -117,7 +125,7 @@ export default class Index extends Component {
 
         const {
             togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
-            toggleUpdating, setSong, nextSong, prevSong
+            toggleRepeat, toggleUpdating, setSong, nextSong, prevSong
         } = this;
 
         const keyHandlers = [
@@ -127,6 +135,7 @@ export default class Index extends Component {
             ['k', togglePlayback],
             ['j', prevSong],
             ['l', nextSong],
+            ['r', toggleRepeat],
             ['s', toggleShuffle],
             ['v', toggleUpdating]
         ].map(([key, handler], i) => (
@@ -172,7 +181,10 @@ export default class Index extends Component {
                             { updating ? 'V' : 'v' }
                         </span>
                         <span onClick={toggleShuffle} title="shuffle on/off">
-                            {shuffle ? 'S' : 's' }
+                            { shuffle ? 'S' : 's' }
+                        </span>
+                        <span onClick={toggleRepeat} title="repeat on/off">
+                            { repeat ? 'R' : 'r' }
                         </span>
                         <span onClick={prevSong} title="previous song">≪</span>
                         <span onClick={togglePlayback} title="play/pause">
@@ -188,6 +200,18 @@ export default class Index extends Component {
                             <table>
                                 <tbody>
                                     <tr>
+                                        <td>V</td>
+                                        <td>visualisation on/off</td>
+                                    </tr>
+                                    <tr>
+                                        <td>S</td>
+                                        <td>shuffle on/off</td>
+                                    </tr>
+                                    <tr>
+                                        <td>R</td>
+                                        <td>repeat on/off</td>
+                                    </tr>
+                                    <tr>
                                         <td>J, ←</td>
                                         <td>previous song</td>
                                     </tr>
@@ -198,14 +222,6 @@ export default class Index extends Component {
                                     <tr>
                                         <td>L, →</td>
                                         <td>next song</td>
-                                    </tr>
-                                    <tr>
-                                        <td>S</td>
-                                        <td>shuffle on/off</td>
-                                    </tr>
-                                    <tr>
-                                        <td>V</td>
-                                        <td>visualisation on/off</td>
                                     </tr>
                                     <tr>
                                         <td colSpan="2">Click the filename to select a song.</td>
