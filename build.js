@@ -45,8 +45,8 @@ if (process.argv.length > 2) {
         return;
     } else if (process.argv[2] === 'live') {
         const webpackDevServer = require('webpack-dev-server');
-        webpackConfig.entry.app.unshift('webpack-dev-server/client?http://localhost:8080/', 'webpack/hot/dev-server');
-        webpackConfig.plugins.unshift(new webpack.HotModuleReplacementPlugin());
+        webpackConfig.entry.app.push('webpack-dev-server/client?http://localhost:8080/', 'webpack/hot/dev-server');
+        webpackConfig.plugins.push(new webpack.HotModuleReplacementPlugin());
         const server = new webpackDevServer(webpackCompiler, { hot: true, compress: true, stats: { colors: true, timings: true, cached: false }});
         server.listen(8080, "localhost");
         return;
