@@ -2,7 +2,6 @@
     height: 100vh;
     position: relative;
     font-size: 16px;
-    display: flex;
 
     @color-text: fade(white, 80%);
     @color-bg: lighten(black, 10%);
@@ -10,29 +9,26 @@
     color: @color-text;
 
     .audiovisual {
-        flex: 1;
-    }
-
-    input[type="text"] {
-        background: none;
-        color: @color-text;
-        width: 100%;
-        border: none;
-        border-bottom: 1px solid @color-text;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
     }
 
     .info {
-        display: flex;
-        flex-flow: column nowrap;
         position: absolute;
         top: 0;
         left: 0;
-        bottom: 0;
-        margin: 1%;
+        max-height: 100%;
+
+        display: flex;
+        flex-flow: column nowrap;
 
         user-select: none;
 
         .file {
+            margin: 10px;
             span {
                 margin: 0 4px;
                 cursor: pointer;
@@ -45,16 +41,26 @@
         .files {
             display: flex;
             flex-flow: column nowrap;
-            margin: 10px 0;
+
+            margin: 10px;
             padding: 10px;
             overflow: auto;
 
             background-color: fade(black, 50%);
             border-radius: 10px;
 
-            .filesContainer {
+            input[type="text"] {
+                background: none;
+                color: @color-text;
+                width: 100%;
+                border: none;
+                border-bottom: 1px solid @color-text;
+            }
+
+            .files-container {
                 flex: 1;
                 overflow: auto;
+
                 p {
                     margin: 4px;
                     cursor: pointer;
@@ -67,13 +73,14 @@
     }
 
     .controls {
-        user-select: none;
         position: absolute;
         top: 0;
         right: 0;
-        margin: 1%;
+
+        user-select: none;
 
         .playback {
+            margin: 10px;
             text-align: right;
             span {
                 margin: 0 4px;
@@ -85,7 +92,7 @@
         }
 
         .help {
-            margin: 10px 0;
+            margin: 10px;
             padding: 10px;
             background-color: fade(black, 50%);
             border-radius: 10px;

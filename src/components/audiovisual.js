@@ -268,7 +268,7 @@ export default class Audiovisual extends Component {
                         const width = 100 / numWave;
                         const top = 49.75 - mag * 30;
                         const style = {
-                            height: '0.5%',
+                            height: '5px',
                             width: `${width}%`,
                             left: `${i * width}%`,
                             top: `${top}%`,

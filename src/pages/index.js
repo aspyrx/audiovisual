@@ -162,7 +162,7 @@ export default class Index extends Component {
                                         filter: event.target.value
                                     });
                                 }} />
-                            <div className="filesContainer">
+                            <div className="files-container">
                                 {audio.map((src, i) => {
                                     return src.toLowerCase().includes(filter)
                                         ? (<p key={i} onClick={() => setSong(i)}>
