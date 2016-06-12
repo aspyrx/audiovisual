@@ -135,7 +135,9 @@ export default class Index extends Component {
 
         if (audio.length < 1) {
             const addSong = evt => {
-                for (let file of evt.target.files) {
+                const files = evt.target.files;
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
                     audio.push({
                         title: file.name,
                         url: window.URL.createObjectURL(file)
