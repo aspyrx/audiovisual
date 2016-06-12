@@ -31,7 +31,7 @@ module.exports = {
         preLoaders: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                include: [ path.resolve(__dirname, 'src') ],
                 loader: 'eslint'
             }
         ],
@@ -46,7 +46,7 @@ module.exports = {
             },
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                include: [ path.resolve(__dirname, 'src') ],
                 loader: 'babel'
             }
         ]

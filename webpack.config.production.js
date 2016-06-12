@@ -33,7 +33,7 @@ module.exports = {
         preLoaders: [
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                include: [ path.resolve(__dirname, 'src') ],
                 loader: 'eslint'
             }
         ],
@@ -48,9 +48,12 @@ module.exports = {
             },
             {
                 test: /\.js$/,
-                exclude: /node_modules/,
+                include: [
+                    path.resolve(__dirname, 'src'),
+                    path.resolve(__dirname, 'node_modules/jsmediatags') // need to transform for minification
+                ],
                 loader: 'babel'
-            }
+            },
         ]
     },
     plugins: [
