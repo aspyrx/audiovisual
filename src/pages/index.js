@@ -223,7 +223,7 @@ export default class Index extends Component {
                                     placeholder="search"
                                     onChange={event => {
                                         this.setState({
-                                            filter: event.target.value
+                                            filter: event.target.value.toLowerCase()
                                         });
                                     }} />
                                 <span className="actions">

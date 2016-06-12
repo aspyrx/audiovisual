@@ -13,7 +13,8 @@
         "browser": true
     },
     "plugins": [
-        "react"
+        "react",
+        "promise"
     ],
     "rules": {
 

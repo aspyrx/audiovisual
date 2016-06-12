@@ -11,6 +11,8 @@ const flags = require('flags');
 const ProgressBar = require('progress');
 const jsmediatags = require('jsmediatags');
 
+const Promise = global.Promise;
+
 flags.defineString('f', undefined, 'Directory from which files should be served.');
 flags.defineString('m', '[.](mp3|wav|ogg)$', 'Regular expression to use to match files.');
 flags.defineString('mflags', 'i', 'Flags to use in regular expression matching.');
@@ -62,7 +64,7 @@ function parseFiles(startPath, prefix, match, recursive, verbose) {
             }
         } else if (filePath.match(match)) {
             const url = filePath.replace(startPath, prefix).replace(/\\/g, '/');
-            function tick(numDone) {
+            const tick = numDone => {
                 done += numDone;
                 const pct = done / count;
                 progress.tick((pct - prevPct) * 100, {
