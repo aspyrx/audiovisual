@@ -79,13 +79,20 @@
                     }
                 }
 
-                .close {
-                    cursor: pointer;
+                .actions {
                     position: absolute;
-                    right: @spacing-x;
+                    right: 0;
 
-                    &:hover {
-                        text-decoration: underline;
+                    input {
+                        display: none;
+                    }
+
+                    span, label {
+                        cursor: help;
+                        margin: @spacing-y @spacing-x;
+                        &:hover {
+                            text-decoration: underline;
+                        }
                     }
                 }
             }
@@ -103,7 +110,7 @@
                     margin: 4px;
                     cursor: pointer;
 
-                    &:hover {
+                    &:hover, &.selected {
                         text-decoration: underline;
                     }
                 }

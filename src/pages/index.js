@@ -4,6 +4,7 @@
 
 import React, {Component} from 'react';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
+import classnames from 'classnames';
 
 import Audiovisual from '../components/audiovisual.js';
 import styles from './index.less';
@@ -11,17 +12,21 @@ import styles from './index.less';
 class FileInfo extends Component {
     static get propTypes() {
         return {
-            file: React.PropTypes.object.isRequired
+            file: React.PropTypes.object.isRequired,
+            selected: React.PropTypes.bool,
+            className: React.PropTypes.any
         };
     }
 
     render() {
-        const { file, ...props } = this.props;
+        const { file, selected, className, ...props } = this.props;
         const { url, title, artist, album } = file;
         const filename = url.match(/[^/]*$/)[0];
 
+        const name = classnames(className, { selected });
+
         return title
-            ? (<p {...props}>
+            ? (<p className={name} {...props}>
                 <span>{artist || 'no artist'}</span>
                 <span>&nbsp;&middot;&nbsp;</span>
                 <span>{album || 'no album'}</span>
@@ -133,20 +138,20 @@ export default class Index extends Component {
         } = this.state;
         const { playing, updating } = this.state;
 
+        const addSong = evt => {
+            const files = evt.target.files;
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                audio.push({
+                    title: file.name,
+                    url: window.URL.createObjectURL(file)
+                });
+            }
+
+            this.setState({ audio });
+        };
+
         if (audio.length < 1) {
-            const addSong = evt => {
-                const files = evt.target.files;
-                for (let i = 0; i < files.length; i++) {
-                    const file = files[i];
-                    audio.push({
-                        title: file.name,
-                        url: window.URL.createObjectURL(file)
-                    });
-                }
-
-                this.setState({ audio });
-            };
-
             return (<div className={styles.container}>
                 <label className="fileInput">
                     <h1>Click to select some songs to play!</h1>
@@ -156,7 +161,8 @@ export default class Index extends Component {
             </div>);
         }
 
-        const file = audio[hist[histIndex]];
+        const audioIndex = hist[histIndex];
+        const file = audio[audioIndex];
 
         avProps.src = file.url;
         avProps.onEnded = () => {
@@ -198,7 +204,13 @@ export default class Index extends Component {
                                             filter: event.target.value
                                         });
                                     }} />
-                                <span className="close" onClick={toggleFiles}>×</span>
+                                <span className="actions">
+                                    <label title="add songs">
+                                        +
+                                        <input type="file" accept="audio/*" multiple onChange={addSong} />
+                                    </label>
+                                    <span onClick={toggleFiles} title="close">×</span>
+                                </span>
                             </div>
                             <div className="files-container">
                                 {audio.map((file, i) => {
@@ -210,6 +222,7 @@ export default class Index extends Component {
                                         ? <FileInfo className="file"
                                             key={i}
                                             file={file}
+                                            selected={i === audioIndex}
                                             onClick={() => setSong(i)} />
                                         : null;
                                 })}
