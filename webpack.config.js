@@ -18,7 +18,7 @@ module.exports = {
     resolve: {
         root: path.resolve(__dirname, 'src'),
         extensions: ['', '.js'],
-        modulesDirectories: ['node_modules'],
+        modulesDirectories: ['node_modules']
     },
     node: {
         fs: 'empty'

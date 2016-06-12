@@ -20,7 +20,7 @@ module.exports = {
     resolve: {
         root: path.resolve(__dirname, 'src'),
         extensions: ['', '.js'],
-        modulesDirectories: ['node_modules'],
+        modulesDirectories: ['node_modules']
     },
     node: {
         fs: 'empty'
@@ -50,10 +50,10 @@ module.exports = {
                 test: /\.js$/,
                 include: [
                     path.resolve(__dirname, 'src'),
-                    path.resolve(__dirname, 'node_modules/jsmediatags') // need to transform for minification
+                    /build2/
                 ],
                 loader: 'babel'
-            },
+            }
         ]
     },
     plugins: [
