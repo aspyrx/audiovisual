@@ -8,6 +8,32 @@ import KeyHandler, {KEYDOWN} from 'react-key-handler';
 import Audiovisual from '../components/audiovisual.js';
 import styles from './index.less';
 
+class FileInfo extends Component {
+    static get propTypes() {
+        return {
+            file: React.PropTypes.object.isRequired
+        };
+    }
+
+    render() {
+        const { file, ...props } = this.props;
+        const { url, title, artist, album } = file;
+        const filename = url.match(/[^/]*$/)[0];
+
+        return title
+            ? (<p {...props}>
+                <span>{artist || 'no artist'}</span>
+                <span>&nbsp;&middot;&nbsp;</span>
+                <span>{album || 'no album'}</span>
+                <span>&nbsp;&middot;&nbsp;</span>
+                <span>{title}</span>
+            </p>)
+            : (<p {...props}>
+                <span>{filename}</span>
+            </p>);
+    }
+}
+
 export default class Index extends Component {
     constructor() {
         super();
@@ -91,7 +117,7 @@ export default class Index extends Component {
                 this.setState({ histIndex: histIndex - 1 });
             } else {
                 hist.unshift(shuffle
-                    ? Math.round(Math.random() * audio.length)
+                    ? Math.floor(Math.random() * audio.length)
                     : ((hist[histIndex] + 1) % audio.length));
                 this.setState({ hist });
             }
@@ -115,10 +141,9 @@ export default class Index extends Component {
             return (<div className={styles.container}></div>);
         }
 
-        const src = audio[hist[histIndex]];
-        const filename = src.match(/[^/]*$/)[0];
+        const file = audio[hist[histIndex]];
 
-        avProps.src = src;
+        avProps.src = file.url;
         avProps.onEnded = () => {
             this.nextSong();
         }
@@ -148,11 +173,7 @@ export default class Index extends Component {
                 {keyHandlers}
                 <Audiovisual className="audiovisual" {...avProps} />
                 <div className="info" onClick={stopEventPropagation}>
-                    <div className="file">
-                        <span className="filename" onClick={toggleFiles}>
-                            {filename}
-                        </span>
-                    </div>
+                    <FileInfo className="file" onClick={toggleFiles} file={file} />
                     { showingFiles
                         ? (<div className="files">
                             <input type="text"
@@ -163,11 +184,15 @@ export default class Index extends Component {
                                     });
                                 }} />
                             <div className="files-container">
-                                {audio.map((src, i) => {
-                                    return src.toLowerCase().includes(filter)
-                                        ? (<p key={i} onClick={() => setSong(i)}>
-                                            {src}
-                                        </p>)
+                                {audio.map((file, i) => {
+                                    const { url, artist, album, title } = file;
+                                    const search = artist || album || title
+                                        ? [artist, album, title].join(' ')
+                                        : url;
+                                    return !filter || search.toLowerCase().includes(filter)
+                                        ? <FileInfo className="file"
+                                            file={file}
+                                            onClick={() => setSong(i)} />
                                         : null;
                                 })}
                             </div>
