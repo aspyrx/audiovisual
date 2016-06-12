@@ -1,7 +1,17 @@
 :local(.container) {
     height: 100vh;
     position: relative;
-    font-size: 16px;
+    display: flex;
+    flex-flow: row nowrap;
+    align-items: flex-start;
+
+    @font-size: 16px;
+    @line-height: 1.4;
+    font-size: @font-size;
+    line-height: @line-height;
+
+    @spacing-x: 10px;
+    @spacing-y: 10px;
 
     @color-text: fade(white, 80%);
     @color-bg: lighten(black, 10%);
@@ -34,19 +44,14 @@
     }
 
     .info {
-        position: absolute;
-        top: 0;
-        left: 0;
-        max-height: 100%;
-
-        display: flex;
-        flex-flow: column nowrap;
+        position: relative;
+        flex: 1;
 
         user-select: none;
 
         .file {
-            margin: 10px;
-            cursor: pointer;
+            margin: @spacing-y @spacing-x;
+            cursor: help;
 
             &:hover {
                 text-decoration: underline;
@@ -54,27 +59,45 @@
         }
 
         .files {
+            max-height: 100vh;
+
             display: flex;
             flex-flow: column nowrap;
 
-            margin: 10px;
-            padding: 10px;
-            overflow: auto;
-
-            background-color: fade(black, 50%);
-            border-radius: 10px;
-
-            input[type="text"] {
-                background: none;
-                color: @color-text;
-                width: 100%;
-                border: none;
+            .search {
+                margin: @spacing-y @spacing-x;
                 border-bottom: 1px solid @color-text;
+
+                input[type="search"] {
+                    width: 100%;
+                    background: none;
+                    color: @color-text;
+                    border: none;
+
+                    &:focus {
+                        outline: none;
+                    }
+                }
+
+                .close {
+                    cursor: pointer;
+                    position: absolute;
+                    right: @spacing-x;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+                }
             }
 
             .files-container {
                 flex: 1;
                 overflow: auto;
+                margin: 0 @spacing-x @spacing-y;
+                padding: @spacing-y @spacing-x;
+
+                background-color: fade(black, 50%);
+                border-radius: @spacing-y;
 
                 .file {
                     margin: 4px;
@@ -89,18 +112,21 @@
     }
 
     .controls {
-        position: absolute;
-        top: 0;
-        right: 0;
-
+        position: relative;
         user-select: none;
+        display: flex;
+        flex-flow: column nowrap;
 
         .playback {
-            margin: 10px;
+            display: flex;
+            flex-flow: row wrap;
+            justify-content: flex-end;
+
+            margin: @spacing-y @spacing-x;
             text-align: right;
             span {
+                cursor: help;
                 margin: 0 4px;
-                cursor: pointer;
                 &:hover {
                     text-decoration: underline;
                 }
@@ -108,10 +134,11 @@
         }
 
         .help {
-            margin: 10px;
-            padding: 10px;
+            margin: 0 @spacing-x @spacing-y;
+            padding: @spacing-y @spacing-x;
             background-color: fade(black, 50%);
-            border-radius: 10px;
+            border-radius: @spacing-y;
+            overflow: auto;
             table {
                 border-collapse: collapse;
 
@@ -122,6 +149,7 @@
                         }
 
                         td {
+                            word-wrap: break-word;
                             padding: 4px;
                         }
                     }

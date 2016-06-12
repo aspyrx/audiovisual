@@ -188,16 +188,18 @@ export default class Index extends Component {
                 {keyHandlers}
                 <Audiovisual className="audiovisual" {...avProps} />
                 <div className="info" onClick={stopEventPropagation}>
-                    <FileInfo className="file" onClick={toggleFiles} file={file} />
                     { showingFiles
                         ? (<div className="files">
-                            <input type="text"
-                                placeholder="search"
-                                onChange={event => {
-                                    this.setState({
-                                        filter: event.target.value
-                                    });
-                                }} />
+                            <div className="search">
+                                <input type="search"
+                                    placeholder="search"
+                                    onChange={event => {
+                                        this.setState({
+                                            filter: event.target.value
+                                        });
+                                    }} />
+                                <span className="close" onClick={toggleFiles}>×</span>
+                            </div>
                             <div className="files-container">
                                 {audio.map((file, i) => {
                                     const { url, artist, album, title } = file;
@@ -213,28 +215,33 @@ export default class Index extends Component {
                                 })}
                             </div>
                         </div>)
-                        : null
+                        : <FileInfo className="file"
+                            onClick={toggleFiles}
+                            title="select a song"
+                            file={file} />
                     }
                 </div>
                 <div className="controls" onClick={stopEventPropagation}>
                     <div className="playback">
-                        <span onClick={toggleUpdating} title="visualisation on/off">
-                            { updating ? 'V' : 'v' }
-                        </span>
-                        <span onClick={toggleShuffle} title="shuffle on/off">
-                            { shuffle ? 'S' : 's' }
-                        </span>
-                        <span onClick={toggleRepeat} title="repeat on/off">
-                            { repeat ? 'R' : 'r' }
-                        </span>
-                        <span onClick={prevSong} title="previous song">≪</span>
-                        <span onClick={togglePlayback} title="play/pause">
-                            { playing ? '►' : ' ‖ ' }
-                        </span>
-                        <span onClick={nextSong} title="next song">≫</span>
-                        <span onMouseOver={toggleHelp}
-                            onMouseOut={toggleHelp}
-                            onClick={toggleHelp}>?</span>
+                        <div>
+                            <span onClick={toggleUpdating} title="visualisation on/off">
+                                { updating ? 'V' : 'v' }
+                            </span>
+                            <span onClick={toggleShuffle} title="shuffle on/off">
+                                { shuffle ? 'S' : 's' }
+                            </span>
+                            <span onClick={toggleRepeat} title="repeat on/off">
+                                { repeat ? 'R' : 'r' }
+                            </span>
+                        </div>
+                        <div>
+                            <span onClick={prevSong} title="previous song">≪</span>
+                            <span onClick={togglePlayback} title="play/pause">
+                                { playing ? '►' : ' ‖ ' }
+                            </span>
+                            <span onClick={nextSong} title="next song">≫</span>
+                            <span onClick={toggleHelp} title="help">?</span>
+                        </div>
                     </div>
                     { showingHelp
                         ? (<div className="help" onClick={toggleHelp}>
@@ -265,7 +272,7 @@ export default class Index extends Component {
                                         <td>next song</td>
                                     </tr>
                                     <tr>
-                                        <td colSpan="2">Click the filename to select a song.</td>
+                                        <td colSpan="2">Click the song info to select a song.</td>
                                     </tr>
                                 </tbody>
                             </table>
