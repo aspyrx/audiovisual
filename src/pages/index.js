@@ -118,7 +118,7 @@ export default class Index extends Component {
                 url: window.URL.createObjectURL(fileObj)
             };
 
-            if (fileObj.name.match(/\.mp3$/)) {
+            if (fileObj.name.match(/\.(mp3|mp4|m4a)$/)) {
                 jsmediatags.read(fileObj, {
                     onSuccess: tag => {
                         file.title = tag.tags.title;

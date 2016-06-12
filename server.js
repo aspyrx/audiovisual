@@ -80,7 +80,7 @@ function parseFiles(startPath, prefix, match, recursive, verbose) {
                 url: url
             };
 
-            if (filePath.match(/\.mp3$/)) {
+            if (filePath.match(/\.(mp3|mp4|m4a)$/)) {
                 files.push(getMediaTags(filePath).then(tags => {
                     file.title = tags.title;
                     file.album = tags.album;
