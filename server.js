@@ -11,7 +11,7 @@ const flags = require('flags');
 const ProgressBar = require('progress');
 const jsmediatags = require('jsmediatags');
 
-flags.defineString('f').setDescription('Directory from which files should be served. (required)');
+flags.defineString('f', undefined, 'Directory from which files should be served.');
 flags.defineString('m', '[.](mp3|wav|ogg)$', 'Regular expression to use to match files.');
 flags.defineString('mflags', 'i', 'Flags to use in regular expression matching.');
 flags.defineBoolean('s', false, 'Scan the files directory for new files.');
@@ -117,14 +117,15 @@ function parseFiles(startPath, prefix, match, recursive, verbose) {
 
 const verbose = flags.get('v');
 
+const filesDirUrl = '/files';
+
 const filesDirFlag = flags.get('f');
 if (!filesDirFlag) {
-    console.error('No files directory specified. See --help for more info.');
-    process.exit(1);
+    startServer([], '[]');
+    return;
 }
 
 const filesDir = path.resolve(filesDirFlag);
-const filesDirUrl = '/files';
 const filesMatch = new RegExp(flags.get('m'), flags.get('mflags'));
 const fileListPath = path.join(filesDir, '.files.json');
 

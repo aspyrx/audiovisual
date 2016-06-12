@@ -47,7 +47,8 @@ export default class Index extends Component {
             updating: true,
             filter: '',
             hist: [0],
-            histIndex: 0
+            histIndex: 0,
+            audio: []
         };
 
         const req = new XMLHttpRequest();
@@ -101,34 +102,28 @@ export default class Index extends Component {
     }
 
     setSong(songIndex) {
-        const { hist, audio } = this.state;
-        if (audio instanceof Array) {
-            hist.unshift(songIndex);
-            this.setState({ hist, histIndex: 0 });
-        }
+        const { hist } = this.state;
+        hist.unshift(songIndex);
+        this.setState({ hist, histIndex: 0 });
     }
 
     nextSong() {
         const { hist, histIndex, repeat, shuffle, audio } = this.state;
-        if (audio instanceof Array) {
-            if (repeat) {
-                this.setState({ playing: true });
-            } else if (histIndex > 0) {
-                this.setState({ histIndex: histIndex - 1 });
-            } else {
-                hist.unshift(shuffle
-                    ? Math.floor(Math.random() * audio.length)
-                    : ((hist[histIndex] + 1) % audio.length));
-                this.setState({ hist });
-            }
+        if (repeat) {
+            this.setState({ playing: true });
+        } else if (histIndex > 0) {
+            this.setState({ histIndex: histIndex - 1 });
+        } else {
+            hist.unshift(shuffle
+                         ? Math.floor(Math.random() * audio.length)
+                         : ((hist[histIndex] + 1) % audio.length));
+                     this.setState({ hist });
         }
     }
 
     prevSong() {
-        const { hist, histIndex, audio } = this.state;
-        if (audio instanceof Array) {
-            this.setState({ histIndex: (histIndex + 1) % hist.length });
-        }
+        const { hist, histIndex } = this.state;
+        this.setState({ histIndex: (histIndex + 1) % hist.length });
     }
 
     render() {
@@ -137,8 +132,26 @@ export default class Index extends Component {
             hist, histIndex, filter, ...avProps
         } = this.state;
         const { playing, updating } = this.state;
-        if (!(audio instanceof Array)) {
-            return (<div className={styles.container}></div>);
+
+        if (audio.length < 1) {
+            const addSong = evt => {
+                for (let file of evt.target.files) {
+                    audio.push({
+                        title: file.name,
+                        url: window.URL.createObjectURL(file)
+                    });
+                }
+
+                this.setState({ audio });
+            };
+
+            return (<div className={styles.container}>
+                <label className="fileInput">
+                    <h1>Click to select some songs to play!</h1>
+                    <h3>(Hint: you can select multiple files)</h3>
+                    <input type="file" accept="audio/*" multiple onChange={addSong} />
+                </label>
+            </div>);
         }
 
         const file = audio[hist[histIndex]];
@@ -191,6 +204,7 @@ export default class Index extends Component {
                                         : url;
                                     return !filter || search.toLowerCase().includes(filter)
                                         ? <FileInfo className="file"
+                                            key={i}
                                             file={file}
                                             onClick={() => setSong(i)} />
                                         : null;
