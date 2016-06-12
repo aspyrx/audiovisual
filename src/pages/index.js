@@ -4,6 +4,7 @@
 
 import React, {Component} from 'react';
 import KeyHandler, {KEYDOWN} from 'react-key-handler';
+import jsmediatags from 'jsmediatags';
 import classnames from 'classnames';
 
 import Audiovisual from '../components/audiovisual.js';
@@ -77,6 +78,7 @@ export default class Index extends Component {
         this.toggleHelp = this.toggleHelp.bind(this);
         this.toggleFiles = this.toggleFiles.bind(this);
         this.toggleUpdating = this.toggleUpdating.bind(this);
+        this.addSongs = this.addSongs.bind(this);
         this.setSong = this.setSong.bind(this);
         this.nextSong = this.nextSong.bind(this);
         this.prevSong = this.prevSong.bind(this);
@@ -104,6 +106,37 @@ export default class Index extends Component {
 
     toggleUpdating() {
         this.setState({ updating: !this.state.updating });
+    }
+
+    addSongs(evt) {
+        const files = evt.target.files;
+        for (let i = 0; i < files.length; i++) {
+            const fileObj = files[i];
+            const file = {
+                title: fileObj.name,
+                url: window.URL.createObjectURL(fileObj)
+            };
+
+            if (fileObj.name.match(/\.mp3$/)) {
+                jsmediatags.read(fileObj, {
+                    onSuccess: tag => {
+                        file.title = tag.tags.title;
+                        file.album = tag.tags.album;
+                        file.artist = tag.tags.artist;
+                        audio.push(file);
+                        this.setState({ audio });
+                    },
+                    onError: () => {
+                        audio.push(file);
+                        this.setState({ audio });
+                    }
+                });
+            } else {
+                audio.push(file);
+            }
+        }
+
+        this.setState({ audio });
     }
 
     setSong(songIndex) {
@@ -138,25 +171,18 @@ export default class Index extends Component {
         } = this.state;
         const { playing, updating } = this.state;
 
-        const addSong = evt => {
-            const files = evt.target.files;
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
-                audio.push({
-                    title: file.name,
-                    url: window.URL.createObjectURL(file)
-                });
-            }
-
-            this.setState({ audio });
-        };
+        const {
+            togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
+            toggleRepeat, toggleUpdating, addSongs, setSong, nextSong, prevSong
+        } = this;
 
         if (audio.length < 1) {
             return (<div className={styles.container}>
                 <label className="fileInput">
                     <h1>Click to select some songs to play!</h1>
                     <h3>(Hint: you can select multiple files)</h3>
-                    <input type="file" accept="audio/*" multiple onChange={addSong} />
+                    <h4>(Loading mp3 files can take a while, please be patient!)</h4>
+                    <input type="file" accept="audio/*" multiple onChange={addSongs} />
                 </label>
             </div>);
         }
@@ -168,11 +194,6 @@ export default class Index extends Component {
         avProps.onEnded = () => {
             this.nextSong();
         }
-
-        const {
-            togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
-            toggleRepeat, toggleUpdating, setSong, nextSong, prevSong
-        } = this;
 
         const keyHandlers = [
             [' ', togglePlayback],
