@@ -109,7 +109,8 @@ export default class Index extends Component {
     }
 
     addSongs(evt) {
-        const files = evt.target.files;
+        const { audio } = this.state;
+        const { files } = evt.target;
         for (let i = 0; i < files.length; i++) {
             const fileObj = files[i];
             const file = {
@@ -228,7 +229,10 @@ export default class Index extends Component {
                                 <span className="actions">
                                     <label title="add songs">
                                         +
-                                        <input type="file" accept="audio/*" multiple onChange={addSong} />
+                                        <input type="file"
+                                            accept="audio/*"
+                                            multiple
+                                            onChange={addSongs} />
                                     </label>
                                     <span onClick={toggleFiles} title="close">×</span>
                                 </span>
