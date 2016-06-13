@@ -23,7 +23,8 @@ flags.defineString('p', 10102, 'Port on which to serve the site.');
 
 flags.parse();
 
-function getMediaTags(filePath, tagsToRead = [ 'title', 'artist', 'album' ]) {
+function getMediaTags(filePath, tagsToRead) {
+    tagsToRead = tagsToRead || [ 'title', 'artist', 'album' ];
     return new Promise((resolve, reject) => {
         new jsmediatags.Reader(filePath)
             .setTagsToRead(tagsToRead)
