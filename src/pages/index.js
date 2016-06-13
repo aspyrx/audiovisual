@@ -34,7 +34,7 @@ class FileInfo extends Component {
                 <span>&nbsp;&middot;&nbsp;</span>
                 <span>{title}</span>
             </p>)
-            : (<p {...props}>
+            : (<p className={name} {...props}>
                 <span>{filename}</span>
             </p>);
     }
