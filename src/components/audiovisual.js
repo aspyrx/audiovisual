@@ -28,7 +28,8 @@ export default class Audiovisual extends Component {
             kickDecay: PropTypes.number,
             kickColor: PropTypes.string,
             bgColor: PropTypes.string,
-            textColor: PropTypes.string
+            textColor: PropTypes.string,
+            altColor: PropTypes.string
         };
     }
 
@@ -46,7 +47,8 @@ export default class Audiovisual extends Component {
             kickDecay: -0.05,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent',
-            textColor: 'rgba(100%, 100%, 100%, 0.8)'
+            textColor: 'rgba(100%, 100%, 100%, 0.8)',
+            altColor: 'rgba(100%, 100%, 100%, 0.1)'
         }
     }
 
@@ -230,8 +232,8 @@ export default class Audiovisual extends Component {
         }
 
         const {
-            className, numFreq, numWave,
-            freqColor, waveColor, kickColor, bgColor, textColor, ...props
+            className, numFreq, numWave, freqColor, waveColor,
+            kickColor, bgColor, textColor, altColor, ...props
         } = this.props;
         const {playing, kicking, progress, freq, wave} = this.state;
 
@@ -241,6 +243,10 @@ export default class Audiovisual extends Component {
             backgroundColor: textColor,
             width: `${progress * 100}%`
         };
+
+        const altStyle = {
+            backgroundColor: altColor
+        }
 
         const audioRef = audio => {
             if (audio) {
@@ -263,16 +269,17 @@ export default class Audiovisual extends Component {
         return (
             <div className={classes} style={style}>
                 <audio src={src} ref={audioRef} {...props} />
-                <div className="progress" style={progressStyle}></div>
+                <div className="progressContainer" style={altStyle}>
+                    <div className="progress" style={progressStyle}></div>
+                </div>
+                <div className="waveZero" style={altStyle}></div>
                 <div className="waves">
                     {Array.prototype.map.call(wave, (mag, i) => {
                         const width = 100 / numWave;
-                        const top = 49.75 - mag * 30;
                         const style = {
-                            height: '5px',
                             width: `${width}%`,
                             left: `${i * width}%`,
-                            top: `${top}%`,
+                            transform: `translateY(${mag * 3000}%)`,
                             backgroundColor: waveColor
                         };
                         return (<div className="wave" key={i} style={style}></div>);
@@ -281,12 +288,10 @@ export default class Audiovisual extends Component {
                 <div className="freqs">
                     {Array.prototype.map.call(freq, (mag, i) => {
                         const width = 100 / numFreq;
-                        const height = mag * 30;
                         const style = {
-                            bottom: 0,
                             width: `${width}%`,
                             left: `${i * width}%`,
-                            height: `${height}%`,
+                            transform: `scaleY(${mag})`,
                             backgroundColor: freqColor
                         };
                         return (<div className="freq" key={i} style={style}></div>);

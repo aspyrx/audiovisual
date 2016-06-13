@@ -8,20 +8,38 @@
 
     .freq {
         position: absolute;
-        transition: height 0.05s linear;
+        height: 30%;
+        bottom: 0;
+        transform-origin: center bottom;
+        transition: transform 0.05s linear;
     }
 
     .wave {
         position: absolute;
-        transition: top 0.05s linear;
+        height: 1%;
+        top: 49.5%;
+        transition: transform 0.05s linear;
     }
 
-    .progress {
+    .progressContainer {
         position: absolute;
         top: 0;
         left: 0;
+        right: 0;
         height: 0.5%;
-        transition: width 0.2s linear;
+
+        .progress {
+            height: 100%;
+            transition: width 0.2s linear;
+        }
+    }
+
+    .waveZero {
+        position: absolute;
+        top: 49.5%;
+        left: 0;
+        right: 0;
+        height: 1%;
     }
 
     .fadeOutScale {
