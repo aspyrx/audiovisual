@@ -14,6 +14,8 @@ export default function Spectral(audio, bufsize) {
     const analyser = context.createAnalyser();
     const gain = context.createGain();
     const source = context.createMediaElementSource(audio);
+    let streamSource = null;
+    const streamSources = {};
 
     analyser.fftSize = bufsize;
     analyser.smoothingTimeConstant = 0;
@@ -23,9 +25,44 @@ export default function Spectral(audio, bufsize) {
     gain.connect(context.destination);
 
     Object.defineProperties(audio, {
+        streaming: {
+            get: () => streamSource !== null
+        },
+        startStreaming: {
+            value: stream => {
+                if (audio.streaming) {
+                    audio.stopStreaming();
+                }
+
+                if (!audio.isPaused) {
+                    audio.pause();
+                }
+
+                source.disconnect();
+                analyser.disconnect();
+                streamSource = streamSources[stream.id];
+                if (!streamSource) {
+                    streamSource = context.createMediaStreamSource(stream);
+                    streamSources[stream.id] = streamSource;
+                }
+                streamSource.connect(analyser);
+            }
+        },
+        stopStreaming: {
+            value: () => {
+                if (!audio.streaming) {
+                    return;
+                }
+
+                streamSource.disconnect();
+                streamSource = null;
+                source.connect(analyser);
+                analyser.connect(gain);
+            }
+        },
         gain: {
-            set: val => this.gain.gain.value = val,
-            get: () => this.gain.gain.value
+            set: val => gain.gain.value = val,
+            get: () => gain.gain.value
         },
         waveformSize: {
             get: () => analyser.frequencyBinCount
@@ -34,10 +71,10 @@ export default function Spectral(audio, bufsize) {
             get: () => analyser.frequencyBinCount
         },
         getWaveform: {
-            value: (out) => analyser.getFloatTimeDomainData(out)
+            value: out => analyser.getFloatTimeDomainData(out)
         },
         getSpectrum: {
-            value: (out) => analyser.getFloatFrequencyData(out)
+            value: out => analyser.getFloatFrequencyData(out)
         }
     });
 

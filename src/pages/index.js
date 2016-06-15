@@ -21,8 +21,8 @@ class FileInfo extends Component {
 
     render() {
         const { file, selected, className, ...props } = this.props;
-        const { url, title, artist, album } = file;
-        const filename = url.match(/[^/]*$/)[0];
+        const { url, stream, title, artist, album } = file;
+        const filename = stream ? 'Streaming...' : url.match(/[^/]*$/)[0];
 
         const name = classnames(className, { selected });
 
@@ -78,6 +78,7 @@ export default class Index extends Component {
         this.toggleHelp = this.toggleHelp.bind(this);
         this.toggleFiles = this.toggleFiles.bind(this);
         this.toggleUpdating = this.toggleUpdating.bind(this);
+        this.addMicrophone = this.addMicrophone.bind(this);
         this.addSongs = this.addSongs.bind(this);
         this.setSong = this.setSong.bind(this);
         this.nextSong = this.nextSong.bind(this);
@@ -108,13 +109,61 @@ export default class Index extends Component {
         this.setState({ updating: !this.state.updating });
     }
 
+    addMicrophone() {
+        const { audio } = this.state;
+        const onSuccess = stream => {
+            audio.unshift({
+                artist: 'Microphone',
+                album: 'Ready',
+                title: 'Listening for input...',
+                stream: stream
+            });
+            this.setState({ audio });
+        };
+        const onError = err => {
+            let message = 'An unknown error occurred while'
+                + ' accessing the microphone.';
+            if (err) {
+                if (err.name === 'NotAllowedError'
+                   || err.name === 'PermissionDeniedError') {
+                    message = 'Microphone access not allowed.';
+                } else if (err.name === 'NotFoundError') {
+                    message = 'No microphone found.';
+                }
+            }
+
+            audio.unshift({
+                artist: 'Microphone',
+                album: 'Error',
+                title: message,
+                url: ''
+            });
+            this.setState({ audio });
+        };
+
+        if (window.navigator.mediaDevices.getUserMedia) {
+            window.navigator.mediaDevices.getUserMedia({ audio: true }).then(
+                onSuccess, onError
+            );
+        } else {
+            const getUserMedia = window.navigator.getUserMedia
+                || window.navigator.webkitGetUserMedia
+                || window.navigator.mozGetUserMedia;
+            if (getUserMedia) {
+                getUserMedia.call(window.navigator,
+                                  { audio: true }, onSuccess, onError);
+            } else {
+                onError();
+            }
+        }
+    }
+
     addSongs(evt) {
         const { audio } = this.state;
         const { files } = evt.target;
         for (let i = 0; i < files.length; i++) {
             const fileObj = files[i];
             const file = {
-                title: fileObj.name,
                 url: window.URL.createObjectURL(fileObj)
             };
 
@@ -173,18 +222,30 @@ export default class Index extends Component {
         const { playing, updating } = this.state;
 
         const {
-            togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
+            addMicrophone, togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
             toggleRepeat, toggleUpdating, addSongs, setSong, nextSong, prevSong
         } = this;
 
+        function stopEventPropagation(evt) {
+            evt.stopPropagation();
+        }
+
         if (audio.length < 1) {
             return (<div className={styles.container}>
-                <label className="fileInput">
-                    <h1>Click to select some songs to play!</h1>
+                <div className="fileInput">
+                    <h1 onClick={addMicrophone}>
+                        Click here to use your microphone!
+                    </h1>
+                    <label>
+                        <h1>Click here to select some songs to play!</h1>
+                        <input type="file"
+                            accept="audio/*"
+                            multiple
+                            onChange={addSongs} />
+                    </label>
                     <h3>(Hint: you can select multiple files)</h3>
                     <h4>(Loading mp3 files can take a while, please be patient!)</h4>
-                    <input type="file" accept="audio/*" multiple onChange={addSongs} />
-                </label>
+                </div>
             </div>);
         }
 
@@ -192,6 +253,7 @@ export default class Index extends Component {
         const file = audio[audioIndex];
 
         avProps.src = file.url;
+        avProps.stream = file.stream;
         avProps.onEnded = () => {
             this.nextSong();
         }
@@ -210,7 +272,6 @@ export default class Index extends Component {
             <KeyHandler key={i} keyEventName={KEYDOWN} keyValue={key} onKeyHandle={handler} />
         ));
 
-        const stopEventPropagation = event => event.stopPropagation();
         return (
             <div className={styles.container} onClick={togglePlayback}>
                 {keyHandlers}

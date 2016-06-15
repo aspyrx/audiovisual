@@ -16,6 +16,7 @@ export default class Audiovisual extends Component {
         return {
             className: PropTypes.string,
             src: PropTypes.string,
+            stream: PropTypes.object,
             playing: PropTypes.bool,
             updating: PropTypes.bool,
             numFreq: PropTypes.number,
@@ -124,7 +125,7 @@ export default class Audiovisual extends Component {
         const waveform = new Float32Array(waveformSize);
         const spectrum = new Float32Array(spectrumSize);
         const onUpdate = () => {
-            if (spectral.paused || !this.state.updating) {
+            if (!this.state.updating || (!spectral.streaming && spectral.paused)) {
                 return;
             }
 
@@ -172,6 +173,10 @@ export default class Audiovisual extends Component {
             this.startUpdates();
         }
 
+        if (this.props.stream) {
+            spectral.startStreaming(this.props.stream);
+        }
+
         spectral.addEventListener('canplay', () => {
             if (this.props.playing) {
                 spectral.play();
@@ -192,12 +197,18 @@ export default class Audiovisual extends Component {
 
     componentWillReceiveProps(props) {
         const {
-            src, playing, updating,
+            src, stream, playing, updating,
             numFreq, numWave, kickThreshold
         } = props;
 
-        if (playing !== this.state.playing || src !== this.props.src) {
-            playing ? this.spectral.play() : this.spectral.pause();
+        if (src) {
+            this.spectral.stopStreaming();
+
+            if (playing !== this.state.playing) {
+                playing ? this.spectral.play() : this.spectral.pause();
+            }
+        } else if (stream) {
+            this.spectral.startStreaming(stream);
         }
 
         if (updating !== this.props.updating && this.spectral) {
@@ -226,8 +237,8 @@ export default class Audiovisual extends Component {
     }
 
     render() {
-        const { src } = this.props;
-        if (!src) {
+        const { src, stream } = this.props;
+        if (!src && !stream) {
             return (<div className={classes}></div>);
         }
 
@@ -268,7 +279,7 @@ export default class Audiovisual extends Component {
 
         return (
             <div className={classes} style={style}>
-                <audio src={src} ref={audioRef} {...props} />
+                <audio src={stream ? undefined : src} ref={audioRef} {...props} />
                 <div className="progressContainer" style={altStyle}>
                     <div className="progress" style={progressStyle}></div>
                 </div>
