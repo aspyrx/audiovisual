@@ -312,7 +312,7 @@ export default class Audiovisual extends Component {
                             return a * a;
                         }
 
-                        const dx = 100 / numWave;
+                        const dx = 100 / (numWave - 1);
                         const dy = (wave[i + 1] - mag) * 7.5;
                         const width = Math.sqrt(pow2(dx) + pow2(dy));
                         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
