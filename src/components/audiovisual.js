@@ -43,9 +43,9 @@ export default class Audiovisual extends Component {
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
-            kickFreq: [3, 9],
-            kickThreshold: -38,
-            kickDecay: -0.05,
+            kickFreq: [0, 1],
+            kickThreshold: -60,
+            kickDecay: -0.1,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.8)',
@@ -64,7 +64,7 @@ export default class Audiovisual extends Component {
             updating: false,
             kicking: false,
             progress: 0,
-            currentKickThreshold: kickThreshold,
+            kickCurrentThreshold: kickThreshold,
             unmountHandlers: [],
             freq, wave
         };
@@ -91,6 +91,20 @@ export default class Audiovisual extends Component {
             return sum / (hi - lo);
         }
 
+        const max = (arr, lo, hi) => {
+            if (hi - lo <= 1) {
+                return arr[lo];
+            }
+
+            let max = -Infinity;
+            for (let i = lo; i < hi; i++) {
+                if (arr[i] > max) {
+                    max = arr[i];
+                }
+            }
+            return max;
+        }
+
         let kickTimer;
         const testKick = (spectrum) => {
             const { kickOn, kickFreq, kickDecay } = this.props;
@@ -98,10 +112,14 @@ export default class Audiovisual extends Component {
                 return;
             }
 
-            const { kickCurrentThreshold } = this.state;
-            const mag = average(spectrum, kickFreq[0], kickFreq[1]);
+            let { kickCurrentThreshold } = this.state;
+            const { kickThreshold } = this.props;
+            const mag = max(spectrum, ...kickFreq);
             if (mag < kickCurrentThreshold) {
-                this.setState({ kickCurrentThreshold: kickCurrentThreshold + kickDecay });
+                kickCurrentThreshold = Math.max(
+                    kickCurrentThreshold + kickDecay, kickThreshold
+                );
+                this.setState({ kickCurrentThreshold });
                 return;
             }
 
