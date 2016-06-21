@@ -304,11 +304,22 @@ export default class Audiovisual extends Component {
                 <div className="waveZero" style={altStyle}></div>
                 <div className="waves">
                     {Array.prototype.map.call(wave, (mag, i) => {
-                        const width = 100 / numWave;
+                        if (i + 1 >= numWave) {
+                            return null;
+                        }
+
+                        function pow2(a) {
+                            return a * a;
+                        }
+
+                        const dx = 100 / numWave;
+                        const dy = (wave[i + 1] - mag) * 7.5;
+                        const width = Math.sqrt(pow2(dx) + pow2(dy));
+                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
                         const style = {
                             width: `${width}%`,
-                            left: `${i * width}%`,
-                            transform: `translateY(${mag * 15}vh)`,
+                            left: `${i * dx}%`,
+                            transform: `translateY(${mag * 15}vh) rotate(${angle}deg)`,
                             backgroundColor: waveColor
                         };
                         return (<div className="wave" key={i} style={style}></div>);
