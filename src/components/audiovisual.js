@@ -290,7 +290,7 @@ export default class Audiovisual extends Component {
                         const style = {
                             width: `${width}%`,
                             left: `${i * width}%`,
-                            transform: `translateY(${mag * 3000}%)`,
+                            transform: `translateY(${mag * 15}vh)`,
                             backgroundColor: waveColor
                         };
                         return (<div className="wave" key={i} style={style}></div>);
