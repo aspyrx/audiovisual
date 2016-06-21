@@ -39,7 +39,7 @@ export default class Audiovisual extends Component {
             playing: false,
             updating: true,
             numFreq: 32,
-            numWave: 64,
+            numWave: 128,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
@@ -134,7 +134,7 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const freqExp = (f, b = 10) => (Math.pow(b, f) - 1) / (b - 1);
+            const freqExp = (f, b = 100) => (Math.pow(b, f) - 1) / (b - 1);
             const freqStep = (i, m = numFreq, n = spectrumSize) =>
                 Math.min(Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
 
@@ -153,7 +153,7 @@ export default class Audiovisual extends Component {
             this.setState({ freq, wave });
         }
 
-        const updateRate = 60;
+        const updateRate = 80;
         let updateTimer;
         this.cancelUpdates = () => {
             if (this.state.updating) {
@@ -300,7 +300,7 @@ export default class Audiovisual extends Component {
                     {Array.prototype.map.call(freq, (mag, i) => {
                         const width = 100 / numFreq;
                         const style = {
-                            width: `${width}%`,
+                            width: `calc(${width}% - 1px)`,
                             left: `${i * width}%`,
                             transform: `scaleY(${mag})`,
                             backgroundColor: freqColor

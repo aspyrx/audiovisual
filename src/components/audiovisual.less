@@ -11,14 +11,21 @@
         height: 30%;
         bottom: 0;
         transform-origin: center bottom;
-        transition: transform 0.05s linear;
+        transition: transform 0.085s linear;
     }
 
     .wave {
         position: absolute;
-        height: 1%;
+        // height: 1%;
         top: 49.5%;
-        transition: transform 0.05s linear;
+        transition: transform 0.085s linear;
+        border-radius: 50%;
+
+        &:before {
+            content: "";
+            display: block;
+            padding-top: 100%;
+        }
     }
 
     .progressContainer {
