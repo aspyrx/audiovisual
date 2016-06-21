@@ -134,7 +134,7 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const freqExp = (f, b = 100) => (Math.pow(b, f) - 1) / (b - 1);
+            const freqExp = (f, b = 10) => (Math.pow(b, f) - 1) / (b - 1);
             const freqStep = (i, m = numFreq, n = spectrumSize) =>
                 Math.min(Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
 
