@@ -308,16 +308,11 @@ export default class Audiovisual extends Component {
                             return null;
                         }
 
-                        function pow2(a) {
-                            return a * a;
-                        }
-
                         const dx = 100 / (numWave - 1);
-                        const dy = (wave[i + 1] - mag) * 7.5;
-                        const width = Math.sqrt(pow2(dx) + pow2(dy));
+                        const dy = (wave[i + 1] - mag) * 15;
                         const angle = Math.atan2(dy, dx) * 180 / Math.PI;
                         const style = {
-                            width: `${width}%`,
+                            width: `calc(${dx}% - 1px)`,
                             left: `${i * dx}%`,
                             transform: `translateY(${mag * 15}vh) rotate(${angle}deg)`,
                             backgroundColor: waveColor

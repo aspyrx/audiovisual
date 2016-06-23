@@ -6,12 +6,14 @@
         transition: background-color 0.3s ease;
     }
 
+    @duration-av: 0.085s;
+
     .freq {
         position: absolute;
         height: 30%;
         bottom: 0;
         transform-origin: center bottom;
-        transition: transform 0.085s linear;
+        transition: transform @duration-av linear;
     }
 
     .wave {
@@ -19,7 +21,7 @@
         height: 0.25vh;
         top: 49.875%;
         transform-origin: left center;
-        transition: transform 0.085s ease;
+        transition: transform @duration-av linear;
     }
 
     .progressContainer {
