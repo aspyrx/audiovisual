@@ -19,6 +19,8 @@ export default class Audiovisual extends Component {
             stream: PropTypes.object,
             playing: PropTypes.bool,
             updating: PropTypes.bool,
+            bufSize: PropTypes.number,
+            smoothing: PropTypes.number,
             numFreq: PropTypes.number,
             numWave: PropTypes.number,
             freqColor: PropTypes.string,
@@ -38,7 +40,9 @@ export default class Audiovisual extends Component {
         return {
             playing: false,
             updating: true,
-            numFreq: 32,
+            bufSize: 2048,
+            smoothing: 0.3,
+            numFreq: 64,
             numWave: 128,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
@@ -75,7 +79,8 @@ export default class Audiovisual extends Component {
             return;
         }
 
-        const spectral = Spectral(audio, 1024);
+        const { bufSize, smoothing } = this.props;
+        const spectral = Spectral(audio, bufSize, smoothing);
         this.spectral = spectral;
         const { unmountHandlers } = this.state;
 
@@ -152,7 +157,7 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const freqExp = (f, b = 10) => (Math.pow(b, f) - 1) / (b - 1);
+            const freqExp = (f, b = 100) => (Math.pow(b, f) - 1) / (b - 1);
             const freqStep = (i, m = numFreq, n = spectrumSize) =>
                 Math.min(Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
 

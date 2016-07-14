@@ -5,7 +5,7 @@
 
 const AudioContext = window.AudioContext;
 
-export default function Spectral(audio, bufsize) {
+export default function Spectral(audio, bufsize, smoothing) {
     if (!(audio instanceof HTMLMediaElement)) {
         throw new Error("audio element not an instance of HTMLMediaElement");
     }
@@ -18,7 +18,7 @@ export default function Spectral(audio, bufsize) {
     const streamSources = {};
 
     analyser.fftSize = bufsize;
-    analyser.smoothingTimeConstant = 0;
+    analyser.smoothingTimeConstant = smoothing;
 
     source.connect(analyser);
     analyser.connect(gain);
