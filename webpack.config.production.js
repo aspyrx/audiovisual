@@ -18,6 +18,10 @@ module.exports = {
         publicPath: '/',
         filename: '[hash].min.js'
     },
+    alias: {
+        'react': 'react-lite',
+        'react-dom': 'react-lite'
+    },
     resolve: {
         root: path.resolve(__dirname, 'src'),
         extensions: ['', '.js'],

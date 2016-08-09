@@ -5,7 +5,7 @@
 
 const AudioContext = window.AudioContext;
 
-export default function Spectral(audio, bufsize, smoothing) {
+export default function Spectral(audio, bufsize, smoothing, maxDelay) {
     if (!(audio instanceof HTMLMediaElement)) {
         throw new Error("audio element not an instance of HTMLMediaElement");
     }
@@ -13,6 +13,7 @@ export default function Spectral(audio, bufsize, smoothing) {
     const context = new AudioContext();
     const analyser = context.createAnalyser();
     const gain = context.createGain();
+    const delay = context.createDelay(maxDelay);
     const source = context.createMediaElementSource(audio);
     let streamSource = null;
     const streamSources = {};
@@ -22,7 +23,8 @@ export default function Spectral(audio, bufsize, smoothing) {
 
     source.connect(analyser);
     analyser.connect(gain);
-    gain.connect(context.destination);
+    gain.connect(delay);
+    delay.connect(context.destination);
 
     Object.defineProperties(audio, {
         streaming: {

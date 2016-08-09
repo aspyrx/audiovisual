@@ -55,8 +55,9 @@
   "devDependencies": {
     "babel-eslint": "^6.0.4",
     "eslint": "^2.10.2",
+    "eslint-plugin-promise": "*",
     "eslint-plugin-react": "^5.1.1",
-    "webpack-dev-server": "^1.14.1",
-    "eslint-plugin-promise": "*"
+    "react-lite": "^0.15.16",
+    "webpack-dev-server": "^1.14.1"
   }
 }
