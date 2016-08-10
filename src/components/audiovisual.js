@@ -33,7 +33,8 @@ export default class Audiovisual extends Component {
             kickColor: PropTypes.string,
             bgColor: PropTypes.string,
             textColor: PropTypes.string,
-            altColor: PropTypes.string
+            altColor: PropTypes.string,
+            onEnded: PropTypes.func
         };
     }
 
@@ -218,6 +219,7 @@ export default class Audiovisual extends Component {
 
             if (playing !== this.state.playing) {
                 playing ? this.spectral.play() : this.spectral.pause();
+                this.setState({ playing });
             }
         } else if (stream) {
             this.spectral.startStreaming(stream);
@@ -225,6 +227,7 @@ export default class Audiovisual extends Component {
 
         if (updating !== this.props.updating && this.spectral) {
             updating ? this.startUpdates() : this.cancelUpdates();
+            this.setState({ updating });
         }
 
         if (numFreq !== this.props.numFreq) {
@@ -256,7 +259,7 @@ export default class Audiovisual extends Component {
 
         const {
             className, numFreq, numWave, freqColor, waveColor,
-            kickColor, bgColor, textColor, altColor
+            kickColor, bgColor, textColor, altColor, onEnded
         } = this.props;
         const {playing, kicking, progress, freq, wave} = this.state;
 
@@ -291,7 +294,7 @@ export default class Audiovisual extends Component {
 
         return (
             <div className={classes} style={style}>
-                <audio src={stream ? undefined : src} ref={audioRef} />
+                <audio src={stream ? undefined : src} ref={audioRef} onEnded={onEnded} />
                 <div className="progressContainer" style={altStyle}>
                     <div className="progress" style={progressStyle}></div>
                 </div>
