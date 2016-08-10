@@ -42,7 +42,7 @@ export default class Audiovisual extends Component {
         return {
             playing: false,
             updating: true,
-            bufSize: 8192,
+            bufSize: 2048,
             smoothing: 0.1,
             delay: 0.25,
             numFreq: 64,

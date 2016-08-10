@@ -47,7 +47,7 @@ module.exports = {
             },
             {
                 test: /\.js$/,
-                include: [ path.resolve(__dirname, 'src') ],
+                include: [ path.resolve(__dirname, 'src'), /jsmediatags/ ],
                 loader: 'babel'
             }
         ]

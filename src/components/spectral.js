@@ -3,7 +3,7 @@
  * from the specified HTML5 <audio> element.
  */
 
-const AudioContext = window.AudioContext;
+const AudioContext = window.AudioContext || window.webkitAudioContext;
 
 export default function Spectral(audio, bufsize, smoothing, delayVal) {
     if (!(audio instanceof HTMLMediaElement)) {
@@ -20,6 +20,19 @@ export default function Spectral(audio, bufsize, smoothing, delayVal) {
 
     analyser.fftSize = bufsize;
     analyser.smoothingTimeConstant = smoothing;
+
+    if (!analyser.getFloatTimeDomainData) {
+        analyser.getFloatTimeDomainData = function getFloatTimeDomainData(arr) {
+            const data = new window.Uint8Array(this.fftSize);
+            this.getByteTimeDomainData(data);
+
+            for (let i = 0; i < data.length; i++) {
+                arr[i] = (data[i] - 128) / 128.0;
+            }
+
+            return arr;
+        }
+    }
 
     delay.delayTime.value = delayVal;
 
