@@ -21,7 +21,7 @@ export default class Audiovisual extends Component {
             updating: PropTypes.bool,
             bufSize: PropTypes.number,
             smoothing: PropTypes.number,
-            maxDelay: PropTypes.number,
+            delay: PropTypes.number,
             numFreq: PropTypes.number,
             numWave: PropTypes.number,
             freqColor: PropTypes.string,
@@ -41,17 +41,17 @@ export default class Audiovisual extends Component {
         return {
             playing: false,
             updating: true,
-            bufSize: 2048,
-            smoothing: 0.3,
-            maxDelay: 0,
+            bufSize: 8192,
+            smoothing: 0.1,
+            delay: 0.25,
             numFreq: 64,
             numWave: 128,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
-            kickFreq: [0, 1],
-            kickThreshold: -60,
-            kickDecay: -0.1,
+            kickFreq: [5, 15],
+            kickThreshold: 0.7,
+            kickDecay: -0.01,
             kickColor: 'rgba(100%, 100%, 100%, 0.03)',
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.8)',
@@ -81,8 +81,8 @@ export default class Audiovisual extends Component {
             return;
         }
 
-        const { bufSize, smoothing } = this.props;
-        const spectral = Spectral(audio, bufSize, smoothing);
+        const { bufSize, smoothing, delay } = this.props;
+        const spectral = Spectral(audio, bufSize, smoothing, delay);
         this.spectral = spectral;
         const { unmountHandlers } = this.state;
 
@@ -98,20 +98,6 @@ export default class Audiovisual extends Component {
             return sum / (hi - lo);
         }
 
-        const max = (arr, lo, hi) => {
-            if (hi - lo <= 1) {
-                return arr[lo];
-            }
-
-            let max = -Infinity;
-            for (let i = lo; i < hi; i++) {
-                if (arr[i] > max) {
-                    max = arr[i];
-                }
-            }
-            return max;
-        }
-
         let kickTimer;
         const testKick = (spectrum) => {
             const { kickOn, kickFreq, kickDecay } = this.props;
@@ -121,7 +107,7 @@ export default class Audiovisual extends Component {
 
             let { kickCurrentThreshold } = this.state;
             const { kickThreshold } = this.props;
-            const mag = max(spectrum, ...kickFreq);
+            const mag = average(spectrum, ...kickFreq);
             if (mag < kickCurrentThreshold) {
                 kickCurrentThreshold = Math.max(
                     kickCurrentThreshold + kickDecay, kickThreshold
@@ -159,19 +145,20 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const freqExp = (f, b = 100) => (Math.pow(b, f) - 1) / (b - 1);
+            const normalizeFreq = f => 1 - ((f + 30) / -70);
+            Array.prototype.forEach.call(spectrum, (f, i) => (spectrum[i] = normalizeFreq(f)));
+
+            const calcFreq = (f, b = 100) => (Math.pow(b, f) - 1) / (b - 1);
             const freqStep = (i, m = numFreq, n = spectrumSize) =>
                 Math.min(Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
 
             for (let i = 0; i < numFreq; i++) {
-                const [lo, hi] = [freqStep(i), freqStep(i + 1)];
-                freq[i] = freqExp(1 - ((average(spectrum, lo, hi) + 30) / -70));
+                freq[i] = calcFreq(average(spectrum, freqStep(i), freqStep(i + 1)));
             }
 
             const waveStep = waveformSize / numWave;
             for (let i = 0; i < numWave; i++) {
-                const [lo, hi] = [i * waveStep, (i + 1) * waveStep];
-                wave[i] = average(waveform, lo, hi);
+                wave[i] = average(waveform, i * waveStep, (i + 1) * waveStep);
             }
 
             testKick(spectrum);
