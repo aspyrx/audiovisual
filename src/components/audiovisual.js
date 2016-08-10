@@ -52,7 +52,7 @@ export default class Audiovisual extends Component {
             kickFreq: [5, 15],
             kickThreshold: 0.7,
             kickDecay: -0.01,
-            kickColor: 'rgba(100%, 100%, 100%, 0.03)',
+            kickColor: 'rgba(100%, 100%, 100%, 0.02)',
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.8)',
             altColor: 'rgba(100%, 100%, 100%, 0.1)'
@@ -148,12 +148,12 @@ export default class Audiovisual extends Component {
             const normalizeFreq = f => 1 - ((f + 30) / -70);
             Array.prototype.forEach.call(spectrum, (f, i) => (spectrum[i] = normalizeFreq(f)));
 
-            const calcFreq = (f, b = 100) => (Math.pow(b, f) - 1) / (b - 1);
+            const calcFreq = (f, b) => (Math.pow(b, f) - 1) / (b - 1);
             const freqStep = (i, m = numFreq, n = spectrumSize) =>
-                Math.min(Math.floor(n * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
+                Math.min(Math.floor(n / 2 * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
 
             for (let i = 0; i < numFreq; i++) {
-                freq[i] = calcFreq(average(spectrum, freqStep(i), freqStep(i + 1)));
+                freq[i] = calcFreq(average(spectrum, freqStep(i), freqStep(i + 1)), (1 - (i / numFreq)) * 100);
             }
 
             const waveStep = waveformSize / numWave;
