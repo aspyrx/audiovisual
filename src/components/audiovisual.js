@@ -256,7 +256,7 @@ export default class Audiovisual extends Component {
 
         const {
             className, numFreq, numWave, freqColor, waveColor,
-            kickColor, bgColor, textColor, altColor, ...props
+            kickColor, bgColor, textColor, altColor
         } = this.props;
         const {playing, kicking, progress, freq, wave} = this.state;
 
@@ -291,7 +291,7 @@ export default class Audiovisual extends Component {
 
         return (
             <div className={classes} style={style}>
-                <audio src={stream ? undefined : src} ref={audioRef} {...props} />
+                <audio src={stream ? undefined : src} ref={audioRef} />
                 <div className="progressContainer" style={altStyle}>
                     <div className="progress" style={progressStyle}></div>
                 </div>
