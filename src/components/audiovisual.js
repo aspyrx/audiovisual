@@ -3,8 +3,10 @@
  */
 
 import React, {Component, PropTypes} from 'react';
+import ReactDOM from 'react-dom';
 import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
 import classNames from 'classnames';
+import Raphael from 'raphael';
 
 import Spectral from './spectral.js';
 import styles from './audiovisual.less';
@@ -43,10 +45,10 @@ export default class Audiovisual extends Component {
             playing: false,
             updating: true,
             bufSize: 2048,
-            smoothing: 0.1,
+            smoothing: 0.2,
             delay: 0.25,
             numFreq: 64,
-            numWave: 128,
+            numWave: 64,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             kickOn: true,
@@ -63,6 +65,8 @@ export default class Audiovisual extends Component {
     constructor(props) {
         super();
 
+        this.onResize = this.onResize.bind(this);
+
         let { playing, numFreq, numWave, kickThreshold } = props;
         const freq = new Float32Array(numFreq);
         const wave = new Float32Array(numWave);
@@ -75,6 +79,20 @@ export default class Audiovisual extends Component {
             unmountHandlers: [],
             freq, wave
         };
+    }
+
+    onResize() {
+        const node = ReactDOM.findDOMNode(this);
+        this.paper = Raphael(node, node.offsetWidth, node.offsetHeight);
+        this.paper.setViewBox(0, -1.5, 1, 3);
+        this.paper.canvas.setAttribute('preserveAspectRatio', 'none');
+        this.path = this.paper.path('M0,0 1,0');
+        this.path.attr({ 'stroke': this.props.waveColor, 'stroke-width': 0.0025 });
+    }
+
+    componentDidMount() {
+        window.addEventListener('resize', this.onResize);
+        this.onResize();
     }
 
     initSpectral(audio) {
@@ -166,7 +184,7 @@ export default class Audiovisual extends Component {
             this.setState({ freq, wave });
         }
 
-        const updateRate = 80;
+        const updateRate = 90;
         let updateTimer;
         this.cancelUpdates = () => {
             if (this.state.updating) {
@@ -246,6 +264,8 @@ export default class Audiovisual extends Component {
     }
 
     componentWillUnmount() {
+        window.removeEventListener('resize', this.onResize);
+
         for (let callback of this.state.unmountHandlers) {
             callback();
         }
@@ -258,7 +278,7 @@ export default class Audiovisual extends Component {
         }
 
         const {
-            className, numFreq, numWave, freqColor, waveColor,
+            className, numFreq, freqColor, numWave,
             kickColor, bgColor, textColor, altColor, onEnded
         } = this.props;
         const {playing, kicking, progress, freq, wave} = this.state;
@@ -292,6 +312,11 @@ export default class Audiovisual extends Component {
                     borderRightColor: textColor
                 }}></div>);
 
+        if (this.path) {
+            const wavePath = 'M0,0 ' + catmullRom2Bezier(Array.prototype.map.call(wave, (mag, i) => `${i / numWave},${mag}`).join(' ') + ' 1,0');
+            this.path.animate({ path: wavePath }, 85, 'linear');
+        }
+
         return (
             <div className={classes} style={style}>
                 <audio src={stream ? undefined : src} ref={audioRef} onEnded={onEnded} />
@@ -299,24 +324,6 @@ export default class Audiovisual extends Component {
                     <div className="progress" style={progressStyle}></div>
                 </div>
                 <div className="waveZero" style={altStyle}></div>
-                <div className="waves">
-                    {Array.prototype.map.call(wave, (mag, i) => {
-                        if (i + 1 >= numWave) {
-                            return null;
-                        }
-
-                        const dx = 100 / (numWave - 1);
-                        const dy = (wave[i + 1] - mag) * 15;
-                        const angle = Math.atan2(dy, dx) * 180 / Math.PI;
-                        const style = {
-                            width: `calc(${dx}% - 1px)`,
-                            left: `${i * dx}%`,
-                            transform: `translateY(${mag * 15}vh) rotate(${angle}deg)`,
-                            backgroundColor: waveColor
-                        };
-                        return (<div className="wave" key={i} style={style}></div>);
-                    })}
-                </div>
                 <div className="freqs">
                     {Array.prototype.map.call(freq, (mag, i) => {
                         const width = 100 / numFreq;
@@ -342,3 +349,54 @@ export default class Audiovisual extends Component {
         );
     }
 }
+
+
+// Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
+function catmullRom2Bezier(points) {
+    const crp = points.split(/[,\s]/);
+    const d = [];
+
+    for (let i = 0; i < crp.length - 2; i += 2) {
+        let p;
+        if (i === 0) {
+            p = [
+                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
+                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
+                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])},
+                {x: parseFloat(crp[ i + 4 ]), y: parseFloat(crp[ i + 5 ])}
+            ];
+        } else if (i === crp.length - 4) {
+            p = [
+                {x: parseFloat(crp[ i - 2 ]), y: parseFloat(crp[ i - 1 ])},
+                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
+                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])},
+                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])}
+            ];
+        } else {
+            p = [
+                {x: parseFloat(crp[ i - 2 ]), y: parseFloat(crp[ i - 1 ])},
+                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
+                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])},
+                {x: parseFloat(crp[ i + 4 ]), y: parseFloat(crp[ i + 5 ])}
+            ];
+        }
+
+        // Catmull-Rom to Cubic Bezier conversion matrix
+        //    0       1       0       0
+        //  -1/6      1      1/6      0
+        //    0      1/6      1     -1/6
+        //    0       0       1       0
+
+        const bp = [
+            { x: p[1].x,  y: p[1].y },
+            { x: ((-p[0].x + 6*p[1].x + p[2].x) / 6), y: ((-p[0].y + 6*p[1].y + p[2].y) / 6)},
+            { x: ((p[1].x + 6*p[2].x - p[3].x) / 6),  y: ((p[1].y + 6*p[2].y - p[3].y) / 6) },
+            { x: p[2].x,  y: p[2].y }
+        ];
+
+        d.push(`C${bp[1].x},${bp[1].y} ${bp[2].x},${bp[2].y} ${bp[3].x},${bp[3].y}`);
+    }
+
+    return d.join(' ');
+}
+

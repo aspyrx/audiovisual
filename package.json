@@ -43,6 +43,7 @@
     "normalize.css": "^4.1.1",
     "postcss-loader": "^0.9.1",
     "progress": "^1.1.8",
+    "raphael": "^2.2.1",
     "react": "^15.0.2",
     "react-addons-css-transition-group": "^15.1.0",
     "react-dom": "^15.0.2",
