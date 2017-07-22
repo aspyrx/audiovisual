@@ -5,7 +5,7 @@ const config = require('./webpack.config.js');
 
 config.output.filename = '[name].js';
 
-config.entry.main.push(
+config.entry.main.unshift(
     'react-hot-loader/patch',
     'webpack-dev-server/client?http://localhost:8080/',
     'webpack/hot/dev-server'

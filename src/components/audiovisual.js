@@ -178,11 +178,7 @@ export default class Audiovisual extends Component {
 
         let updateTimer = null;
         const onUpdate = () => {
-            if (
-                !this.state.updating || (!spectral.streaming && spectral.paused)
-            ) {
-                return;
-            }
+            updateTimer = null;
 
             spectral.getWaveform(waveform);
             spectral.getSpectrum(spectrum);
@@ -207,7 +203,6 @@ export default class Audiovisual extends Component {
             }
 
             testKick(spectrum);
-            this.setState({ freq, wave });
 
             if (this.path) {
                 const wavePath = 'M0,0 ' + catmullRom2Bezier(
@@ -218,7 +213,16 @@ export default class Audiovisual extends Component {
                 this.path.attr('path', wavePath);
             }
 
-            updateTimer = requestAnimationFrame(onUpdate);
+            this.setState({ freq, wave }, () => {
+                if (
+                    !this.state.updating
+                    || (!spectral.streaming && spectral.paused)
+                ) {
+                    return;
+                }
+
+                updateTimer = requestAnimationFrame(onUpdate);
+            });
         };
 
         this.cancelUpdates = () => {

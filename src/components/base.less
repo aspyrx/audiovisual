@@ -16,26 +16,30 @@
 @duration-transition: 0.2s;
 @duration-enter-leave: 0.3s;
 
-@color-primary: #800000;
+@color-primary: rgb(0%, 50%, 100%);
 
-@color-bg: lighten(@color-text, 85%);
+@color-bg: lighten(black, 10%);
 @color-bg-hover: tint(@color-primary, 25%);
 @color-bg-active: @color-primary;
 @color-bg-card: lighten(@color-bg, 5%);
 
-@color-text: rgb(10%, 10%, 10%);
+@color-text-dark: rgb(10%, 10%, 10%);
 @color-text-light: rgb(90%, 90%, 90%);
 
+@color-text: contrast(
+    @color-bg, @color-text-dark, @color-text-light
+);
+
 @color-text-bg-primary: contrast(
-    @color-primary, @color-text, @color-text-light
+    @color-primary, @color-text-dark, @color-text-light
 );
 
 @color-text-bg-hover: contrast(
-    @color-bg-hover, @color-text, @color-text-light
+    @color-bg-hover, @color-text-dark, @color-text-light
 );
 
 @color-text-bg-active: contrast(
-    @color-bg-active, @color-text, @color-text-light
+    @color-bg-active, @color-text-dark, @color-text-light
 );
 
 @box-shadow: 0 @spacing-y / 2 @spacing-y / 2 fadeout(@color-text, 75%);

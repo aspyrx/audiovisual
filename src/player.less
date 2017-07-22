@@ -1,3 +1,5 @@
+@import '~components/base';
+
 .container {
     height: 100vh;
     position: relative;
@@ -5,16 +7,6 @@
     flex-flow: row nowrap;
     align-items: flex-start;
 
-    @font-size: 16px;
-    @line-height: 1.4;
-    font-size: @font-size;
-    line-height: @line-height;
-
-    @spacing-x: 10px;
-    @spacing-y: 10px;
-
-    @color-text: fade(white, 80%);
-    @color-bg: lighten(black, 10%);
     background-color: @color-bg;
     color: @color-text;
 
@@ -56,74 +48,6 @@
         flex: 1;
 
         user-select: none;
-
-        .file {
-            margin: @spacing-y @spacing-x;
-            cursor: pointer;
-
-            &:hover {
-                text-decoration: underline;
-            }
-        }
-
-        .files {
-            max-height: 100vh;
-
-            display: flex;
-            flex-flow: column nowrap;
-
-            .search {
-                margin: @spacing-y @spacing-x;
-                border-bottom: 1px solid @color-text;
-
-                input[type="search"] {
-                    width: 100%;
-                    background: none;
-                    color: @color-text;
-                    border: none;
-
-                    &:focus {
-                        outline: none;
-                    }
-                }
-
-                .actions {
-                    position: absolute;
-                    right: 0;
-
-                    input {
-                        display: none;
-                    }
-
-                    span, label {
-                        cursor: pointer;
-                        margin: @spacing-y @spacing-x;
-                        &:hover {
-                            text-decoration: underline;
-                        }
-                    }
-                }
-            }
-
-            .filesContainer {
-                flex: 1;
-                overflow: auto;
-                margin: 0 @spacing-x @spacing-y;
-                padding: @spacing-y @spacing-x;
-
-                background-color: fade(black, 50%);
-                border-radius: @spacing-y;
-
-                .file {
-                    margin: 4px;
-                    cursor: pointer;
-
-                    &:hover, &.selected {
-                        text-decoration: underline;
-                    }
-                }
-            }
-        }
     }
 
     .controls {

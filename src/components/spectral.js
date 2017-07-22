@@ -5,19 +5,7 @@
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;
 
-export default function Spectral(audio, bufsize, smoothing, delayVal) {
-    if (!(audio instanceof HTMLMediaElement)) {
-        throw new Error('audio element not an instance of HTMLMediaElement');
-    }
-
-    const context = new AudioContext();
-    const analyser = context.createAnalyser();
-    const gain = context.createGain();
-    const delay = context.createDelay(1.0);
-    const source = context.createMediaElementSource(audio);
-    let streamSource = null;
-    const streamSources = {};
-
+function setupAnalyser(analyser, bufsize, smoothing) {
     analyser.fftSize = bufsize;
     analyser.smoothingTimeConstant = smoothing;
 
@@ -33,13 +21,20 @@ export default function Spectral(audio, bufsize, smoothing, delayVal) {
             return arr;
         };
     }
+}
 
-    delay.delayTime.value = delayVal;
-
+function setupConnections(context, nodes) {
+    const { analyser, gain, delay, source } = nodes;
     source.connect(analyser);
     analyser.connect(gain);
     gain.connect(delay);
     delay.connect(context.destination);
+}
+
+function defineAPI(audio, context, nodes) {
+    const { analyser, gain, source } = nodes;
+    let streamSource = null;
+    const streamSources = {};
 
     Object.defineProperties(audio, {
         streaming: {
@@ -94,7 +89,25 @@ export default function Spectral(audio, bufsize, smoothing, delayVal) {
             value: out => analyser.getFloatFrequencyData(out)
         }
     });
+}
 
+export default function Spectral(audio, bufsize, smoothing, delayVal) {
+    if (!(audio instanceof HTMLMediaElement)) {
+        throw new Error('audio element not an instance of HTMLMediaElement');
+    }
+
+    const context = new AudioContext();
+    const nodes = {
+        analyser: context.createAnalyser(),
+        gain: context.createGain(),
+        source: context.createMediaElementSource(audio),
+        delay: context.createDelay(1.0)
+    };
+
+    nodes.delay.delayTime.value = delayVal;
+    setupAnalyser(nodes.analyser, bufsize, smoothing);
+    setupConnections(context, nodes);
+    defineAPI(audio, context, nodes);
     return audio;
 }
 
