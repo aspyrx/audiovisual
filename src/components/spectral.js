@@ -78,7 +78,7 @@ export default function Spectral(audio, bufsize, smoothing, delayVal) {
             }
         },
         gain: {
-            set: val => gain.gain.value = val,
+            set: val => (gain.gain.value = val),
             get: () => gain.gain.value
         },
         waveformSize: {

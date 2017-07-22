@@ -320,7 +320,7 @@ export default class Player extends Component {
                                     return !filter || search.includes(filter)
                                         ? <FileInfo className={styles.file}
                                             key={i}
-                                            file={file}
+                                            file={f}
                                             selected={i === audioIndex}
                                             onClick={() => setSong(i)} />
                                         : null;

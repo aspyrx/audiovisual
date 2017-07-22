@@ -175,6 +175,8 @@ export default class Audiovisual extends Component {
         const { waveformSize, spectrumSize } = spectral;
         const waveform = new Float32Array(waveformSize);
         const spectrum = new Float32Array(spectrumSize);
+
+        let updateTimer = null;
         const onUpdate = () => {
             if (
                 !this.state.updating || (!spectral.streaming && spectral.paused)
@@ -206,19 +208,34 @@ export default class Audiovisual extends Component {
 
             testKick(spectrum);
             this.setState({ freq, wave });
+
+            if (this.path) {
+                const wavePath = 'M0,0 ' + catmullRom2Bezier(
+                    Array.prototype.map.call(wave, (mag, i) =>
+                        `${i / numWave},${mag}`
+                    ).join(' ') + ' 1,0'
+                );
+                this.path.attr('path', wavePath);
+            }
+
+            updateTimer = requestAnimationFrame(onUpdate);
         };
 
-        const updateRate = 90;
-        let updateTimer;
         this.cancelUpdates = () => {
+            if (updateTimer !== null) {
+                cancelAnimationFrame(updateTimer);
+            }
+
             if (this.state.updating) {
-                window.clearInterval(updateTimer);
                 this.setState({ updating: false });
             }
         };
         this.startUpdates = () => {
+            if (updateTimer === null) {
+                updateTimer = requestAnimationFrame(onUpdate);
+            }
+
             if (!this.state.updating) {
-                updateTimer = window.setInterval(onUpdate, updateRate);
                 this.setState({ updating: true });
             }
         };
@@ -300,11 +317,11 @@ export default class Audiovisual extends Component {
     render() {
         const {
             src, stream,
-            className, numFreq, freqColor, numWave,
+            className, numFreq, freqColor,
             kickColor, bgColor, textColor, altColor, onEnded
         } = this.props;
         const {
-            playing, kicking, progress, freq, wave
+            playing, kicking, progress, freq
         } = this.state;
 
         const classes = classNames(styles.audiovisual, className, { kicking });
@@ -365,16 +382,7 @@ export default class Audiovisual extends Component {
                         borderRightColor: textColor
                     }}
                 />
-            </CSSTransition>
-
-        if (this.path) {
-            const wavePath = 'M0,0 ' + catmullRom2Bezier(
-                Array.prototype.map.call(wave, (mag, i) =>
-                    `${i / numWave},${mag}`
-                ).join(' ') + ' 1,0'
-            );
-            this.path.animate({ path: wavePath }, 85, 'linear');
-        }
+            </CSSTransition>;
 
         return <div
             ref={node => (this.node = node)}
