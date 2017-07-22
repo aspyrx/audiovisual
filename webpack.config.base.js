@@ -9,26 +9,11 @@ const srcDir = path.resolve(ctxDir, 'src');
 const outDir = path.resolve(ctxDir, 'dist');
 const publicPath = '/';
 
-const babelConfig = {
-    presets: [
-        ['env', {
-            targets: {
-                browsers: ['defaults']
-            },
-            modules: false
-        }],
-        'react'
-    ],
-    plugins: [
-        'react-hot-loader/babel'
-    ]
-};
-
 module.exports = {
     devtool: 'cheap-module-source-map',
     context: ctxDir,
     entry: {
-        main: [srcDir],
+        main: ['normalize.css', srcDir],
         lib: [
             'babel-polyfill',
             'react', 'react-dom',
@@ -42,9 +27,9 @@ module.exports = {
     },
     resolve: {
         alias: {
-            '~': srcDir,
             'jsmediatags$': 'jsmediatags/dist/jsmediatags.min.js'
-        }
+        },
+        modules: [srcDir, 'node_modules']
     },
     module: {
         rules: [{
@@ -107,8 +92,7 @@ module.exports = {
             test: /\.js$/,
             exclude: /node_modules/,
             use: [{
-                loader: 'babel-loader',
-                options: babelConfig
+                loader: 'babel-loader'
             }]
         }]
     },

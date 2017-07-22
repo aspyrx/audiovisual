@@ -2,9 +2,10 @@
  * audiovisual.js - React component that visualises audio.
  */
 
-import React, {Component, PropTypes} from 'react';
-import ReactDOM from 'react-dom';
-import ReactCSSTransitionGroup from 'react-addons-css-transition-group';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import TransitionGroup from 'react-transition-group/TransitionGroup';
+import CSSTransition from 'react-transition-group/CSSTransition';
 import classNames from 'classnames';
 import Raphael from 'raphael';
 
@@ -12,6 +13,33 @@ import Spectral from './spectral.js';
 import styles from './audiovisual.less';
 
 const Float32Array = window.Float32Array;
+
+function average(arr, lo, hi) {
+    if (hi - lo <= 1) {
+        return arr[lo];
+    }
+
+    let sum = 0;
+    for (let i = lo; i < hi; i++) {
+        sum += arr[i];
+    }
+    return sum / (hi - lo);
+}
+
+function normalizeFreq(f) {
+    return 1 - ((f + 30) / -70);
+}
+
+function calcFreq(f, b) {
+    return (Math.pow(b, f) - 1) / (b - 1);
+}
+
+function freqStep(i, m, n) {
+    return Math.min(
+        Math.floor(n / 2 * Math.pow(n / Math.sqrt(m), (i / m) - 1)),
+        n
+    );
+}
 
 export default class Audiovisual extends Component {
     static get propTypes() {
@@ -59,7 +87,7 @@ export default class Audiovisual extends Component {
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.8)',
             altColor: 'rgba(100%, 100%, 100%, 0.1)'
-        }
+        };
     }
 
     constructor(props) {
@@ -82,12 +110,15 @@ export default class Audiovisual extends Component {
     }
 
     onResize() {
-        const node = ReactDOM.findDOMNode(this);
-        this.paper = Raphael(node, node.offsetWidth, node.offsetHeight);
+        this.paper = Raphael(
+            this.node, this.node.offsetWidth, this.node.offsetHeight
+        );
         this.paper.setViewBox(0, -1.5, 1, 3);
         this.paper.canvas.setAttribute('preserveAspectRatio', 'none');
         this.path = this.paper.path('M0,0 1,0');
-        this.path.attr({ 'stroke': this.props.waveColor, 'stroke-width': 0.0025 });
+        this.path.attr({
+            'stroke': this.props.waveColor, 'stroke-width': 0.0025
+        });
     }
 
     componentDidMount() {
@@ -104,18 +135,6 @@ export default class Audiovisual extends Component {
         const spectral = Spectral(audio, bufSize, smoothing, delay);
         this.spectral = spectral;
         const { unmountHandlers } = this.state;
-
-        const average = (arr, lo, hi) => {
-            if (hi - lo <= 1) {
-                return arr[lo];
-            }
-
-            let sum = 0;
-            for (let i = lo; i < hi; i++) {
-                sum += arr[i];
-            }
-            return sum / (hi - lo);
-        }
 
         let kickTimer;
         const testKick = (spectrum) => {
@@ -142,8 +161,10 @@ export default class Audiovisual extends Component {
                 this.setState({ kicking: true });
             }
 
-            kickTimer = window.setTimeout(() => this.setState({ kicking: false }), 50);
-        }
+            kickTimer = window.setTimeout(() => {
+                this.setState({ kicking: false });
+            }, 50);
+        };
 
         unmountHandlers.push(() => {
             if (this.state.kicking) {
@@ -155,7 +176,9 @@ export default class Audiovisual extends Component {
         const waveform = new Float32Array(waveformSize);
         const spectrum = new Float32Array(spectrumSize);
         const onUpdate = () => {
-            if (!this.state.updating || (!spectral.streaming && spectral.paused)) {
+            if (
+                !this.state.updating || (!spectral.streaming && spectral.paused)
+            ) {
                 return;
             }
 
@@ -164,15 +187,16 @@ export default class Audiovisual extends Component {
             const { freq, wave } = this.state;
             const { numFreq, numWave } = this.props;
 
-            const normalizeFreq = f => 1 - ((f + 30) / -70);
-            Array.prototype.forEach.call(spectrum, (f, i) => (spectrum[i] = normalizeFreq(f)));
-
-            const calcFreq = (f, b) => (Math.pow(b, f) - 1) / (b - 1);
-            const freqStep = (i, m = numFreq, n = spectrumSize) =>
-                Math.min(Math.floor(n / 2 * Math.pow(n / Math.sqrt(m), (i / m) - 1)), n);
+            Array.prototype.forEach.call(
+                spectrum, (f, i) => (spectrum[i] = normalizeFreq(f))
+            );
 
             for (let i = 0; i < numFreq; i++) {
-                freq[i] = calcFreq(average(spectrum, freqStep(i), freqStep(i + 1)), (1 - (i / numFreq)) * 100);
+                freq[i] = calcFreq(average(
+                    spectrum,
+                    freqStep(i, numFreq, spectrumSize),
+                    freqStep(i + 1, numFreq, spectrumSize)
+                ), (1 - (i / numFreq)) * 100);
             }
 
             const waveStep = waveformSize / numWave;
@@ -182,7 +206,7 @@ export default class Audiovisual extends Component {
 
             testKick(spectrum);
             this.setState({ freq, wave });
-        }
+        };
 
         const updateRate = 90;
         let updateTimer;
@@ -214,7 +238,9 @@ export default class Audiovisual extends Component {
             }
         });
         spectral.addEventListener('timeupdate', () => {
-            this.setState({ progress: spectral.currentTime / spectral.duration });
+            this.setState({
+                progress: spectral.currentTime / spectral.duration
+            });
         });
         spectral.addEventListener('play', () => {
             this.setState({ playing: true });
@@ -266,24 +292,27 @@ export default class Audiovisual extends Component {
     componentWillUnmount() {
         window.removeEventListener('resize', this.onResize);
 
-        for (let callback of this.state.unmountHandlers) {
-            callback();
+        for (let handler of this.state.unmountHandlers) {
+            handler();
         }
     }
 
     render() {
-        const { src, stream } = this.props;
-        if (!src && !stream) {
-            return (<div className={classes}></div>);
-        }
-
         const {
+            src, stream,
             className, numFreq, freqColor, numWave,
             kickColor, bgColor, textColor, altColor, onEnded
         } = this.props;
-        const {playing, kicking, progress, freq, wave} = this.state;
+        const {
+            playing, kicking, progress, freq, wave
+        } = this.state;
 
         const classes = classNames(styles.audiovisual, className, { kicking });
+
+        if (!src && !stream) {
+            return <div className={classes} />;
+        }
+
         const style = { backgroundColor: kicking ? kickColor : bgColor };
         const progressStyle = {
             backgroundColor: textColor,
@@ -292,7 +321,7 @@ export default class Audiovisual extends Component {
 
         const altStyle = {
             backgroundColor: altColor
-        }
+        };
 
         const audioRef = audio => {
             if (audio) {
@@ -301,52 +330,86 @@ export default class Audiovisual extends Component {
         };
 
         const playIndicator = playing
-            ? (<div className="play fadeOutScale"
-                style={{ borderLeftColor: textColor }}></div>)
+            ? <CSSTransition
+                classNames={{
+                    appear: styles.fadeOutScaleTransition,
+                    appearActive: styles.fadeOutScaleTransitionActive,
+                    enter: styles.fadeOutScaleTransition,
+                    enterActive: styles.fadeOutScaleTransitionActive,
+                    exit: null
+                }}
+                timeout={500}
+            >
+                <div
+                    className={classNames(styles.play, styles.fadeOutScale)}
+                    style={{ borderLeftColor: textColor }}
+                />
+            </CSSTransition>
             : null;
         const pauseIndicator = playing
             ? null
-            : (<div className="pause fadeOutScale"
-                style={{
-                    borderLeftColor: textColor,
-                    borderRightColor: textColor
-                }}></div>);
+            : <CSSTransition
+                classNames={{
+                    appear: styles.fadeOutScaleTransition,
+                    appearActive: styles.fadeOutScaleTransitionActive,
+                    enter: styles.fadeOutScaleTransition,
+                    enterActive: styles.fadeOutScaleTransitionActive,
+                    exit: null
+                }}
+                timeout={500}
+            >
+                <div
+                    className={classNames(styles.pause, styles.fadeOutScale)}
+                    style={{
+                        borderLeftColor: textColor,
+                        borderRightColor: textColor
+                    }}
+                />
+            </CSSTransition>
 
         if (this.path) {
-            const wavePath = 'M0,0 ' + catmullRom2Bezier(Array.prototype.map.call(wave, (mag, i) => `${i / numWave},${mag}`).join(' ') + ' 1,0');
+            const wavePath = 'M0,0 ' + catmullRom2Bezier(
+                Array.prototype.map.call(wave, (mag, i) =>
+                    `${i / numWave},${mag}`
+                ).join(' ') + ' 1,0'
+            );
             this.path.animate({ path: wavePath }, 85, 'linear');
         }
 
-        return (
-            <div className={classes} style={style}>
-                <audio src={stream ? undefined : src} ref={audioRef} onEnded={onEnded} />
-                <div className="progressContainer" style={altStyle}>
-                    <div className="progress" style={progressStyle}></div>
-                </div>
-                <div className="waveZero" style={altStyle}></div>
-                <div className="freqs">
-                    {Array.prototype.map.call(freq, (mag, i) => {
-                        const width = 100 / numFreq;
-                        const style = {
-                            width: `calc(${width}% - 1px)`,
-                            left: `${i * width}%`,
-                            transform: `scaleY(${mag})`,
-                            backgroundColor: freqColor
-                        };
-                        return (<div className="freq" key={i} style={style}></div>);
-                    })}
-                </div>
-                <ReactCSSTransitionGroup transitionName="fadeOutScale"
-                    transitionAppear={true}
-                    transitionAppearTimeout={500}
-                    transitionEnter={true}
-                    transitionEnterTimeout={500}
-                    transitionLeave={false}>
-                    {playIndicator}
-                    {pauseIndicator}
-                </ReactCSSTransitionGroup>
+        return <div
+            ref={node => (this.node = node)}
+            className={classes} style={style}
+        >
+            <audio
+                src={stream ? void 0 : src}
+                ref={audioRef}
+                onEnded={onEnded}
+            />
+            <div className={styles.progressContainer} style={altStyle}>
+                <div className={styles.progress} style={progressStyle}></div>
             </div>
-        );
+            <div className={styles.waveZero} style={altStyle}></div>
+            <div className={styles.freqs}>
+                {Array.prototype.map.call(freq, (mag, i) => {
+                    const width = 100 / numFreq;
+                    const freqStyle = {
+                        width: `calc(${width}% - 1px)`,
+                        left: `${i * width}%`,
+                        transform: `scaleY(${mag})`,
+                        backgroundColor: freqColor
+                    };
+                    return <div
+                        key={i}
+                        className={styles.freq}
+                        style={freqStyle}
+                    />;
+                })}
+            </div>
+            <TransitionGroup>
+                {playIndicator}
+                {pauseIndicator}
+            </TransitionGroup>
+        </div>;
     }
 }
 
@@ -360,24 +423,24 @@ function catmullRom2Bezier(points) {
         let p;
         if (i === 0) {
             p = [
-                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
-                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
-                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])},
-                {x: parseFloat(crp[ i + 4 ]), y: parseFloat(crp[ i + 5 ])}
+                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
+                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
+                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) },
+                { x: parseFloat(crp[i + 4]), y: parseFloat(crp[i + 5]) }
             ];
         } else if (i === crp.length - 4) {
             p = [
-                {x: parseFloat(crp[ i - 2 ]), y: parseFloat(crp[ i - 1 ])},
-                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
-                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])},
-                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])}
+                { x: parseFloat(crp[i - 2]), y: parseFloat(crp[i - 1]) },
+                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
+                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) },
+                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) }
             ];
         } else {
             p = [
-                {x: parseFloat(crp[ i - 2 ]), y: parseFloat(crp[ i - 1 ])},
-                {x: parseFloat(crp[ i ]), y: parseFloat(crp[ i + 1 ])},
-                {x: parseFloat(crp[ i + 2 ]), y: parseFloat(crp[ i + 3 ])},
-                {x: parseFloat(crp[ i + 4 ]), y: parseFloat(crp[ i + 5 ])}
+                { x: parseFloat(crp[i - 2]), y: parseFloat(crp[i - 1]) },
+                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
+                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) },
+                { x: parseFloat(crp[i + 4]), y: parseFloat(crp[i + 5]) }
             ];
         }
 
@@ -387,14 +450,25 @@ function catmullRom2Bezier(points) {
         //    0      1/6      1     -1/6
         //    0       0       1       0
 
-        const bp = [
-            { x: p[1].x,  y: p[1].y },
-            { x: ((-p[0].x + 6*p[1].x + p[2].x) / 6), y: ((-p[0].y + 6*p[1].y + p[2].y) / 6)},
-            { x: ((p[1].x + 6*p[2].x - p[3].x) / 6),  y: ((p[1].y + 6*p[2].y - p[3].y) / 6) },
-            { x: p[2].x,  y: p[2].y }
-        ];
+        const bp = [{
+            x: p[1].x,
+            y: p[1].y
+        }, {
+            x: ((-p[0].x + 6 * p[1].x + p[2].x) / 6),
+            y: ((-p[0].y + 6 * p[1].y + p[2].y) / 6)
+        }, {
+            x: ((p[1].x + 6 * p[2].x - p[3].x) / 6),
+            y: ((p[1].y + 6 * p[2].y - p[3].y) / 6)
+        }, {
+            x: p[2].x,
+            y: p[2].y
+        }];
 
-        d.push(`C${bp[1].x},${bp[1].y} ${bp[2].x},${bp[2].y} ${bp[3].x},${bp[3].y}`);
+        d.push(
+            `C${bp[1].x},${bp[1].y} `
+            + `${bp[2].x},${bp[2].y} `
+            + `${bp[3].x},${bp[3].y}`
+        );
     }
 
     return d.join(' ');

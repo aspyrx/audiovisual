@@ -7,7 +7,7 @@ const AudioContext = window.AudioContext || window.webkitAudioContext;
 
 export default function Spectral(audio, bufsize, smoothing, delayVal) {
     if (!(audio instanceof HTMLMediaElement)) {
-        throw new Error("audio element not an instance of HTMLMediaElement");
+        throw new Error('audio element not an instance of HTMLMediaElement');
     }
 
     const context = new AudioContext();
@@ -31,7 +31,7 @@ export default function Spectral(audio, bufsize, smoothing, delayVal) {
             }
 
             return arr;
-        }
+        };
     }
 
     delay.delayTime.value = delayVal;

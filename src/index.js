@@ -2,10 +2,9 @@
  * index.js - Entry point for the app.
  */
 
-import 'normalize-css/normalize.css';
 import React from 'react';
 import { render } from 'react-dom';
-import App from '~/app';
+import App from './app';
 
 const appDiv = document.createElement('div');
 
@@ -23,7 +22,7 @@ document.body.appendChild(appDiv);
 render(<App />, appDiv);
 
 if (module.hot) {
-    module.hot.accept('~/app', () =>
+    module.hot.accept('./app', () =>
         render(<App />, appDiv)
     );
 

@@ -2,20 +2,21 @@
  * index.js - Index page for the app.
  */
 
-import React, {Component} from 'react';
-import KeyHandler, {KEYDOWN} from 'react-key-handler';
+import React, { Component } from 'react';
+import PropTypes from 'prop-types';
+import KeyHandler, { KEYDOWN } from 'react-key-handler';
 import jsmediatags from 'jsmediatags';
 import classnames from 'classnames';
 
-import Audiovisual from '../components/audiovisual.js';
+import Audiovisual from 'components/audiovisual';
 import styles from './player.less';
 
 class FileInfo extends Component {
     static get propTypes() {
         return {
-            file: React.PropTypes.object.isRequired,
-            selected: React.PropTypes.bool,
-            className: React.PropTypes.any
+            file: PropTypes.object.isRequired,
+            selected: PropTypes.bool,
+            className: PropTypes.any
         };
     }
 
@@ -68,7 +69,7 @@ export default class Player extends Component {
                     }
                 }
             }
-        }
+        };
         req.open('GET', '/files.json');
         req.send();
 
@@ -151,7 +152,7 @@ export default class Player extends Component {
                 || window.navigator.mozGetUserMedia;
             if (getUserMedia) {
                 getUserMedia.call(window.navigator,
-                                  { audio: true }, onSuccess, onError);
+                    { audio: true }, onSuccess, onError);
             } else {
                 onError();
             }
@@ -203,9 +204,9 @@ export default class Player extends Component {
             this.setState({ histIndex: histIndex - 1 });
         } else {
             hist.unshift(shuffle
-                         ? Math.floor(Math.random() * audio.length)
-                         : ((hist[histIndex] + 1) % audio.length));
-                     this.setState({ hist });
+                ? Math.floor(Math.random() * audio.length)
+                : ((hist[histIndex] + 1) % audio.length));
+            this.setState({ hist });
         }
     }
 
@@ -222,8 +223,11 @@ export default class Player extends Component {
         const { playing, updating } = this.state;
 
         const {
-            addMicrophone, togglePlayback, toggleShuffle, toggleHelp, toggleFiles,
-            toggleRepeat, toggleUpdating, addSongs, setSong, nextSong, prevSong
+            addMicrophone,
+            togglePlayback, toggleShuffle,
+            toggleHelp, toggleFiles,
+            toggleRepeat, toggleUpdating,
+            addSongs, setSong, nextSong, prevSong
         } = this;
 
         function stopEventPropagation(evt) {
@@ -232,7 +236,7 @@ export default class Player extends Component {
 
         if (audio.length < 1) {
             return (<div className={styles.container}>
-                <div className="fileInput">
+                <div className={styles.fileInput}>
                     <h1 onClick={addMicrophone}>
                         Click here to use your microphone!
                     </h1>
@@ -244,7 +248,9 @@ export default class Player extends Component {
                             onChange={addSongs} />
                     </label>
                     <h3>(Hint: you can select multiple files)</h3>
-                    <h4>(Loading mp3 files can take a while, please be patient!)</h4>
+                    <h4>
+                        (Loading mp3 files can take a while, please be patient!)
+                    </h4>
                 </div>
             </div>);
         }
@@ -256,7 +262,7 @@ export default class Player extends Component {
         avProps.stream = file.stream;
         avProps.onEnded = () => {
             this.nextSong();
-        }
+        };
 
         const keyHandlers = [
             [' ', togglePlayback],
@@ -268,26 +274,30 @@ export default class Player extends Component {
             ['r', toggleRepeat],
             ['s', toggleShuffle],
             ['v', toggleUpdating]
-        ].map(([key, handler], i) => (
-            <KeyHandler key={i} keyEventName={KEYDOWN} keyValue={key} onKeyHandle={handler} />
-        ));
+        ].map(([key, handler], i) => <KeyHandler
+            key={i}
+            keyEventName={KEYDOWN}
+            keyValue={key}
+            onKeyHandle={handler}
+        />);
 
         return (
             <div className={styles.container} onClick={togglePlayback}>
                 {keyHandlers}
-                <Audiovisual className="audiovisual" {...avProps} />
-                <div className="info" onClick={stopEventPropagation}>
+                <Audiovisual className={styles.audiovisual} {...avProps} />
+                <div className={styles.info} onClick={stopEventPropagation}>
                     { showingFiles
-                        ? (<div className="files">
-                            <div className="search">
+                        ? (<div className={styles.files}>
+                            <div className={styles.search}>
                                 <input type="search"
                                     placeholder="search"
                                     onChange={event => {
+                                        const { value } = event.target;
                                         this.setState({
-                                            filter: event.target.value.toLowerCase()
+                                            filter: value.toLowerCase()
                                         });
                                     }} />
-                                <span className="actions">
+                                <span className={styles.actions}>
                                     <label title="add songs">
                                         +
                                         <input type="file"
@@ -295,17 +305,20 @@ export default class Player extends Component {
                                             multiple
                                             onChange={addSongs} />
                                     </label>
-                                    <span onClick={toggleFiles} title="close">×</span>
+                                    <span onClick={toggleFiles} title="close">
+                                        ×
+                                    </span>
                                 </span>
                             </div>
-                            <div className="files-container">
-                                {audio.map((file, i) => {
-                                    const { url, artist, album, title } = file;
-                                    const search = artist || album || title
+                            <div className={styles.filesContainer}>
+                                {audio.map((f, i) => {
+                                    const { url, artist, album, title } = f;
+                                    const search = (artist || album || title
                                         ? [artist, album, title].join(' ')
-                                        : url;
-                                    return !filter || search.toLowerCase().includes(filter)
-                                        ? <FileInfo className="file"
+                                        : url
+                                    ).toLowerCase();
+                                    return !filter || search.includes(filter)
+                                        ? <FileInfo className={styles.file}
                                             key={i}
                                             file={file}
                                             selected={i === audioIndex}
@@ -314,36 +327,49 @@ export default class Player extends Component {
                                 })}
                             </div>
                         </div>)
-                        : <FileInfo className="file"
+                        : <FileInfo className={styles.file}
                             onClick={toggleFiles}
                             title="select a song"
                             file={file} />
                     }
                 </div>
-                <div className="controls" onClick={stopEventPropagation}>
-                    <div className="playback">
+                <div className={styles.controls} onClick={stopEventPropagation}>
+                    <div className={styles.playback}>
                         <div>
-                            <span onClick={toggleUpdating} title="visualisation on/off">
+                            <span
+                                onClick={toggleUpdating}
+                                title="visualisation on/off"
+                            >
                                 { updating ? 'V' : 'v' }
                             </span>
-                            <span onClick={toggleShuffle} title="shuffle on/off">
+                            <span
+                                onClick={toggleShuffle}
+                                title="shuffle on/off"
+                            >
                                 { shuffle ? 'S' : 's' }
                             </span>
-                            <span onClick={toggleRepeat} title="repeat on/off">
+                            <span
+                                onClick={toggleRepeat}
+                                title="repeat on/off"
+                            >
                                 { repeat ? 'R' : 'r' }
                             </span>
                         </div>
                         <div>
-                            <span onClick={prevSong} title="previous song">≪</span>
+                            <span onClick={prevSong} title="previous song">
+                                ≪
+                            </span>
                             <span onClick={togglePlayback} title="play/pause">
                                 { playing ? '►' : ' ‖ ' }
                             </span>
-                            <span onClick={nextSong} title="next song">≫</span>
+                            <span onClick={nextSong} title="next song">
+                                ≫
+                            </span>
                             <span onClick={toggleHelp} title="help">?</span>
                         </div>
                     </div>
                     { showingHelp
-                        ? (<div className="help" onClick={toggleHelp}>
+                        ? (<div className={styles.help} onClick={toggleHelp}>
                             <table>
                                 <tbody>
                                     <tr>
@@ -371,7 +397,10 @@ export default class Player extends Component {
                                         <td>next song</td>
                                     </tr>
                                     <tr>
-                                        <td colSpan="2">Click the song info to select a song.</td>
+                                        <td colSpan="2">
+                                            Click the song info to select a
+                                            song.
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
