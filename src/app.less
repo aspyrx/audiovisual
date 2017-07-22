@@ -1,8 +1,43 @@
-/*
- * app.less - Global styles for the entire app.
- */
+@import '~base';
 
-body {
-    font-family: sans-serif;
+a[href] {
+    color: @color-primary;
+    text-decoration: none;
+    &:hover, &:active {
+        text-decoration: underline;
+    }
+}
+
+:global(#app) {
+    font-family: Corbel, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", "DejaVu Sans", "Bitstream Vera Sans", "Liberation Sans", Verdana, "Verdana Ref", sans-serif;
+    font-size: @font-size;
+    line-height: @line-height;
+    min-height: 100vh;
+    background-color: @color-bg;
+    display: flex;
+    flex-flow: column nowrap;
+
+    > * {
+        flex: 1;
+        display: inherit;
+        flex-flow: column nowrap;
+    }
+
+    :focus {
+        outline: none;
+    }
+
+    .container {
+        flex: 1;
+        display: flex;
+        flex-flow: column nowrap;
+
+        width: 100%;
+        margin: @spacing-y auto;
+        padding: 0 @spacing-x;
+        box-sizing: border-box;
+
+        color: @color-text;
+    }
 }
 

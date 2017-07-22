@@ -8,7 +8,7 @@ import jsmediatags from 'jsmediatags';
 import classnames from 'classnames';
 
 import Audiovisual from '../components/audiovisual.js';
-import styles from './index.less';
+import styles from './player.less';
 
 class FileInfo extends Component {
     static get propTypes() {
@@ -40,7 +40,7 @@ class FileInfo extends Component {
     }
 }
 
-export default class Index extends Component {
+export default class Player extends Component {
     constructor() {
         super();
 

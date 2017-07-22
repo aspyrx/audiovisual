@@ -1,0 +1,22 @@
+@import '~base';
+
+.spinner {
+    @duration: 2s;
+    @width: 50vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: @width;
+    height: 2px;
+
+    opacity: 0.5;
+    background-color: @color-primary;
+
+    @keyframes spin {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100vw + @width); }
+    }
+
+    animation: spin @duration linear infinite;
+}
+
