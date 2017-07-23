@@ -148,6 +148,8 @@ export default class Player extends Component {
             if (state.hist.length < histIndex + 1) {
                 state.histIndex = state.hist.length > 0 ? 0 : null;
             }
+
+            return state;
         });
     }
 

@@ -96,11 +96,10 @@ export default class Audiovisual extends Component {
             numFreq, numWave
         } = props;
 
+        this.audio = null;
         this.spectral = null;
         this.waveform = null;
         this.spectrum = null;
-        this.audio = null;
-        this.spectral = null;
         this.animFrame = null;
 
         this.state = {
@@ -226,10 +225,6 @@ export default class Audiovisual extends Component {
                 this[updating ? 'startAnimating' : 'stopAnimating']();
             }
         }
-    }
-
-    componentWillUnmount() {
-        this.destroySpectral();
     }
 
     render() {
