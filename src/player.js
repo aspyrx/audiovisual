@@ -11,6 +11,12 @@ import Audiovisual from 'components/audiovisual';
 import Files from 'components/files';
 import styles from './player.less';
 
+function readTags(fileObj) {
+    return new Promise((onSuccess, onError) => {
+        jsmediatags.read(fileObj, { onSuccess, onError });
+    });
+}
+
 function Help(props) {
     return <div className={styles.help} onClick={props.onClick}>
         <table>
@@ -58,45 +64,21 @@ export default class Player extends Component {
         super();
 
         this.state = {
-            playing: false,
+            playing: true,
             repeat: false,
             shuffle: true,
             showingHelp: false,
             updating: true,
-            hist: [0],
-            histIndex: 0,
-            audio: []
+            hist: [],
+            histIndex: null,
+            audio: [],
+            streams: []
         };
-
-        const req = new XMLHttpRequest();
-        req.onreadystatechange = () => {
-            if (req.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-            if (req.status !== 200) {
-                return;
-            }
-
-            const audio = JSON.parse(req.responseText);
-
-            if (!(audio instanceof Array)) {
-                return;
-            }
-
-            if(!audio.length) {
-                return;
-            }
-
-            this.setState({ audio });
-            if (this.state.shuffle) {
-                this.nextSong();
-            }
-        };
-        req.open('GET', '/files.json');
-        req.send();
 
         [
-            'addMicrophone', 'addSongs', 'setSong', 'nextSong', 'prevSong',
+            'addFile', 'removeFile',
+            'addMicrophone', 'addSongs',
+            'setFile', 'nextSong', 'prevSong',
             'togglePlayback', 'toggleShuffle', 'toggleRepeat', 'toggleUpdating',
             'toggleHelp'
         ].forEach(key => {
@@ -124,110 +106,133 @@ export default class Player extends Component {
         this.setState({ updating: !this.state.updating });
     }
 
+    addFile(file) {
+        if (!file || file.length < 1) {
+            return;
+        }
+
+        this.setState(({ audio, streams, hist }) => {
+            const state = {};
+
+            if (file.stream) {
+                state.streams = streams.concat(file);
+            } else {
+                state.audio = audio.concat(file);
+            }
+
+            if (!hist.length) {
+                state.hist = hist.concat(file);
+                state.histIndex = 0;
+            }
+
+            return state;
+        });
+    }
+
+    removeFile(file) {
+        if (!file) {
+            return;
+        }
+
+        const notFile = f => f !== file;
+
+        this.setState(({ audio, streams, hist, histIndex }) => {
+            const state = {};
+            if (file.stream) {
+                state.streams = streams.filter(notFile);
+            } else {
+                state.audio = audio.filter(notFile);
+            }
+
+            state.hist = hist.filter(notFile);
+            if (state.hist.length < histIndex + 1) {
+                state.histIndex = state.hist.length > 0 ? 0 : null;
+            }
+        });
+    }
+
     addMicrophone() {
-        const { audio } = this.state;
         const onSuccess = stream => {
-            audio.unshift({
+            const tracks = stream.getAudioTracks();
+            if (!tracks.length) {
+                return;
+            }
+
+            const file = {
                 artist: 'Microphone',
                 album: 'Ready',
                 title: 'Listening for input...',
                 stream: stream
-            });
-            this.setState({ audio });
-        };
-        const onError = err => {
-            let message = 'An unknown error occurred while'
-                + ' accessing the microphone.';
-            if (err) {
-                if (err.name === 'NotAllowedError'
-                   || err.name === 'PermissionDeniedError') {
-                    message = 'Microphone access not allowed.';
-                } else if (err.name === 'NotFoundError') {
-                    message = 'No microphone found.';
-                }
-            }
+            };
 
-            audio.unshift({
-                artist: 'Microphone',
-                album: 'Error',
-                title: message,
-                url: ''
+            tracks[0].addEventListener('ended', () => {
+                this.removeFile(file);
             });
-            this.setState({ audio });
-        };
 
-        if (!navigator) {
-            onError();
-        }
+            this.addFile(file);
+        };
 
         try {
             navigator.mediaDevices.getUserMedia({ audio: true }).then(
-                onSuccess, onError
+                onSuccess, console.log
             );
         } catch (err) {
             const getUserMedia = navigator.getUserMedia
                 || navigator.webkitGetUserMedia
                 || navigator.mozGetUserMedia;
-            if (getUserMedia) {
-                getUserMedia.call(
-                    window.navigator,
-                    { audio: true }, onSuccess, onError
-                );
-            } else {
-                onError();
-            }
+            getUserMedia.call(
+                navigator, { audio: true }, onSuccess, console.log
+            );
         }
     }
 
     addSongs(evt) {
-        const { audio } = this.state;
-        const { files } = evt.target;
-        for (let i = 0; i < files.length; i++) {
-            const fileObj = files[i];
+        Promise.all(Array.prototype.map.call(evt.target.files, fileObj => {
             const file = {
                 url: window.URL.createObjectURL(fileObj)
             };
 
-            if (fileObj.name.match(/\.(mp3|mp4|m4a)$/)) {
-                jsmediatags.read(fileObj, {
-                    onSuccess: tag => {
-                        file.title = tag.tags.title;
-                        file.album = tag.tags.album;
-                        file.artist = tag.tags.artist;
-                        audio.push(file);
-                        this.setState({ audio });
-                    },
-                    onError: () => {
-                        audio.push(file);
-                        this.setState({ audio });
-                    }
-                });
-            } else {
-                audio.push(file);
+            if (!fileObj.name.match(/\.(mp3|mp4|m4a)$/)) {
+                return file;
             }
-        }
 
-        this.setState({ audio });
+            return readTags(fileObj).then(tag => {
+                file.title = tag.tags.title;
+                file.album = tag.tags.album;
+                file.artist = tag.tags.artist;
+                return file;
+            }, () => file);
+        })).then(this.addFile);
     }
 
-    setSong(songIndex) {
-        const { hist } = this.state;
-        hist.unshift(songIndex);
-        this.setState({ hist, histIndex: 0 });
+    setFile(file) {
+        this.setState(({ hist }) => ({
+            hist: [file].concat(hist),
+            histIndex: 0
+        }));
     }
 
     nextSong() {
-        const { hist, histIndex, repeat, shuffle, audio } = this.state;
-        if (repeat) {
-            this.setState({ playing: true });
-        } else if (histIndex > 0) {
-            this.setState({ histIndex: histIndex - 1 });
-        } else {
-            hist.unshift(shuffle
-                ? Math.floor(Math.random() * audio.length)
-                : ((hist[histIndex] + 1) % audio.length));
-            this.setState({ hist });
-        }
+        this.setState(({
+            hist, histIndex, repeat, shuffle, audio, streams
+        }) => {
+            if (repeat) {
+                return { playing: true };
+            }
+
+            if (histIndex > 0) {
+                return { histIndex: histIndex - 1 };
+            }
+
+            const file = hist[histIndex];
+            const arr = file.stream ? streams : audio;
+            const nextIndex = shuffle
+                ? Math.floor(Math.random() * arr.length)
+                : (arr.indexOf(file) + 1) % arr.length;
+            return {
+                hist: [arr[nextIndex]].concat(hist)
+            };
+        });
     }
 
     prevSong() {
@@ -235,15 +240,44 @@ export default class Player extends Component {
         this.setState({ histIndex: (histIndex + 1) % hist.length });
     }
 
+    componentDidMount() {
+        const req = new XMLHttpRequest();
+        req.onreadystatechange = () => {
+            if (req.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+            if (req.status !== 200) {
+                return;
+            }
+
+            const audio = JSON.parse(req.responseText);
+
+            if (!(audio instanceof Array)) {
+                return;
+            }
+
+            if(!audio.length) {
+                return;
+            }
+
+            this.setState({ audio }, () => {
+                if (this.state.shuffle) {
+                    this.nextSong();
+                }
+            });
+        };
+        req.open('GET', '/files.json');
+        req.send();
+    }
+
     render() {
         const {
-            showingHelp, shuffle, repeat, audio,
-            hist, histIndex, ...avProps
+            showingHelp, shuffle, repeat, audio, streams,
+            hist, histIndex, updating, playing
         } = this.state;
-        const { playing, updating } = this.state;
 
         const {
-            addMicrophone, addSongs, setSong, nextSong, prevSong,
+            addMicrophone, addSongs, setFile, nextSong, prevSong,
             togglePlayback, toggleShuffle, toggleRepeat, toggleUpdating,
             toggleHelp
         } = this;
@@ -252,7 +286,7 @@ export default class Player extends Component {
             evt.stopPropagation();
         }
 
-        if (audio.length < 1) {
+        if (!audio.length && !streams.length) {
             return <div className={styles.container}>
                 <div className={styles.fileInput}>
                     <h1 onClick={addMicrophone}>
@@ -273,14 +307,17 @@ export default class Player extends Component {
             </div>;
         }
 
-        const audioIndex = hist[histIndex];
-        const file = audio[audioIndex];
-
-        avProps.src = file.url;
-        avProps.stream = file.stream;
-        avProps.onEnded = () => {
-            this.nextSong();
+        const avProps = {
+            updating,
+            playing,
+            onEnded: this.nextSong
         };
+
+        const file = histIndex === null ? null : hist[histIndex];
+        if (file) {
+            avProps.src = file.url;
+            avProps.stream = file.stream;
+        }
 
         const keyHandlers = [
             [' ', togglePlayback],
@@ -308,10 +345,12 @@ export default class Player extends Component {
             <Audiovisual className={styles.audiovisual} {...avProps} />
             <div className={styles.info} onClick={stopEventPropagation}>
                 <Files
+                    file={file}
                     audio={audio}
-                    audioIndex={audioIndex}
-                    setSong={setSong}
+                    streams={streams}
+                    setFile={setFile}
                     addSongs={addSongs}
+                    addMicrophone={addMicrophone}
                 />
             </div>
             <div className={styles.controls} onClick={stopEventPropagation}>
@@ -338,13 +377,13 @@ export default class Player extends Component {
                     </div>
                     <div>
                         <span onClick={prevSong} title="previous song">
-                            ≪
+                            ⏮
                         </span>
                         <span onClick={togglePlayback} title="play/pause">
-                            { playing ? ' ‖ ' : '►' }
+                            { playing ? '⏸' : '⏵' }
                         </span>
                         <span onClick={nextSong} title="next song">
-                            ≫
+                            ⏭
                         </span>
                         <span onClick={toggleHelp} title="help">?</span>
                     </div>

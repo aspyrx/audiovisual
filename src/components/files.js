@@ -1,8 +1,8 @@
 import React, { Component } from 'react';
 import {
-    bool, number, string, func, object, shape, arrayOf
+    bool, string, func, object, shape, arrayOf
 } from 'prop-types';
-import classnames from 'classnames';
+import classNames from 'classnames';
 
 import styles from './files.less';
 
@@ -16,12 +16,18 @@ const fileShape = shape({
 
 function FileInfo(props) {
     const { file, selected, onClick } = props;
-    const { url, stream, title, artist, album } = file;
-    const filename = stream ? 'Streaming...' : url.match(/[^/]*$/)[0];
-
-    const className = classnames(styles.file, {
+    const className = classNames(styles.file, {
         [styles.selected]: selected
     });
+
+    if (!file) {
+        return <p className={className} onClick={onClick} title={props.title}>
+            <span>No song selected.</span>
+        </p>;
+    }
+
+    const { url, stream, title, artist, album } = file;
+    const filename = stream ? 'Streaming...' : url.match(/[^/]*$/)[0];
 
     if (!title) {
         return <p className={className} onClick={onClick} title={props.title}>
@@ -39,20 +45,50 @@ function FileInfo(props) {
 }
 
 FileInfo.propTypes = {
-    file: fileShape.isRequired,
+    file: fileShape,
     selected: bool,
     className: string,
     onClick: func,
     title: string
 };
 
+function Actions(props) {
+    const { addMicrophone, addSongs, toggle } = props;
+
+    return <span className={styles.actions}>
+        <span onClick={addMicrophone} title="add microphone">
+            ⏺
+        </span>
+        <label title="add songs">
+            +
+            <input
+                type="file"
+                accept="audio/*"
+                multiple
+                onChange={addSongs}
+            />
+        </label>
+        <span onClick={toggle} title="close">
+            ×
+        </span>
+    </span>;
+}
+
+Actions.propTypes = {
+    addMicrophone: func.isRequired,
+    addSongs: func.isRequired,
+    toggle: func.isRequired
+};
+
 export default class Files extends Component {
     static get propTypes() {
         return {
+            file: fileShape,
             audio: arrayOf(fileShape).isRequired,
-            audioIndex: number.isRequired,
-            setSong: func.isRequired,
-            addSongs: func.isRequired
+            streams: arrayOf(fileShape).isRequired,
+            setFile: func.isRequired,
+            addSongs: func.isRequired,
+            addMicrophone: func.isRequired
         };
     }
 
@@ -80,7 +116,7 @@ export default class Files extends Component {
 
     render() {
         const {
-            audio, audioIndex, setSong, addSongs
+            file, audio, streams, setFile, addSongs, addMicrophone
         } = this.props;
         const { filter, showing } = this.state;
         const { toggle } = this;
@@ -89,40 +125,45 @@ export default class Files extends Component {
             return <FileInfo
                 onClick={toggle}
                 title="select a song"
-                file={audio[audioIndex]}
+                file={file}
             />;
         }
 
-        const files = audio.map((f, i) => {
+        const streamsInfo = streams.map((f, i) => {
+            function onClick() {
+                toggle();
+                setFile(f);
+            }
+
+            return <FileInfo
+                key={i}
+                file={f}
+                selected={f === file}
+                onClick={onClick}
+            />;
+        });
+
+        const audioInfo = audio.map((f, i) => {
             const { url, artist, album, title } = f;
             const search = (artist || album || title
                 ? [artist, album, title].join(' ')
                 : url
             ).toLowerCase();
+
+            function onClick() {
+                toggle();
+                setFile(f);
+            }
+
             return !filter || search.includes(filter)
                 ? <FileInfo
                     key={i}
                     file={f}
-                    selected={i === audioIndex}
-                    onClick={() => setSong(i)}
+                    selected={f === file}
+                    onClick={onClick}
                 />
                 : null;
         });
-
-        const actions = <span className={styles.actions}>
-            <label title="add songs">
-                +
-                <input
-                    type="file"
-                    accept="audio/*"
-                    multiple
-                    onChange={addSongs}
-                />
-            </label>
-            <span onClick={toggle} title="close">
-                ×
-            </span>
-        </span>;
 
         return <div className={styles.files}>
             <div className={styles.search}>
@@ -131,10 +172,15 @@ export default class Files extends Component {
                     placeholder="search"
                     onChange={this.onSearchChange}
                 />
-                {actions}
+                <Actions
+                    addSongs={addSongs}
+                    addMicrophone={addMicrophone}
+                    toggle={toggle}
+                />
             </div>
             <div className={styles.filesContainer}>
-                {files}
+                {streamsInfo}
+                {audioInfo}
             </div>
         </div>;
     }
