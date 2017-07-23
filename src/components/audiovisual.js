@@ -110,7 +110,7 @@ export default class Audiovisual extends Component {
     static get defaultProps() {
         return {
             numFreq: 64,
-            numWave: 64,
+            numWave: 1024,
             waveWidth: 3,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
