@@ -57,7 +57,7 @@ function Actions(props) {
 
     return <span className={styles.actions}>
         <span onClick={addMicrophone} title="add microphone">
-            ⏺
+            ●
         </span>
         <label title="add songs">
             +
