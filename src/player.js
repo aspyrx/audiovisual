@@ -296,8 +296,8 @@ export default class Player extends Component {
                     </h1>
                     <label>
                         <h1>Click here to select some songs to play!</h1>
-                        <input type="file"
-                            accept="audio/*"
+                        <input type='file'
+                            accept='audio/*'
                             multiple
                             onChange={addSongs} />
                     </label>
@@ -305,6 +305,13 @@ export default class Player extends Component {
                     <h4>
                         (Loading mp3 files can take a while, please be patient!)
                     </h4>
+                    <h5>
+                        <a href='https://github.com/aspyrx/audiovisual'>
+                            Source code on GitHub
+                        </a> made by <a href='https://szz.io/'>
+                            Stan Zhang
+                        </a>
+                    </h5>
                 </div>
             </div>;
         }
