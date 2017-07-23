@@ -14,7 +14,7 @@ const ProgressBar = require('progress');
 const jsmediatags = require('jsmediatags');
 
 const argvConfig =  {
-    string: ['f', 'm', 'mflags', 'p'],
+    string: ['m', 'mflags', 'p'],
     boolean: ['s', 'r', 'v'],
     default: {
         m: '[.](mp3|wav|ogg)$',
@@ -25,6 +25,10 @@ const argvConfig =  {
         p: 10102
     },
     unknown(flag) {
+        if (!flag.startsWith('-')) {
+            return true;
+        }
+
         console.log(`Unknown flag: '${flag}'`);
         usage();
         process.exit(1);
@@ -33,7 +37,6 @@ const argvConfig =  {
 
 function usage() {
     const desc = {
-        f: 'Directory from which files should be served.',
         m: 'Regular expression to use to match files.',
         mflags: 'Flags to use in regular expression matching.',
         s: 'Scan the files directory for new files.',
@@ -43,7 +46,7 @@ function usage() {
     };
 
     const script = path.relative('', require.main.filename);
-    console.log(`Usage: node ${script}\n`);
+    console.log(`Usage: node ${script} [directory]\n`);
     Object.keys(desc).forEach(key => {
         const flag = key.length === 1
             ? `-${key}`
@@ -166,7 +169,7 @@ const verbose = argv.v;
 
 const filesDirUrl = '/files';
 
-const filesDirFlag = argv.f;
+const filesDirFlag = argv._[0];
 if (!filesDirFlag) {
     startServer([], '[]');
     return;
@@ -213,7 +216,7 @@ function startServer(fileList, fileListString) {
 
     const app = express();
 
-    app.use(express.static('dist'));
+    app.use(express.static(path.resolve(__dirname, '../dist')));
     app.get('/files.json', (req, res) => res.type('json').send(fileListString));
     app.get(filesDirUrl + '/*', (req, res) => {
         const reqpath = decodeURIComponent(req.url);

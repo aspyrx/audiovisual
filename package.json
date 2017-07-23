@@ -2,13 +2,20 @@
   "name": "audiovisual",
   "version": "2.0.0",
   "description": "An audio visualizer web app",
-  "main": "server.js",
+  "main": "bin/audiovisual.js",
   "scripts": {
     "live": "node build.js live",
     "watch": "node build.js watch",
     "build": "node build.js",
     "dist": "node build.js production",
-    "prepublish": "node build.js production"
+    "prepare": "node build.js production"
+  },
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "bin": {
+    "audiovisual": "bin/audiovisual.js"
   },
   "repository": {
     "type": "git",
