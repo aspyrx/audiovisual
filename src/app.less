@@ -1,8 +1,25 @@
-/*
- * app.less - Global styles for the entire app.
- */
+@import '~components/base';
 
-body {
-    font-family: sans-serif;
+a[href] {
+    color: @color-primary;
+    text-decoration: none;
+    &:hover, &:active {
+        text-decoration: underline;
+    }
+}
+
+:global(#app) {
+    min-height: 100vh;
+    display: flex;
+    flex-flow: column nowrap;
+    width: 100%;
+    box-sizing: border-box;
+
+    background-color: @color-bg;
+    color: @color-text;
+
+    font-size: @font-size;
+    font-family: Corbel, "Lucida Grande", "Lucida Sans Unicode", "Lucida Sans", "DejaVu Sans", "Bitstream Vera Sans", "Liberation Sans", Verdana, "Verdana Ref", sans-serif;
+    line-height: @line-height;
 }
 

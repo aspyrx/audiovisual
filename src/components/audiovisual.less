@@ -1,10 +1,6 @@
-:local(.audiovisual) {
+.audiovisual {
     position: relative;
     overflow: hidden;
-
-    &:not(.kicking) {
-        transition: background-color 0.3s ease;
-    }
 
     @duration-av: 85ms;
 
@@ -14,6 +10,13 @@
         bottom: 0;
         transform-origin: center bottom;
         transition: transform @duration-av linear;
+    }
+
+    .wave {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+        bottom: 0;
     }
 
     .progressContainer {
@@ -40,12 +43,12 @@
     .fadeOutScale {
         visibility: hidden;
 
-        &.fadeOutScale-appear, &.fadeOutScale-enter {
+        &.fadeOutScaleTransition {
             visibility: visible;
             opacity: 1;
             transform: scale(1, 1);
 
-            &.fadeOutScale-appear-active, &.fadeOutScale-enter-active {
+            &.fadeOutScaleTransitionActive {
                 opacity: 0;
                 transform: scale(1.5, 1.5);
                 transition: all 0.5s ease;

@@ -1,0 +1,13 @@
+{
+    "plugins": [
+        "react"
+    ],
+    "extends": ["plugin:react/recommended"],
+    "parser": "babel-eslint",
+    "env": {
+        "node": false,
+        "browser": true,
+        "commonjs": true,
+        "es6": true
+    }
+}

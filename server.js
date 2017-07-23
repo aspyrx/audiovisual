@@ -1,30 +1,65 @@
-'use strict';
+#!/usr/bin/env node
 
-/* eslint-env node */
-/* eslint no-console: "off" */
+/* eslint-disable no-console, no-process-exit */
+
+'use strict';
 
 const fs = require('fs');
 const process = require('process');
 const path = require('path');
 
-const flags = require('flags');
+const express = require('express');
+const minimist = require('minimist');
 const ProgressBar = require('progress');
 const jsmediatags = require('jsmediatags');
 
-const Promise = global.Promise;
+const argvConfig =  {
+    string: ['f', 'm', 'mflags', 'p'],
+    boolean: ['s', 'r', 'v'],
+    default: {
+        m: '[.](mp3|wav|ogg)$',
+        mflags: 'i',
+        s: false,
+        r: false,
+        v: false,
+        p: 10102
+    },
+    unknown(flag) {
+        console.log(`Unknown flag: '${flag}'`);
+        usage();
+        process.exit(1);
+    }
+};
 
-flags.defineString('f', undefined, 'Directory from which files should be served.');
-flags.defineString('m', '[.](mp3|wav|ogg)$', 'Regular expression to use to match files.');
-flags.defineString('mflags', 'i', 'Flags to use in regular expression matching.');
-flags.defineBoolean('s', false, 'Scan the files directory for new files.');
-flags.defineBoolean('r', false, 'Whether to scan recursively for files.');
-flags.defineBoolean('v', false, 'Output verbose information.');
-flags.defineString('p', 10102, 'Port on which to serve the site.');
+function usage() {
+    const desc = {
+        f: 'Directory from which files should be served.',
+        m: 'Regular expression to use to match files.',
+        mflags: 'Flags to use in regular expression matching.',
+        s: 'Scan the files directory for new files.',
+        r: 'Whether to scan recursively for files.',
+        v: 'Output verbose information.',
+        p: 'Port on which to serve the site.'
+    };
 
-flags.parse();
+    const script = path.relative('', require.main.filename);
+    console.log(`Usage: node ${script}\n`);
+    Object.keys(desc).forEach(key => {
+        const flag = key.length === 1
+            ? `-${key}`
+            : `--${key}`;
+        const value = key in argvConfig.default
+            ? `=${argvConfig.default[key]}`
+            : '';
+
+        console.log(`\t${flag}${value}\t${desc[key]}\n`);
+    });
+}
+
+const argv = minimist(process.argv.slice(2), argvConfig);
 
 function getMediaTags(filePath, tagsToRead) {
-    tagsToRead = tagsToRead || [ 'title', 'artist', 'album' ];
+    tagsToRead = tagsToRead || ['title', 'artist', 'album'];
     return new Promise((resolve, reject) => {
         new jsmediatags.Reader(filePath)
             .setTagsToRead(tagsToRead)
@@ -40,6 +75,7 @@ function getMediaTags(filePath, tagsToRead) {
     });
 }
 
+// eslint-disable-next-line max-params
 function parseFiles(startPath, prefix, match, recursive, verbose) {
     const files = [];
     let firstDir = true;
@@ -50,67 +86,75 @@ function parseFiles(startPath, prefix, match, recursive, verbose) {
         }
     );
 
-    let prevPct = 0;
     let done = 0;
     let count = 0;
 
-    function addFiles(filePath) {
-        if (fs.statSync(filePath).isDirectory() && (firstDir || recursive)) {
-            const dir = fs.readdirSync(filePath);
+    function tick(numDone, url) {
+        done += numDone;
+        const pct = done / count;
+        progress.update(pct, {
+            done: done,
+            count: count,
+            path: url
+        });
+    }
 
-            dir.map(name => addFiles(path.join(filePath, name)));
+    function addDir(dirPath) {
+        const dir = fs.readdirSync(dirPath);
 
-            if (firstDir) {
-                firstDir = false;
-            }
-        } else if (filePath.match(match)) {
-            const url = filePath.replace(startPath, prefix).replace(/\\/g, '/');
-            const tick = numDone => {
-                done += numDone;
-                const pct = done / count;
-                progress.tick((pct - prevPct) * 100, {
-                    done: done,
-                    count: count,
-                    path: url
-                });
-                prevPct = pct;
-            }
+        dir.map(name => addFiles(path.join(dirPath, name)));
 
-            count += 1;
-            tick(0);
+        if (firstDir) {
+            firstDir = false;
+        }
+    }
 
-            const file = {
-                url: url
-            };
+    function addFile(filePath) {
+        const url = filePath.replace(startPath, prefix).replace(/\\/g, '/');
+        count++;
+        tick(0, url);
 
-            if (filePath.match(/\.(mp3|mp4|m4a)$/)) {
-                files.push(getMediaTags(filePath).then(tags => {
-                    file.title = tags.title;
-                    file.album = tags.album;
-                    file.artist = tags.artist;
+        const file = {
+            url: url
+        };
 
-                    if (verbose) {
-                        console.log("add tags", file);
-                    }
+        if (filePath.match(/\.(mp3|mp4|m4a)$/)) {
+            files.push(getMediaTags(filePath).then(tags => {
+                file.title = tags.title;
+                file.album = tags.album;
+                file.artist = tags.artist;
 
-                    tick(1);
-                    return file;
-                }, err => {
-                    if (verbose) {
-                        console.error(err);
-                    }
-
-                    tick(1);
-                    return file;
-                }));
-            } else {
                 if (verbose) {
-                    console.log("add", file);
+                    console.log('add tags', file);
                 }
 
-                tick(1);
-                files.push(file);
+                tick(1, url);
+                return file;
+            }, err => {
+                if (verbose) {
+                    console.error(err);
+                }
+
+                tick(1, url);
+                return file;
+            }));
+        } else {
+            if (verbose) {
+                console.log('add', file);
             }
+
+            tick(1, url);
+            files.push(file);
+        }
+    }
+
+    function addFiles(filePath) {
+        const fileStats = fs.statSync(filePath);
+
+        if (fileStats.isDirectory() && (firstDir || recursive)) {
+            addDir(filePath);
+        } else if (fileStats.isFile() && filePath.match(match)) {
+            addFile(filePath);
         }
     }
 
@@ -118,23 +162,23 @@ function parseFiles(startPath, prefix, match, recursive, verbose) {
     return Promise.all(files);
 }
 
-const verbose = flags.get('v');
+const verbose = argv.v;
 
 const filesDirUrl = '/files';
 
-const filesDirFlag = flags.get('f');
+const filesDirFlag = argv.f;
 if (!filesDirFlag) {
     startServer([], '[]');
     return;
 }
 
 const filesDir = path.resolve(filesDirFlag);
-const filesMatch = new RegExp(flags.get('m'), flags.get('mflags'));
+const filesMatch = new RegExp(argv.m, argv.mflags);
 const fileListPath = path.join(filesDir, '.files.json');
 
-if (flags.get('s')) {
+if (argv.s) {
     console.log(`Scanning ${filesDir} for files matching ${filesMatch}`);
-    parseFiles(filesDir, filesDirUrl, filesMatch, flags.get('r'), verbose)
+    parseFiles(filesDir, filesDirUrl, filesMatch, argv.r, verbose)
         .then(fileList => {
             const fileListString = JSON.stringify(fileList);
 
@@ -142,7 +186,7 @@ if (flags.get('s')) {
             fs.writeFileSync(fileListPath, fileListString);
 
             startServer(fileList, fileListString);
-        }, err => { console.error(err) })
+        }, console.error);
 } else {
     try {
         const fileListString = fs.readFileSync(fileListPath, 'utf8');
@@ -153,7 +197,9 @@ if (flags.get('s')) {
     } catch (err) {
         if (err.code === 'ENOENT') {
             console.error(`${fileListPath} not found!`);
-            console.error('Try scanning for files using --s. See --help for more info.');
+            console.error(
+                'Try scanning for files using --s. See --help for more info.'
+            );
             process.exit(1);
         } else {
             throw err;
@@ -163,9 +209,8 @@ if (flags.get('s')) {
 
 function startServer(fileList, fileListString) {
     const fileUrlMap = {};
-    fileList.map(file => fileUrlMap[file.url] = true);
+    fileList.forEach(file => (fileUrlMap[file.url] = true));
 
-    const express = require('express');
     const app = express();
 
     app.use(express.static('dist'));
@@ -173,14 +218,19 @@ function startServer(fileList, fileListString) {
     app.get(filesDirUrl + '/*', (req, res) => {
         const reqpath = decodeURIComponent(req.url);
         if (fileUrlMap[reqpath]) {
-            const filePath = path.join(filesDir, reqpath.replace(filesDirUrl, '').replace(/\//g, path.sep));
-                res.sendFile(filePath);
+            const filePath = path.join(
+                filesDir,
+                reqpath.replace(filesDirUrl, '').replace(/\//g, path.sep)
+            );
+            res.sendFile(filePath);
         } else {
             res.status(404).end();
         }
     });
 
-    const port = flags.get('p');
-    app.listen(port, () => console.log(`audiovisual server listening on *:${port}`));
+    const port = argv.p;
+    app.listen(port, () => {
+        console.log(`audiovisual server listening on *:${port}`);
+    });
 }
 

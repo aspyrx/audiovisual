@@ -1,12 +1,10 @@
 {
-    "libs": [
-        "browser",
-        "ecma6"
+    "libs": ["ecmascript"],
+    "loadEagerly": [
+        "src/**/*.js",
+        "test/**/*.js"
     ],
-    "loadEagerly": [],
     "plugins": {
-        "modules": {},
-        "es_modules": {},
-        "webpack": {}
+        "node": {}
     }
 }
