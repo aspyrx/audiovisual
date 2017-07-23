@@ -13,12 +13,6 @@ export default class Spectral {
 
         audio.pause();
 
-        audio.addEventListener('canplay', () => {
-            if (this._audioPlaying && audio.paused) {
-                audio.play();
-            }
-        });
-
         const {
             bufsize = 2048,
             smoothing = 0.2,
@@ -45,6 +39,9 @@ export default class Spectral {
             delay: {
                 value: context.createDelay(1.0)
             },
+            _onCanPlay: {
+                value: this._onCanPlay.bind(this)
+            },
             _audioPlaying: {
                 value: false,
                 writable: true
@@ -61,6 +58,16 @@ export default class Spectral {
         this.setupDelay(delay);
         this.setupAnalyser(bufsize, smoothing);
         this.setupConnections();
+
+        audio.addEventListener('canplay', this._onCanPlay);
+    }
+
+    close() {
+        const { _audio, context, _onCanPlay } = this;
+        _audio.removeEventListener('canplay', _onCanPlay);
+        if (context.close) {
+            context.close();
+        }
     }
 
     setupDelay(delay) {
@@ -94,6 +101,12 @@ export default class Spectral {
         analyser.connect(gain);
         gain.connect(delay);
         delay.connect(context.destination);
+    }
+
+    _onCanPlay() {
+        if (this._audioPlaying && this._audio.paused) {
+            this._audio.play();
+        }
     }
 
     get streaming() {

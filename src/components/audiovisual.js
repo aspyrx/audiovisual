@@ -143,6 +143,7 @@ export default class Audiovisual extends Component {
         this.stopAnimating();
         this.waveform = null;
         this.spectrum = null;
+        this.spectral.close();
         this.spectral = null;
         this.audio.removeEventListener('timeupdate', this.onTimeUpdate);
         this.audio = null;
@@ -216,12 +217,7 @@ export default class Audiovisual extends Component {
 
         if (this.spectral) {
             if (playing) {
-                if (stream) {
-                    this.spectral.play(stream);
-                    this.setState({ progress: 0 });
-                } else {
-                    this.spectral.play();
-                }
+                this.spectral.play(stream);
             } else {
                 this.spectral.pause();
             }
@@ -238,8 +234,8 @@ export default class Audiovisual extends Component {
 
     render() {
         const {
-            className, numFreq,
-            bgColor, altColor, textColor, freqColor,
+            className, numFreq, numWave,
+            bgColor, altColor, textColor, freqColor, waveColor,
             src, stream, playing, onEnded
         } = this.props;
 
@@ -251,7 +247,7 @@ export default class Audiovisual extends Component {
         }
 
         const {
-            progress, freq
+            progress, freq, wave
         } = this.state;
 
         const progressStyle = {
@@ -263,6 +259,12 @@ export default class Audiovisual extends Component {
             backgroundColor: altColor
         };
 
+        const wavePath = 'M0,0 ' + catmullRom2Bezier(
+            Array.prototype.map.call(wave, (mag, i) =>
+                `${i / numWave},${mag}`
+            ).join(' ') + ' 1,0'
+        );
+
         return <div className={classes} style={style}>
             <audio
                 src={stream ? void 0 : src}
@@ -273,6 +275,16 @@ export default class Audiovisual extends Component {
                 <div className={styles.progress} style={progressStyle}></div>
             </div>
             <div className={styles.waveZero} style={altStyle}></div>
+            <svg
+                className={styles.wave}
+                viewBox='0 -1.5 1 3'
+                preserveAspectRatio='none'
+            >
+                <path
+                    fill='none' stroke={waveColor} strokeWidth={0.0025}
+                    d={wavePath}
+                />
+            </svg>
             <div className={styles.freqs}>
                 {Array.prototype.map.call(freq, (mag, i) => {
                     const width = 100 / numFreq;
@@ -300,8 +312,6 @@ export default class Audiovisual extends Component {
         </div>;
     }
 }
-
-void catmullRom2Bezier;
 
 // Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
 function catmullRom2Bezier(points) {
