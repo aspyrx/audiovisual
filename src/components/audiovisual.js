@@ -97,6 +97,7 @@ export default class Audiovisual extends Component {
             updating: bool,
             numFreq: number,
             numWave: number,
+            waveWidth: number,
             freqColor: string,
             waveColor: string,
             bgColor: string,
@@ -110,6 +111,7 @@ export default class Audiovisual extends Component {
         return {
             numFreq: 64,
             numWave: 64,
+            waveWidth: 3,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
             bgColor: 'transparent',
@@ -125,6 +127,7 @@ export default class Audiovisual extends Component {
             numFreq, numWave
         } = props;
 
+        this.node = null;
         this.audio = null;
         this.spectral = null;
         this.waveform = null;
@@ -134,11 +137,13 @@ export default class Audiovisual extends Component {
         this.state = {
             progress: 0,
             freq: new Float32Array(numFreq),
-            wave: new Float32Array(numWave)
+            wave: new Float32Array(numWave),
+            offsetWidth: 1,
+            offsetHeight: 1
         };
 
         [
-            'audioRef', 'onAnimFrame', 'onTimeUpdate'
+            'nodeRef', 'audioRef', 'onAnimFrame', 'onTimeUpdate', 'onResize'
         ].forEach(key => {
             this[key] = this[key].bind(this);
         });
@@ -147,6 +152,11 @@ export default class Audiovisual extends Component {
     onTimeUpdate(evt) {
         const progress = evt.target.currentTime / evt.target.duration;
         this.setState({ progress });
+    }
+
+    onResize() {
+        const { offsetWidth, offsetHeight } = this.node;
+        this.setState({ offsetWidth, offsetHeight });
     }
 
     initSpectral(audio) {
@@ -182,6 +192,17 @@ export default class Audiovisual extends Component {
             ? 'destroySpectral'
             : 'initSpectral'
         ](audio);
+    }
+
+    nodeRef(node) {
+        this.node = node;
+
+        if (node) {
+            window.addEventListener('resize', this.onResize);
+            this.onResize();
+        } else {
+            window.removeEventListener('resize', this.onResize);
+        }
     }
 
     onAnimFrame() {
@@ -250,15 +271,17 @@ export default class Audiovisual extends Component {
                 this.spectral.pause();
             }
 
-            if (playing) {
-                this[updating ? 'startAnimating' : 'stopAnimating']();
+            if (playing && updating) {
+                this.startAnimating();
+            } else {
+                this.stopAnimating();
             }
         }
     }
 
     render() {
         const {
-            className, numFreq, numWave,
+            className, numFreq, numWave, waveWidth,
             bgColor, altColor, textColor, freqColor, waveColor,
             src, stream, playing, onEnded
         } = this.props;
@@ -271,7 +294,7 @@ export default class Audiovisual extends Component {
         }
 
         const {
-            progress, freq, wave
+            progress, freq, wave, offsetWidth, offsetHeight
         } = this.state;
 
         const progressStyle = {
@@ -283,17 +306,23 @@ export default class Audiovisual extends Component {
             backgroundColor: altColor
         };
 
-        const wavePath = 'M0,0 ' + catmullRom2Bezier(
-            Array.prototype.map.call(wave, (mag, i) =>
-                `${i / numWave},${mag}`
-            ).join(' ') + ' 1,0'
+        const wavePath = `M0,${offsetHeight / 2} ` + catmullRom2Bezier(
+            Array.prototype.map.call(wave, (mag, i) => {
+                const x = i / numWave * offsetWidth;
+                const y = (mag / 3 + 0.5) * offsetHeight;
+                return `${x},${y}`;
+            }).join(' ') + ` ${offsetWidth},${offsetHeight / 2}`
         );
 
         const playbackIndicator = playing
             ? <PlayIcon textColor={textColor} />
             : <PauseIcon textColor={textColor} />;
 
-        return <div className={classes} style={style}>
+        return <div
+            className={classes}
+            style={style}
+            ref={this.nodeRef}
+        >
             <audio
                 src={stream ? void 0 : src}
                 ref={this.audioRef}
@@ -303,14 +332,10 @@ export default class Audiovisual extends Component {
                 <div className={styles.progress} style={progressStyle}></div>
             </div>
             <div className={styles.waveZero} style={altStyle}></div>
-            <svg
-                className={styles.wave}
-                viewBox='0 -1.5 1 3'
-                preserveAspectRatio='none'
-            >
+            <svg className={styles.wave}>
                 <path
-                    fill='none' stroke={waveColor} strokeWidth={0.0025}
-                    d={wavePath}
+                    fill='none'
+                    stroke={waveColor} strokeWidth={waveWidth} d={wavePath}
                 />
             </svg>
             <div className={styles.freqs}>
