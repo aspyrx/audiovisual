@@ -389,7 +389,7 @@ export default class Player extends Component {
                             ⏪
                         </span>
                         <span onClick={togglePlayback} title="play/pause">
-                            { playing ? '❙❙' : '►' }
+                            { playing ? '॥' : '►' }
                         </span>
                         <span onClick={nextSong} title="next song">
                             ⏩

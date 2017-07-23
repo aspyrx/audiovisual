@@ -37,16 +37,16 @@ function freqStep(i, m, n) {
 }
 
 function FadeTransition(props) {
-    const { children } = props;
+    const { children, ...rest } = props;
     const className = classNames(children.props.className, styles.fadeOutScale);
     const childWithClass = React.cloneElement(children, { className });
     return  <CSSTransition
+        {...rest}
         classNames={{
             appear: styles.fadeOutScaleTransition,
             appearActive: styles.fadeOutScaleTransitionActive,
             enter: styles.fadeOutScaleTransition,
-            enterActive: styles.fadeOutScaleTransitionActive,
-            exit: null
+            enterActive: styles.fadeOutScaleTransitionActive
         }}
         timeout={500}
     >
@@ -56,6 +56,35 @@ function FadeTransition(props) {
 
 FadeTransition.propTypes = {
     children: element
+};
+
+function PauseIcon(props) {
+    const { textColor, className } = props;
+    return <div
+        className={classNames(styles.pause, className)}
+        style={{
+            borderLeftColor: textColor,
+            borderRightColor: textColor
+        }}
+    />;
+}
+
+PauseIcon.propTypes = {
+    textColor: string.isRequired,
+    className: string
+};
+
+function PlayIcon(props) {
+    const { textColor, className } = props;
+    return <div
+        className={classNames(styles.play, className)}
+        style={{ borderLeftColor: textColor }}
+    />;
+}
+
+PlayIcon.propTypes = {
+    textColor: string.isRequired,
+    className: string
 };
 
 export default class Audiovisual extends Component {
@@ -260,6 +289,10 @@ export default class Audiovisual extends Component {
             ).join(' ') + ' 1,0'
         );
 
+        const playbackIndicator = playing
+            ? <PlayIcon textColor={textColor} />
+            : <PauseIcon textColor={textColor} />;
+
         return <div className={classes} style={style}>
             <audio
                 src={stream ? void 0 : src}
@@ -297,11 +330,8 @@ export default class Audiovisual extends Component {
                 })}
             </div>
             <TransitionGroup>
-                <FadeTransition>
-                    <div
-                        className={playing ? styles.play : styles.pause}
-                        style={{ borderColor: textColor }}
-                    />
+                <FadeTransition key={playing ? 'play' : 'pause'}>
+                    {playbackIndicator}
                 </FadeTransition>
             </TransitionGroup>
         </div>;
