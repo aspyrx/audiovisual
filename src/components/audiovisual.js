@@ -292,43 +292,50 @@ export default class Audiovisual extends Component {
     }
 
     onAnimFrame() {
-        const { spectral, waveform, spectrum } = this;
-        const { numFreq, numWave } = this.props;
-        const { waveformSize, spectrumSize } = spectral;
+        this.updateWave();
+        this.updateFreq();
+        this.animFrame = requestAnimationFrame(this.onAnimFrame);
+    }
 
+    updateWave() {
+        const { wave } = this;
+        if (!wave) {
+            return;
+        }
+
+        const { spectral, waveform, wavePoints } = this;
         spectral.fillWaveform(waveform);
-        spectral.fillSpectrum(spectrum);
 
-        Array.prototype.forEach.call(
-            spectrum, (f, i) => (spectrum[i] = normalizeFreq(f))
-        );
-
-        const { offsetWidth, offsetHeight } = this.state;
-        const { wavePoints } = this;
+        const { waveformSize } = spectral;
+        const { numWave } = this.props;
+        const { offsetWidth: w, offsetHeight: h } = this.state;
 
         const waveStep = waveformSize / numWave;
         for (let i = 0; i < numWave; i++) {
             wavePoints[i] = (
                 average(waveform, i * waveStep, (i + 1) * waveStep) / 3 + 0.5
-            ) * offsetHeight;
+            ) * h;
         }
 
-        this.updateWave(offsetWidth, offsetHeight, numWave, wavePoints);
-        this.updateFreq(numFreq, spectrum, spectrumSize);
-        this.animFrame = requestAnimationFrame(this.onAnimFrame);
-    }
-
-    updateWave(w, h, n, ys) {
-        const { wave } = this;
         if (wave) {
-            const bezier = ysToBezier(w, n, ys);
+            const bezier = ysToBezier(w, numWave, wavePoints);
             wave.setAttribute('d', `M0,${h / 2} ${bezier} ${w},${h / 2}`);
         }
     }
 
-    updateFreq(numFreq, spectrum, spectrumSize) {
+    updateFreq() {
+        const { spectral, spectrum, freqs } = this;
+
+        spectral.fillSpectrum(spectrum);
+        Array.prototype.forEach.call(
+            spectrum, (f, i) => (spectrum[i] = normalizeFreq(f))
+        );
+
+        const { numFreq } = this.props;
+        const { spectrumSize } = spectral;
+
         for (let i = 0; i < numFreq; i++) {
-            const freq = this.freqs[i];
+            const freq = freqs[i];
             if (freq && freq.rect) {
                 const scale = calcFreq(average(
                     spectrum,
@@ -339,7 +346,6 @@ export default class Audiovisual extends Component {
             }
         }
     }
-
 
     startAnimating() {
         if (this.animFrame === null) {
