@@ -11,6 +11,10 @@ import Audiovisual from 'components/audiovisual';
 import Files from 'components/files';
 import styles from './player.less';
 
+function shuffleIndex(old, n) {
+    return (old + 1 + Math.floor(Math.random() * (n - 1))) % n;
+}
+
 function readTags(fileObj) {
     return new Promise((onSuccess, onError) => {
         jsmediatags.read(fileObj, { onSuccess, onError });
@@ -111,7 +115,7 @@ export default class Player extends Component {
             return;
         }
 
-        this.setState(({ audio, streams, hist }) => {
+        this.setState(({ audio, streams, hist, shuffle }) => {
             const state = {};
 
             if (file.stream) {
@@ -121,7 +125,10 @@ export default class Player extends Component {
             }
 
             if (!hist.length) {
-                state.hist = hist.concat(file.length ? file[0] : file);
+                state.hist = hist.concat(file.length
+                    ? file[shuffle ? shuffleIndex(0, file.length) : 0]
+                    : file
+                );
                 state.histIndex = 0;
             }
 
@@ -230,13 +237,15 @@ export default class Player extends Component {
                 return { histIndex: histIndex - 1 };
             }
 
-            const file = hist[histIndex];
-            const arr = file.stream ? streams : audio;
-            const nextIndex = shuffle
-                ? Math.floor(Math.random() * arr.length)
-                : (arr.indexOf(file) + 1) % arr.length;
+            const oldFile = hist[histIndex];
+            const arr = oldFile.stream ? streams : audio;
+            const oldIndex = arr.indexOf(oldFile);
+            const index = shuffle
+                ? shuffleIndex(oldIndex, arr.length)
+                : (oldIndex + 1) % arr.length;
+            const file = arr[index];
             return {
-                hist: [arr[nextIndex]].concat(hist)
+                hist: [file].concat(hist)
             };
         });
     }
