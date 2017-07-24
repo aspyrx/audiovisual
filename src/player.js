@@ -395,13 +395,13 @@ export default class Player extends Component {
                     </div>
                     <div>
                         <span onClick={prevSong} title="previous song">
-                            ⏪
+                            ⏮
                         </span>
                         <span onClick={togglePlayback} title="play/pause">
                             { playing ? '॥' : '►' }
                         </span>
                         <span onClick={nextSong} title="next song">
-                            ⏩
+                            ⏭
                         </span>
                         <span onClick={toggleHelp} title="help">?</span>
                     </div>
