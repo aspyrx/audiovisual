@@ -121,7 +121,7 @@ export default class Player extends Component {
             }
 
             if (!hist.length) {
-                state.hist = hist.concat(file);
+                state.hist = hist.concat(file.length ? file[0] : file);
                 state.histIndex = 0;
             }
 
@@ -218,6 +218,10 @@ export default class Player extends Component {
         this.setState(({
             hist, histIndex, repeat, shuffle, audio, streams
         }) => {
+            if (histIndex === null) {
+                return;
+            }
+
             if (repeat) {
                 return { playing: true };
             }
@@ -262,11 +266,7 @@ export default class Player extends Component {
                 return;
             }
 
-            this.setState({ audio }, () => {
-                if (this.state.shuffle) {
-                    this.nextSong();
-                }
-            });
+            this.addFile(audio);
         };
         req.open('GET', '/files.json');
         req.send();
