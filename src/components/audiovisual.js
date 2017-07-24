@@ -26,7 +26,7 @@ function normalizeFreq(f) {
 }
 
 function calcFreq(f, b) {
-    return (Math.pow(b, f) - 1) / (b - 1);
+    return Math.min((Math.pow(b, f) - 1) / (b - 1), 1);
 }
 
 function freqStep(i, m, n) {
@@ -87,6 +87,70 @@ PlayIcon.propTypes = {
     className: string
 };
 
+class FreqBar extends Component {
+    constructor() {
+        super();
+
+        this.rect = null;
+        this.rectRef = this.rectRef.bind(this);
+    }
+
+    rectRef(rect) {
+        this.rect = rect;
+    }
+
+    render() {
+        const { width, height, index, color } = this.props;
+
+        return <rect
+            ref={this.rectRef}
+            className={styles.freq}
+            fill={color}
+            width={width - 1}
+            height={height / 3}
+            x={index * width}
+            y={height * 2 / 3}
+        />;
+    }
+}
+
+FreqBar.propTypes = {
+    index: number.isRequired,
+    width: number.isRequired,
+    height: number.isRequired,
+    color: string.isRequired
+};
+
+
+function FreqBars(props) {
+    const { freqRef, numFreq, width, height, color } = props;
+    const barWidth = width / numFreq;
+
+    const freqBars = new Array(numFreq);
+    for (let i = 0; i < numFreq; i++) {
+        freqBars[i] = <FreqBar
+            key={i}
+            ref={freqRef}
+            index={i}
+            width={barWidth}
+            height={height}
+            color={color}
+        />;
+    }
+
+    return <g className={styles.freqBars}>
+        {freqBars}
+    </g>;
+}
+
+FreqBars.propTypes = {
+    freqRef: func,
+    numFreq: number.isRequired,
+    width: number.isRequired,
+    height: number.isRequired,
+    color: string.isRequired
+};
+
 export default class Audiovisual extends Component {
     static get propTypes() {
         return {
@@ -140,17 +204,17 @@ export default class Audiovisual extends Component {
         this.wave = null;
         this.wavePoints = new Float32Array(numWave);
 
-        this.freq = null;
-        this.freqPoints = new Float32Array(numFreq);
+        this.freqs = new Array(numFreq);
+
+        this.progress = null;
 
         this.state = {
-            progress: 0,
             offsetWidth: 1,
             offsetHeight: 1
         };
 
         [
-            'nodeRef', 'audioRef', 'waveRef',
+            'nodeRef', 'audioRef', 'waveRef', 'freqRef', 'progressRef',
             'onAnimFrame', 'onTimeUpdate', 'onResize'
         ].forEach(key => {
             this[key] = this[key].bind(this);
@@ -159,7 +223,9 @@ export default class Audiovisual extends Component {
 
     onTimeUpdate(evt) {
         const progress = evt.target.currentTime / evt.target.duration;
-        this.setState({ progress });
+        if (this.progress) {
+            this.progress.style.width = `${progress * 100}%`;
+        }
     }
 
     onResize() {
@@ -217,6 +283,14 @@ export default class Audiovisual extends Component {
         this.wave = wave;
     }
 
+    freqRef(freq) {
+        this.freqs[freq.props.index] = freq;
+    }
+
+    progressRef(progress) {
+        this.progress = progress;
+    }
+
     onAnimFrame() {
         const { spectral, waveform, spectrum } = this;
         const { numFreq, numWave } = this.props;
@@ -230,15 +304,7 @@ export default class Audiovisual extends Component {
         );
 
         const { offsetWidth, offsetHeight } = this.state;
-        const { wavePoints, freqPoints } = this;
-
-        for (let i = 0; i < numFreq; i++) {
-            freqPoints[i] = calcFreq(average(
-                spectrum,
-                freqStep(i, numFreq, spectrumSize),
-                freqStep(i + 1, numFreq, spectrumSize)
-            ), (1 - (i / numFreq)) * 100);
-        }
+        const { wavePoints } = this;
 
         const waveStep = waveformSize / numWave;
         for (let i = 0; i < numWave; i++) {
@@ -248,6 +314,7 @@ export default class Audiovisual extends Component {
         }
 
         this.updateWave(offsetWidth, offsetHeight, numWave, wavePoints);
+        this.updateFreq(numFreq, spectrum, spectrumSize);
         this.animFrame = requestAnimationFrame(this.onAnimFrame);
     }
 
@@ -258,6 +325,21 @@ export default class Audiovisual extends Component {
             wave.setAttribute('d', `M0,${h / 2} ${bezier} ${w},${h / 2}`);
         }
     }
+
+    updateFreq(numFreq, spectrum, spectrumSize) {
+        for (let i = 0; i < numFreq; i++) {
+            const freq = this.freqs[i];
+            if (freq && freq.rect) {
+                const scale = calcFreq(average(
+                    spectrum,
+                    freqStep(i, numFreq, spectrumSize),
+                    freqStep(i + 1, numFreq, spectrumSize)
+                ), (1 - (i / numFreq)) * 100);
+                freq.rect.style.transform = `scaleY(${scale})`;
+            }
+        }
+    }
+
 
     startAnimating() {
         if (this.animFrame === null) {
@@ -280,7 +362,7 @@ export default class Audiovisual extends Component {
         } = props;
 
         if (numFreq !== old.numFreq) {
-            this.freqPoints = new Float32Array(numFreq);
+            this.freqs = new Array(numFreq);
         }
 
         if (numWave !== old.numWave) {
@@ -304,8 +386,8 @@ export default class Audiovisual extends Component {
 
     render() {
         const {
-            className, waveWidth,
-            bgColor, altColor, textColor, waveColor,
+            className, waveWidth, numFreq,
+            bgColor, altColor, textColor, waveColor, freqColor,
             src, stream, playing, onEnded
         } = this.props;
 
@@ -316,18 +398,9 @@ export default class Audiovisual extends Component {
             return <div className={classes} style={style} />;
         }
 
-        const { progress } = this.state;
+        const { offsetWidth, offsetHeight } = this.state;
 
-        const { nodeRef, audioRef, waveRef } = this;
-
-        const progressStyle = {
-            backgroundColor: textColor,
-            width: `${progress * 100}%`
-        };
-
-        const altStyle = {
-            backgroundColor: altColor
-        };
+        const { nodeRef, audioRef, progressRef, waveRef, freqRef } = this;
 
         const playbackIndicator = playing
             ? <PlayIcon textColor={textColor} />
@@ -343,14 +416,32 @@ export default class Audiovisual extends Component {
                 ref={audioRef}
                 onEnded={onEnded}
             />
-            <div className={styles.progressContainer} style={altStyle}>
-                <div className={styles.progress} style={progressStyle}></div>
+            <div
+                className={styles.progressContainer}
+                style={{ backgroundColor: altColor }}
+            >
+                <div
+                    ref={progressRef}
+                    className={styles.progress}
+                    style={{ backgroundColor: textColor }}
+                />
             </div>
-            <div className={styles.waveZero} style={altStyle}></div>
-            <svg className={styles.wave}>
+            <svg className={styles.visualiser}>
+                <line
+                    x1={0} y1={offsetHeight / 2}
+                    x2={offsetWidth} y2={offsetHeight / 2}
+                    fill='none' stroke={altColor} strokeWidth={waveWidth}
+                />
                 <path
-                    fill='none' ref={waveRef}
-                    stroke={waveColor} strokeWidth={waveWidth}
+                    ref={waveRef}
+                    fill='none' stroke={waveColor} strokeWidth={waveWidth}
+                />
+                <FreqBars
+                    freqRef={freqRef}
+                    numFreq={numFreq}
+                    color={freqColor}
+                    width={offsetWidth}
+                    height={offsetHeight}
                 />
             </svg>
             <TransitionGroup>
