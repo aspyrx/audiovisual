@@ -124,26 +124,34 @@ export default class Audiovisual extends Component {
         super();
 
         const {
-            numFreq, numWave
+            numFreq,
+            numWave
         } = props;
 
-        this.node = null;
         this.audio = null;
         this.spectral = null;
         this.waveform = null;
         this.spectrum = null;
+
         this.animFrame = null;
+
+        this.node = null;
+
+        this.wave = null;
+        this.wavePoints = new Float32Array(numWave);
+
+        this.freq = null;
+        this.freqPoints = new Float32Array(numFreq);
 
         this.state = {
             progress: 0,
-            freq: new Float32Array(numFreq),
-            wave: new Float32Array(numWave),
             offsetWidth: 1,
             offsetHeight: 1
         };
 
         [
-            'nodeRef', 'audioRef', 'onAnimFrame', 'onTimeUpdate', 'onResize'
+            'nodeRef', 'audioRef', 'waveRef',
+            'onAnimFrame', 'onTimeUpdate', 'onResize'
         ].forEach(key => {
             this[key] = this[key].bind(this);
         });
@@ -205,10 +213,13 @@ export default class Audiovisual extends Component {
         }
     }
 
+    waveRef(wave) {
+        this.wave = wave;
+    }
+
     onAnimFrame() {
         const { spectral, waveform, spectrum } = this;
         const { numFreq, numWave } = this.props;
-        const { freq, wave } = this.state;
         const { waveformSize, spectrumSize } = spectral;
 
         spectral.fillWaveform(waveform);
@@ -218,8 +229,11 @@ export default class Audiovisual extends Component {
             spectrum, (f, i) => (spectrum[i] = normalizeFreq(f))
         );
 
+        const { offsetWidth, offsetHeight } = this.state;
+        const { wavePoints, freqPoints } = this;
+
         for (let i = 0; i < numFreq; i++) {
-            freq[i] = calcFreq(average(
+            freqPoints[i] = calcFreq(average(
                 spectrum,
                 freqStep(i, numFreq, spectrumSize),
                 freqStep(i + 1, numFreq, spectrumSize)
@@ -228,12 +242,21 @@ export default class Audiovisual extends Component {
 
         const waveStep = waveformSize / numWave;
         for (let i = 0; i < numWave; i++) {
-            wave[i] = average(waveform, i * waveStep, (i + 1) * waveStep);
+            wavePoints[i] = (
+                average(waveform, i * waveStep, (i + 1) * waveStep) / 3 + 0.5
+            ) * offsetHeight;
         }
 
-        this.setState({ freq, wave }, () => {
-            this.animFrame = requestAnimationFrame(this.onAnimFrame);
-        });
+        this.updateWave(offsetWidth, offsetHeight, numWave, wavePoints);
+        this.animFrame = requestAnimationFrame(this.onAnimFrame);
+    }
+
+    updateWave(w, h, n, ys) {
+        const { wave } = this;
+        if (wave) {
+            const bezier = ysToBezier(w, n, ys);
+            wave.setAttribute('d', `M0,${h / 2} ${bezier} ${w},${h / 2}`);
+        }
     }
 
     startAnimating() {
@@ -257,11 +280,11 @@ export default class Audiovisual extends Component {
         } = props;
 
         if (numFreq !== old.numFreq) {
-            this.freq = new Float32Array(numFreq);
+            this.freqPoints = new Float32Array(numFreq);
         }
 
         if (numWave !== old.numWave) {
-            this.wave = new Float32Array(numWave);
+            this.wavePoints = new Float32Array(numWave);
         }
 
         if (this.spectral) {
@@ -281,8 +304,8 @@ export default class Audiovisual extends Component {
 
     render() {
         const {
-            className, numFreq, numWave, waveWidth,
-            bgColor, altColor, textColor, freqColor, waveColor,
+            className, waveWidth,
+            bgColor, altColor, textColor, waveColor,
             src, stream, playing, onEnded
         } = this.props;
 
@@ -293,9 +316,9 @@ export default class Audiovisual extends Component {
             return <div className={classes} style={style} />;
         }
 
-        const {
-            progress, freq, wave, offsetWidth, offsetHeight
-        } = this.state;
+        const { progress } = this.state;
+
+        const { nodeRef, audioRef, waveRef } = this;
 
         const progressStyle = {
             backgroundColor: textColor,
@@ -306,14 +329,6 @@ export default class Audiovisual extends Component {
             backgroundColor: altColor
         };
 
-        const wavePath = `M0,${offsetHeight / 2} ` + catmullRom2Bezier(
-            Array.prototype.map.call(wave, (mag, i) => {
-                const x = i / numWave * offsetWidth;
-                const y = (mag / 3 + 0.5) * offsetHeight;
-                return `${x},${y}`;
-            }).join(' ') + ` ${offsetWidth},${offsetHeight / 2}`
-        );
-
         const playbackIndicator = playing
             ? <PlayIcon textColor={textColor} />
             : <PauseIcon textColor={textColor} />;
@@ -321,11 +336,11 @@ export default class Audiovisual extends Component {
         return <div
             className={classes}
             style={style}
-            ref={this.nodeRef}
+            ref={nodeRef}
         >
             <audio
                 src={stream ? void 0 : src}
-                ref={this.audioRef}
+                ref={audioRef}
                 onEnded={onEnded}
             />
             <div className={styles.progressContainer} style={altStyle}>
@@ -334,26 +349,10 @@ export default class Audiovisual extends Component {
             <div className={styles.waveZero} style={altStyle}></div>
             <svg className={styles.wave}>
                 <path
-                    fill='none'
-                    stroke={waveColor} strokeWidth={waveWidth} d={wavePath}
+                    fill='none' ref={waveRef}
+                    stroke={waveColor} strokeWidth={waveWidth}
                 />
             </svg>
-            <div className={styles.freqs}>
-                {Array.prototype.map.call(freq, (mag, i) => {
-                    const width = 100 / numFreq;
-                    const freqStyle = {
-                        width: `calc(${width}% - 1px)`,
-                        left: `${i * width}%`,
-                        transform: `scaleY(${mag})`,
-                        backgroundColor: freqColor
-                    };
-                    return <div
-                        key={i}
-                        className={styles.freq}
-                        style={freqStyle}
-                    />;
-                })}
-            </div>
             <TransitionGroup>
                 <FadeTransition key={playing ? 'play' : 'pause'}>
                     {playbackIndicator}
@@ -364,59 +363,50 @@ export default class Audiovisual extends Component {
 }
 
 // Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
-function catmullRom2Bezier(points) {
-    const crp = points.split(/[,\s]/);
-    const d = [];
+// eslint-disable-next-line max-params
+function catmullRom2Bezier(ax, ay, bx, by, cx, cy, dx, dy) {
+    // Catmull-Rom to Cubic Bezier conversion matrix
+    //    0       1       0       0
+    //  -1/6      1      1/6      0
+    //    0      1/6      1     -1/6
+    //    0       0       1       0
 
-    for (let i = 0; i < crp.length - 2; i += 2) {
-        let p;
-        if (i === 0) {
-            p = [
-                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
-                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
-                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) },
-                { x: parseFloat(crp[i + 4]), y: parseFloat(crp[i + 5]) }
-            ];
-        } else if (i === crp.length - 4) {
-            p = [
-                { x: parseFloat(crp[i - 2]), y: parseFloat(crp[i - 1]) },
-                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
-                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) },
-                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) }
-            ];
-        } else {
-            p = [
-                { x: parseFloat(crp[i - 2]), y: parseFloat(crp[i - 1]) },
-                { x: parseFloat(crp[i]), y: parseFloat(crp[i + 1]) },
-                { x: parseFloat(crp[i + 2]), y: parseFloat(crp[i + 3]) },
-                { x: parseFloat(crp[i + 4]), y: parseFloat(crp[i + 5]) }
-            ];
-        }
+    const px = (-ax + 6 * bx + cx) / 6;
+    const py = (-ay + 6 * by + cy) / 6;
+    const qx = (bx + 6 * cx - dx) / 6;
+    const qy = (by + 6 * cy - dy) / 6;
 
-        // Catmull-Rom to Cubic Bezier conversion matrix
-        //    0       1       0       0
-        //  -1/6      1      1/6      0
-        //    0      1/6      1     -1/6
-        //    0       0       1       0
+    return `C${px},${py} ${qx},${qy} ${cx},${cy}`;
+}
 
-        const bp = [{
-            x: p[1].x,
-            y: p[1].y
-        }, {
-            x: ((-p[0].x + 6 * p[1].x + p[2].x) / 6),
-            y: ((-p[0].y + 6 * p[1].y + p[2].y) / 6)
-        }, {
-            x: ((p[1].x + 6 * p[2].x - p[3].x) / 6),
-            y: ((p[1].y + 6 * p[2].y - p[3].y) / 6)
-        }, {
-            x: p[2].x,
-            y: p[2].y
-        }];
+function ysToBezier(w, n, ys) {
+    if (n < 3) {
+        return '';
+    }
 
-        d.push(
-            `C${bp[1].x},${bp[1].y} `
-            + `${bp[2].x},${bp[2].y} `
-            + `${bp[3].x},${bp[3].y}`
+    const dx = w / n;
+    const d = new Array(n - 1);
+
+    d[0] = catmullRom2Bezier(
+        0, ys[0],
+        0, ys[0],
+        dx, ys[1],
+        dx + dx, ys[2]
+    );
+
+    d[n - 2] = catmullRom2Bezier(
+        (n - 3) * dx, ys[n - 3],
+        (n - 2) * dx, ys[n - 2],
+        (n - 1) * dx, ys[n - 1],
+        (n - 1) * dx, ys[n - 1]
+    );
+
+    for (let i = 1, x = 0; i < n - 2; i++, x += dx) {
+        d[i] = catmullRom2Bezier(
+            x - dx, ys[i - 1],
+            x, ys[i],
+            x + dx, ys[i + 1],
+            x + dx + dx, ys[i + 2]
         );
     }
 
