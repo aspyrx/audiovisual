@@ -100,41 +100,47 @@ class FreqBar extends Component {
     }
 
     render() {
-        const { width, height, index, color } = this.props;
+        const { x, y, width, height, fill } = this.props;
 
         return <rect
             ref={this.rectRef}
             className={styles.freq}
-            fill={color}
-            width={width - 1}
-            height={height / 3}
-            x={index * width}
-            y={height * 2 / 3}
+            fill={fill}
+            x={x}
+            y={y}
+            width={width}
+            height={height}
         />;
     }
 }
 
 FreqBar.propTypes = {
     index: number.isRequired,
+    x: number.isRequired,
+    y: number.isRequired,
     width: number.isRequired,
     height: number.isRequired,
-    color: string.isRequired
+    fill: string.isRequired
 };
 
 
 function FreqBars(props) {
-    const { freqRef, numFreq, width, height, color } = props;
-    const barWidth = width / numFreq;
-
+    const { freqRef, numFreq, width, height, fill } = props;
+    const dx = width / numFreq;
+    const barWidth = dx * 0.98;
+    const barHeight = height / 3;
+    const y = height * 2 / 3;
     const freqBars = new Array(numFreq);
-    for (let i = 0; i < numFreq; i++) {
+    for (let i = 0, x = 0; i < numFreq; i++, x += dx) {
         freqBars[i] = <FreqBar
             key={i}
-            ref={freqRef}
             index={i}
+            ref={freqRef}
+            x={x}
+            y={y}
             width={barWidth}
-            height={height}
-            color={color}
+            height={barHeight}
+            fill={fill}
         />;
     }
 
@@ -148,7 +154,7 @@ FreqBars.propTypes = {
     numFreq: number.isRequired,
     width: number.isRequired,
     height: number.isRequired,
-    color: string.isRequired
+    fill: string.isRequired
 };
 
 export default class Audiovisual extends Component {
@@ -173,7 +179,7 @@ export default class Audiovisual extends Component {
 
     static get defaultProps() {
         return {
-            numFreq: 64,
+            numFreq: 128,
             numWave: 1024,
             waveWidth: 3,
             freqColor: 'white',
@@ -445,7 +451,7 @@ export default class Audiovisual extends Component {
                 <FreqBars
                     freqRef={freqRef}
                     numFreq={numFreq}
-                    color={freqColor}
+                    fill={freqColor}
                     width={offsetWidth}
                     height={offsetHeight}
                 />

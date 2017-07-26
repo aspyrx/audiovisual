@@ -15,7 +15,7 @@ export default class Spectral {
 
         const {
             bufsize = 2048,
-            smoothing = 0.2,
+            smoothing = 0.8,
             delay = 0.25
         } = options;
 
