@@ -290,7 +290,9 @@ export default class Audiovisual extends Component {
     }
 
     freqRef(freq) {
-        this.freqs[freq.props.index] = freq;
+        if (freq) {
+            this.freqs[freq.props.index] = freq;
+        }
     }
 
     progressRef(progress) {

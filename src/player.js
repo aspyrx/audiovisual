@@ -288,7 +288,7 @@ export default class Player extends Component {
         } = this.state;
 
         const {
-            addMicrophone, addSongs, setFile, nextSong, prevSong,
+            addMicrophone, addSongs, setFile, removeFile, nextSong, prevSong,
             togglePlayback, toggleShuffle, toggleRepeat, toggleUpdating,
             toggleHelp
         } = this;
@@ -367,6 +367,7 @@ export default class Player extends Component {
                     audio={audio}
                     streams={streams}
                     setFile={setFile}
+                    removeFile={removeFile}
                     addSongs={addSongs}
                     addMicrophone={addMicrophone}
                 />

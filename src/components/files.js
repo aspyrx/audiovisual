@@ -15,32 +15,43 @@ const fileShape = shape({
 });
 
 function FileInfo(props) {
-    const { file, selected, onClick } = props;
+    const { file, selected, onClick, onRemove } = props;
     const className = classNames(styles.file, {
         [styles.selected]: selected
     });
 
+    let contents;
     if (!file) {
-        return <p className={className} onClick={onClick} title={props.title}>
-            <span>No song selected.</span>
-        </p>;
+        contents = <span onClick={onClick}>No song selected.</span>;
+    } else {
+        const {
+            artist = 'no artist',
+            album = 'no album',
+            title
+        } = file;
+
+        let text;
+        if (title) {
+            text = `${artist} · ${album} · ${title}`;
+        } else {
+            const { stream, url } = file;
+            text = stream
+                ? 'Streaming...'
+                : url.match(/[^/]*$/)[0];
+        }
+
+        contents = onRemove
+            ? [
+                <span key='contents' onClick={onClick}>{text}</span>,
+                <span key='remove' className={styles.remove} onClick={onRemove}>
+                    ×
+                </span>
+            ]
+            : <span onClick={onClick}>{text}</span>;
     }
 
-    const { url, stream, title, artist, album } = file;
-    const filename = stream ? 'Streaming...' : url.match(/[^/]*$/)[0];
-
-    if (!title) {
-        return <p className={className} onClick={onClick} title={props.title}>
-            <span>{filename}</span>
-        </p>;
-    }
-
-    return <p className={className} onClick={onClick} title={props.title}>
-        <span>{artist || 'no artist'}</span>
-        <span>&nbsp;&middot;&nbsp;</span>
-        <span>{album || 'no album'}</span>
-        <span>&nbsp;&middot;&nbsp;</span>
-        <span>{title}</span>
+    return <p className={className} title={props.title}>
+        {contents}
     </p>;
 }
 
@@ -49,6 +60,7 @@ FileInfo.propTypes = {
     selected: bool,
     className: string,
     onClick: func,
+    onRemove: func,
     title: string
 };
 
@@ -87,6 +99,7 @@ export default class Files extends Component {
             audio: arrayOf(fileShape).isRequired,
             streams: arrayOf(fileShape).isRequired,
             setFile: func.isRequired,
+            removeFile: func.isRequired,
             addSongs: func.isRequired,
             addMicrophone: func.isRequired
         };
@@ -116,7 +129,7 @@ export default class Files extends Component {
 
     render() {
         const {
-            file, audio, streams, setFile, addSongs, addMicrophone
+            file, audio, streams, setFile, removeFile, addSongs, addMicrophone
         } = this.props;
         const { filter, showing } = this.state;
         const { toggle } = this;
@@ -135,11 +148,16 @@ export default class Files extends Component {
                 setFile(f);
             }
 
+            function onRemove() {
+                removeFile(f);
+            }
+
             return <FileInfo
                 key={i}
                 file={f}
                 selected={f === file}
                 onClick={onClick}
+                onRemove={onRemove}
             />;
         });
 
@@ -155,12 +173,17 @@ export default class Files extends Component {
                 setFile(f);
             }
 
+            function onRemove() {
+                removeFile(f);
+            }
+
             return !filter || search.includes(filter)
                 ? <FileInfo
                     key={i}
                     file={f}
                     selected={f === file}
                     onClick={onClick}
+                    onRemove={onRemove}
                 />
                 : null;
         });

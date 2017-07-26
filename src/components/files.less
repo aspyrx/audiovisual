@@ -61,8 +61,17 @@
             margin: 4px;
             cursor: pointer;
 
+            .remove {
+                display: none;
+            }
+
             &:hover, &.selected {
                 text-decoration: underline;
+
+                .remove {
+                    display: unset;
+                    float: right;
+                }
             }
         }
     }
