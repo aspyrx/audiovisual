@@ -87,76 +87,6 @@ PlayIcon.propTypes = {
     className: string
 };
 
-class FreqBar extends Component {
-    constructor() {
-        super();
-
-        this.rect = null;
-        this.rectRef = this.rectRef.bind(this);
-    }
-
-    rectRef(rect) {
-        this.rect = rect;
-    }
-
-    render() {
-        const { x, y, width, height, fill } = this.props;
-
-        return <rect
-            ref={this.rectRef}
-            className={styles.freq}
-            fill={fill}
-            x={x}
-            y={y}
-            width={width}
-            height={height}
-        />;
-    }
-}
-
-FreqBar.propTypes = {
-    index: number.isRequired,
-    x: number.isRequired,
-    y: number.isRequired,
-    width: number.isRequired,
-    height: number.isRequired,
-    fill: string.isRequired
-};
-
-
-function FreqBars(props) {
-    const { freqRef, numFreq, width, height, fill } = props;
-    const dx = width / numFreq;
-    const barWidth = dx * 0.98;
-    const barHeight = height / 3;
-    const y = height * 2 / 3;
-    const freqBars = new Array(numFreq);
-    for (let i = 0, x = 0; i < numFreq; i++, x += dx) {
-        freqBars[i] = <FreqBar
-            key={i}
-            index={i}
-            ref={freqRef}
-            x={x}
-            y={y}
-            width={barWidth}
-            height={barHeight}
-            fill={fill}
-        />;
-    }
-
-    return <g className={styles.freqBars}>
-        {freqBars}
-    </g>;
-}
-
-FreqBars.propTypes = {
-    freqRef: func,
-    numFreq: number.isRequired,
-    width: number.isRequired,
-    height: number.isRequired,
-    fill: string.isRequired
-};
-
 export default class Audiovisual extends Component {
     static get propTypes() {
         return {
@@ -190,6 +120,7 @@ export default class Audiovisual extends Component {
         };
     }
 
+    // eslint-disable-next-line max-statements
     constructor(props) {
         super();
 
@@ -208,9 +139,12 @@ export default class Audiovisual extends Component {
         this.node = null;
 
         this.wave = null;
-        this.wavePoints = new Float32Array(numWave);
+        this.waveXs = new Float32Array(numWave);
+        this.waveYs = new Float32Array(numWave);
 
-        this.freqs = new Array(numFreq);
+        this.freq = null;
+        this.freqXs = new Float32Array(numFreq);
+        this.freqYs = new Float32Array(numFreq);
 
         this.progress = null;
 
@@ -236,7 +170,26 @@ export default class Audiovisual extends Component {
 
     onResize() {
         const { offsetWidth, offsetHeight } = this.node;
-        this.setState({ offsetWidth, offsetHeight });
+        if (offsetWidth !== this.state.offsetWidth) {
+            const { numFreq, numWave } = this.props;
+            const { freqXs, waveXs } = this;
+
+            const dfX = offsetWidth / numFreq;
+            for (let i = 0, x = dfX; i < numFreq; i++, x += dfX) {
+                freqXs[i] = x;
+            }
+
+            const dwX = offsetWidth / numWave;
+            for (let i = 0, x = 0; i < numWave; i++, x += dwX) {
+                waveXs[i] = x;
+            }
+
+            this.setState({ offsetWidth });
+        }
+
+        if (offsetHeight !== this.state.offsetHeight) {
+            this.setState({ offsetHeight });
+        }
     }
 
     initSpectral(audio) {
@@ -290,9 +243,7 @@ export default class Audiovisual extends Component {
     }
 
     freqRef(freq) {
-        if (freq) {
-            this.freqs[freq.props.index] = freq;
-        }
+        this.freq = freq;
     }
 
     progressRef(progress) {
@@ -311,7 +262,7 @@ export default class Audiovisual extends Component {
             return;
         }
 
-        const { spectral, waveform, wavePoints } = this;
+        const { spectral, waveform, waveXs, waveYs } = this;
         spectral.fillWaveform(waveform);
 
         const { waveformSize } = spectral;
@@ -320,19 +271,25 @@ export default class Audiovisual extends Component {
 
         const waveStep = waveformSize / numWave;
         for (let i = 0; i < numWave; i++) {
-            wavePoints[i] = (
+            waveYs[i] = (
                 average(waveform, i * waveStep, (i + 1) * waveStep) / 3 + 0.5
             ) * h;
         }
 
         if (wave) {
-            const bezier = ysToBezier(w, numWave, wavePoints);
+            const bezier = pointsToBezier(numWave, waveXs, waveYs);
             wave.setAttribute('d', `M0,${h / 2} ${bezier} M${w},${h / 2}`);
         }
     }
 
     updateFreq() {
-        const { spectral, spectrum, freqs } = this;
+        const { freq } = this;
+        if (!freq) {
+            return;
+        }
+
+        const { spectral, spectrum, freqXs, freqYs } = this;
+        const { offsetWidth: w, offsetHeight: h } = this.state;
 
         spectral.fillSpectrum(spectrum);
         Array.prototype.forEach.call(
@@ -342,17 +299,18 @@ export default class Audiovisual extends Component {
         const { numFreq } = this.props;
         const { spectrumSize } = spectral;
 
-        for (let i = 0; i < numFreq; i++) {
-            const freq = freqs[i];
-            if (freq && freq.rect) {
-                const scale = calcFreq(average(
-                    spectrum,
-                    freqStep(i, numFreq, spectrumSize),
-                    freqStep(i + 1, numFreq, spectrumSize)
-                ), (1 - (i / numFreq)) * 100);
-                freq.rect.style.transform = `scaleY(${scale})`;
-            }
+        const db = -100 / numFreq;
+        const barHeight = h / 3;
+        for (let i = 0, b = 100; i < numFreq; i++, b += db) {
+            freqYs[i] = h - calcFreq(average(
+                spectrum,
+                freqStep(i, numFreq, spectrumSize),
+                freqStep(i + 1, numFreq, spectrumSize)
+            ), b) * barHeight;
         }
+
+        const points = pointsToBars(numFreq, 0, freqXs, freqYs);
+        freq.setAttribute('points', `0,${h} ${points} ${w},${h}`);
     }
 
     startAnimating() {
@@ -376,7 +334,7 @@ export default class Audiovisual extends Component {
         } = props;
 
         if (numFreq !== old.numFreq) {
-            this.freqs = new Array(numFreq);
+            this.freqPoints = new Float32Array(numFreq);
         }
 
         if (numWave !== old.numWave) {
@@ -400,7 +358,7 @@ export default class Audiovisual extends Component {
 
     render() {
         const {
-            className, waveWidth, numFreq,
+            className, waveWidth,
             bgColor, altColor, textColor, waveColor, freqColor,
             src, stream, playing, onEnded
         } = this.props;
@@ -450,12 +408,9 @@ export default class Audiovisual extends Component {
                     ref={waveRef}
                     fill='none' stroke={waveColor} strokeWidth={waveWidth}
                 />
-                <FreqBars
-                    freqRef={freqRef}
-                    numFreq={numFreq}
+                <polygon
+                    ref={freqRef}
                     fill={freqColor}
-                    width={offsetWidth}
-                    height={offsetHeight}
                 />
             </svg>
             <TransitionGroup>
@@ -476,44 +431,89 @@ function catmullRom2Bezier(ax, ay, bx, by, cx, cy, dx, dy) {
     //    0      1/6      1     -1/6
     //    0       0       1       0
 
-    const px = (-ax + 6 * bx + cx) / 6;
-    const py = (-ay + 6 * by + cy) / 6;
-    const qx = (bx + 6 * cx - dx) / 6;
-    const qy = (by + 6 * cy - dy) / 6;
+    const px = ((-ax + 6 * bx + cx) / 6).toFixed(3);
+    const py = ((-ay + 6 * by + cy) / 6).toFixed(3);
+    const qx = ((bx + 6 * cx - dx) / 6).toFixed(3);
+    const qy = ((by + 6 * cy - dy) / 6).toFixed(3);
 
     return `C${px},${py} ${qx},${qy} ${cx},${cy}`;
 }
 
-function ysToBezier(w, n, ys) {
+// eslint-disable-next-line max-statements
+function pointsToBezier(n, xs, ys) {
     if (n < 3) {
         return '';
     }
 
-    const dx = w / n;
     const d = new Array(n - 1);
 
-    d[0] = catmullRom2Bezier(
-        0, ys[0],
-        0, ys[0],
-        dx, ys[1],
-        dx + dx, ys[2]
-    );
-
     d[n - 2] = catmullRom2Bezier(
-        (n - 3) * dx, ys[n - 3],
-        (n - 2) * dx, ys[n - 2],
-        (n - 1) * dx, ys[n - 1],
-        (n - 1) * dx, ys[n - 1]
+        xs[n - 3], ys[n - 3],
+        xs[n - 2], ys[n - 2],
+        xs[n - 1], ys[n - 1],
+        xs[n - 1], ys[n - 1]
     );
 
-    for (let i = 1, x = 0; i < n - 2; i++, x += dx) {
+    let xp = xs[0];
+    let yp = ys[0];
+    let x = xs[0];
+    let y = ys[0];
+    let xn = xs[1];
+    let yn = ys[1];
+    let xnn = xs[2];
+    let ynn = ys[2];
+    d[0] = catmullRom2Bezier(
+        xp, yp,
+        xp, yp,
+        xn, yn,
+        xnn, ynn
+    );
+
+    for (let i = 1; i < n - 2; i++) {
         d[i] = catmullRom2Bezier(
-            x - dx, ys[i - 1],
-            x, ys[i],
-            x + dx, ys[i + 1],
-            x + dx + dx, ys[i + 2]
+            xp, yp,
+            x, y,
+            xn, yn,
+            xnn, ynn
         );
+
+        xp = x;
+        yp = y;
+        x = xn;
+        y = yn;
+        xn = xnn;
+        yn = ynn;
+        xnn = xs[i + 2];
+        ynn = ys[i + 2];
     }
+
+    return d.join(' ');
+}
+
+/**
+ * Converts a set of points to coordinates representing bars.
+ *
+ * @param {number} n - length of ys
+ * @param {number} startX - the starting x coordinate
+ * @param {Float32Array} xs - x coords
+ * @param {Float32Array} ys - y coords
+ * @returns {string} - The formatted coordinates.
+ */
+function pointsToBars(n, startX, xs, ys) {
+    if (n < 2) {
+        return '';
+    }
+
+    const d = new Array(n + 1);
+
+    let i = 0, x = startX;
+    do {
+        const xn = xs[i].toFixed(3);
+        const y = ys[i].toFixed(3);
+        d[i] = `${x},${y} ${xn},${y}`;
+        i++;
+        x = xn;
+    } while (i < n);
 
     return d.join(' ');
 }
