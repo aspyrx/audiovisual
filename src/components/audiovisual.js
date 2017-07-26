@@ -319,7 +319,7 @@ export default class Audiovisual extends Component {
 
         if (wave) {
             const bezier = ysToBezier(w, numWave, wavePoints);
-            wave.setAttribute('d', `M0,${h / 2} ${bezier} ${w},${h / 2}`);
+            wave.setAttribute('d', `M0,${h / 2} ${bezier} M${w},${h / 2}`);
         }
     }
 
