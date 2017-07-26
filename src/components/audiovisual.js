@@ -282,7 +282,7 @@ export default class Audiovisual extends Component {
         const waveStep = waveformSize / numWave;
         for (let i = 0; i < numWave; i++) {
             waveYs[i] = (
-                average(waveform, i * waveStep, (i + 1) * waveStep) / 3 + 0.5
+                average(waveform, i * waveStep, (i + 1) * waveStep) / 6 + 0.5
             ) * h;
         }
 
