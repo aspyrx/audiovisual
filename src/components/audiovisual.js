@@ -26,7 +26,14 @@ function normalizeFreq(f) {
 }
 
 function calcFreq(f, b) {
-    return Math.min((Math.pow(b, f) - 1) / (b - 1), 1);
+    const x = (Math.pow(b, f) - 1) / (b - 1);
+    if (x < 0) {
+        return 0;
+    } else if (x > 1) {
+        return 1;
+    }
+
+    return x;
 }
 
 function freqStep(i, m, n) {
@@ -129,24 +136,25 @@ export default class Audiovisual extends Component {
             numWave
         } = props;
 
+        // refs
         this.audio = null;
         this.spectral = null;
+        this.node = null;
+        this.canvas = null;
+        this.progress = null;
+
+        // timers
+        this.animFrame = null;
+
+        // data arrays
         this.waveform = null;
         this.spectrum = null;
 
-        this.animFrame = null;
-
-        this.node = null;
-
-        this.wave = null;
         this.waveXs = new Float32Array(numWave);
         this.waveYs = new Float32Array(numWave);
 
-        this.freq = null;
         this.freqXs = new Float32Array(numFreq);
         this.freqYs = new Float32Array(numFreq);
-
-        this.progress = null;
 
         this.state = {
             offsetWidth: 1,
@@ -154,7 +162,7 @@ export default class Audiovisual extends Component {
         };
 
         [
-            'nodeRef', 'audioRef', 'waveRef', 'freqRef', 'progressRef',
+            'audioRef', 'nodeRef', 'canvasRef', 'progressRef',
             'onAnimFrame', 'onTimeUpdate', 'onResize'
         ].forEach(key => {
             this[key] = this[key].bind(this);
@@ -238,12 +246,12 @@ export default class Audiovisual extends Component {
         }
     }
 
-    waveRef(wave) {
-        this.wave = wave;
-    }
-
-    freqRef(freq) {
-        this.freq = freq;
+    canvasRef(canvas) {
+        if (canvas) {
+            this.canvas = canvas.getContext('2d');
+        } else {
+            this.canvas = null;
+        }
     }
 
     progressRef(progress) {
@@ -251,23 +259,25 @@ export default class Audiovisual extends Component {
     }
 
     onAnimFrame() {
-        this.updateWave();
-        this.updateFreq();
-        this.animFrame = requestAnimationFrame(this.onAnimFrame);
-    }
-
-    updateWave() {
-        const { wave } = this;
-        if (!wave) {
+        const { canvas } = this;
+        if (!canvas) {
             return;
         }
 
+        const { offsetWidth: w, offsetHeight: h } = this.state;
+        canvas.clearRect(0, 0, w, h);
+        this.updateWave(canvas);
+        this.updateFreq(canvas);
+        this.animFrame = requestAnimationFrame(this.onAnimFrame);
+    }
+
+    updateWave(canvas) {
         const { spectral, waveform, waveXs, waveYs } = this;
         spectral.fillWaveform(waveform);
 
         const { waveformSize } = spectral;
-        const { numWave } = this.props;
-        const { offsetWidth: w, offsetHeight: h } = this.state;
+        const { numWave, waveColor, waveWidth } = this.props;
+        const { offsetHeight: h } = this.state;
 
         const waveStep = waveformSize / numWave;
         for (let i = 0; i < numWave; i++) {
@@ -276,28 +286,26 @@ export default class Audiovisual extends Component {
             ) * h;
         }
 
-        if (wave) {
-            const bezier = pointsToBezier(numWave, waveXs, waveYs);
-            wave.setAttribute('d', `M0,${h / 2} ${bezier} M${w},${h / 2}`);
-        }
+        canvas.beginPath();
+        canvas.strokeStyle = waveColor;
+        canvas.lineWidth = waveWidth;
+        canvas.moveTo(0, h / 2);
+        drawBezier(canvas, numWave, waveXs, waveYs);
+        canvas.stroke();
     }
 
-    updateFreq() {
-        const { freq } = this;
-        if (!freq) {
-            return;
-        }
-
+    // eslint-disable-next-line max-statements
+    updateFreq(canvas) {
         const { spectral, spectrum, freqXs, freqYs } = this;
-        const { offsetWidth: w, offsetHeight: h } = this.state;
 
         spectral.fillSpectrum(spectrum);
         Array.prototype.forEach.call(
             spectrum, (f, i) => (spectrum[i] = normalizeFreq(f))
         );
 
-        const { numFreq } = this.props;
         const { spectrumSize } = spectral;
+        const { numFreq, freqColor } = this.props;
+        const { offsetWidth: w, offsetHeight: h } = this.state;
 
         const db = -100 / numFreq;
         const barHeight = h / 3;
@@ -309,8 +317,13 @@ export default class Audiovisual extends Component {
             ), b) * barHeight;
         }
 
-        const points = pointsToBars(numFreq, 0, freqXs, freqYs);
-        freq.setAttribute('points', `0,${h} ${points} ${w},${h}`);
+        canvas.beginPath();
+        canvas.fillStyle = freqColor;
+        canvas.moveTo(0, h);
+        drawBars(canvas, numFreq, 0, freqXs, freqYs);
+        canvas.lineTo(w, h);
+        canvas.closePath();
+        canvas.fill();
     }
 
     startAnimating() {
@@ -359,7 +372,7 @@ export default class Audiovisual extends Component {
     render() {
         const {
             className, waveWidth,
-            bgColor, altColor, textColor, waveColor, freqColor,
+            bgColor, altColor, textColor,
             src, stream, playing, onEnded
         } = this.props;
 
@@ -372,7 +385,13 @@ export default class Audiovisual extends Component {
 
         const { offsetWidth, offsetHeight } = this.state;
 
-        const { nodeRef, audioRef, progressRef, waveRef, freqRef } = this;
+        const { nodeRef, audioRef, progressRef, canvasRef } = this;
+
+        const waveZeroStyle = {
+            backgroundColor: altColor,
+            height: waveWidth,
+            bottom: (offsetHeight - waveWidth) / 2
+        };
 
         const playbackIndicator = playing
             ? <PlayIcon textColor={textColor} />
@@ -388,6 +407,7 @@ export default class Audiovisual extends Component {
                 ref={audioRef}
                 onEnded={onEnded}
             />
+            <div className={styles.waveZero} style={waveZeroStyle}></div>
             <div
                 className={styles.progressContainer}
                 style={{ backgroundColor: altColor }}
@@ -398,21 +418,12 @@ export default class Audiovisual extends Component {
                     style={{ backgroundColor: textColor }}
                 />
             </div>
-            <svg className={styles.visualiser}>
-                <line
-                    x1={0} y1={offsetHeight / 2}
-                    x2={offsetWidth} y2={offsetHeight / 2}
-                    fill='none' stroke={altColor} strokeWidth={waveWidth}
-                />
-                <path
-                    ref={waveRef}
-                    fill='none' stroke={waveColor} strokeWidth={waveWidth}
-                />
-                <polygon
-                    ref={freqRef}
-                    fill={freqColor}
-                />
-            </svg>
+            <canvas
+                ref={canvasRef}
+                className={styles.visualiser}
+                width={offsetWidth}
+                height={offsetHeight}
+            />
             <TransitionGroup>
                 <FadeTransition key={playing ? 'play' : 'pause'}>
                     {playbackIndicator}
@@ -424,35 +435,26 @@ export default class Audiovisual extends Component {
 
 // Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
 // eslint-disable-next-line max-params
-function catmullRom2Bezier(ax, ay, bx, by, cx, cy, dx, dy) {
+function drawBezierFromCatmullRom(canvas, ax, ay, bx, by, cx, cy, dx, dy) {
     // Catmull-Rom to Cubic Bezier conversion matrix
     //    0       1       0       0
     //  -1/6      1      1/6      0
     //    0      1/6      1     -1/6
     //    0       0       1       0
 
-    const px = ((-ax + 6 * bx + cx) / 6).toFixed(3);
-    const py = ((-ay + 6 * by + cy) / 6).toFixed(3);
-    const qx = ((bx + 6 * cx - dx) / 6).toFixed(3);
-    const qy = ((by + 6 * cy - dy) / 6).toFixed(3);
+    const px = (-ax + 6 * bx + cx) / 6;
+    const py = (-ay + 6 * by + cy) / 6;
+    const qx = (bx + 6 * cx - dx) / 6;
+    const qy = (by + 6 * cy - dy) / 6;
 
-    return `C${px},${py} ${qx},${qy} ${cx},${cy}`;
+    canvas.bezierCurveTo(px, py, qx, qy, cx, cy);
 }
 
 // eslint-disable-next-line max-statements
-function pointsToBezier(n, xs, ys) {
+function drawBezier(canvas, n, xs, ys) {
     if (n < 3) {
-        return '';
+        return;
     }
-
-    const d = new Array(n - 1);
-
-    d[n - 2] = catmullRom2Bezier(
-        xs[n - 3], ys[n - 3],
-        xs[n - 2], ys[n - 2],
-        xs[n - 1], ys[n - 1],
-        xs[n - 1], ys[n - 1]
-    );
 
     let xp = xs[0];
     let yp = ys[0];
@@ -462,7 +464,8 @@ function pointsToBezier(n, xs, ys) {
     let yn = ys[1];
     let xnn = xs[2];
     let ynn = ys[2];
-    d[0] = catmullRom2Bezier(
+    drawBezierFromCatmullRom(
+        canvas,
         xp, yp,
         xp, yp,
         xn, yn,
@@ -470,7 +473,8 @@ function pointsToBezier(n, xs, ys) {
     );
 
     for (let i = 1; i < n - 2; i++) {
-        d[i] = catmullRom2Bezier(
+        drawBezierFromCatmullRom(
+            canvas,
             xp, yp,
             x, y,
             xn, yn,
@@ -487,34 +491,23 @@ function pointsToBezier(n, xs, ys) {
         ynn = ys[i + 2];
     }
 
-    return d.join(' ');
+    drawBezierFromCatmullRom(
+        canvas,
+        xs[n - 3], ys[n - 3],
+        xs[n - 2], ys[n - 2],
+        xs[n - 1], ys[n - 1],
+        xs[n - 1], ys[n - 1]
+    );
 }
 
-/**
- * Converts a set of points to coordinates representing bars.
- *
- * @param {number} n - length of ys
- * @param {number} startX - the starting x coordinate
- * @param {Float32Array} xs - x coords
- * @param {Float32Array} ys - y coords
- * @returns {string} - The formatted coordinates.
- */
-function pointsToBars(n, startX, xs, ys) {
-    if (n < 2) {
-        return '';
-    }
-
-    const d = new Array(n + 1);
-
-    let i = 0, x = startX;
-    do {
-        const xn = xs[i].toFixed(3);
-        const y = ys[i].toFixed(3);
-        d[i] = `${x},${y} ${xn},${y}`;
-        i++;
+// eslint-disable-next-line max-params
+function drawBars(canvas, n, startX, xs, ys) {
+    for (let i = 0, x = startX; i < n; i++) {
+        const xn = xs[i];
+        const y = ys[i];
+        canvas.lineTo(x, y);
+        canvas.lineTo(xn, y);
         x = xn;
-    } while (i < n);
-
-    return d.join(' ');
+    }
 }
 
