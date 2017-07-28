@@ -7,6 +7,7 @@ import KeyHandler, { KEYDOWN } from 'react-key-handler';
 import { func } from 'prop-types';
 import jsmediatags from 'jsmediatags';
 
+import Spinner from 'components/spinner';
 import Audiovisual from 'components/audiovisual';
 import Files from 'components/files';
 import styles from './player.less';
@@ -40,47 +41,22 @@ function addTags(file) {
 
         file.hasTags = true;
 
-        if (!tags.picture) {
-            return file;
+        if (tags.picture) {
+            const type = {
+                'jpg': 'image/jpeg',
+                'png': 'image/png',
+                'gif': 'image/gif'
+            }[tags.picture.format.toLowerCase()];
+            const pictureObj = new Blob(tags.picture.data);
+            file.pictureObj = pictureObj;
+            file.pictureUrl = URL.createObjectURL(pictureObj, { type });
         }
+
+        return file;
     }, err => {
         console.error('failed to parse tags', err);
         return err;
     });
-}
-
-function addFileObj(file) {
-    if (!file.url || file.fileObj) {
-        return Promise.resolve(file);
-    }
-
-    return new Promise((resolve, reject) => {
-        const req = new XMLHttpRequest();
-        req.responseType = 'blob';
-        req.onreadystatechange = () => {
-            if (req.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
-            if (req.status !== 200) {
-                return;
-            }
-
-            if (!(req.response instanceof Blob)) {
-                return;
-            }
-
-            resolve(req.response);
-        };
-        req.onerror = reject;
-        req.open('GET', file.url);
-        req.send();
-    }).then(blob => {
-        const fileObj = new File([blob], file.url, { type: blob.type });
-        file.fileObj = fileObj;
-        file.url = URL.createObjectURL(fileObj);
-        file.hasObjectURL = true;
-        return file;
-    }, () => file);
 }
 
 function Help(props) {
@@ -130,6 +106,7 @@ export default class Player extends Component {
         super();
 
         this.state = {
+            loading: false,
             playing: true,
             repeat: false,
             shuffle: true,
@@ -170,6 +147,54 @@ export default class Player extends Component {
 
     toggleUpdating() {
         this.setState({ updating: !this.state.updating });
+    }
+
+    request(method, url, opts) {
+        return new Promise((resolve, reject) => {
+            const req = new XMLHttpRequest();
+            Object.assign(req, opts);
+            req.onreadystatechange = () => {
+                if (req.readyState === req.OPENED) {
+                    this.setState({ loading: true });
+                    return;
+                } else if (req.readyState !== XMLHttpRequest.DONE) {
+                    return;
+                }
+
+                this.setState({ loading: false }, () => resolve(req));
+            };
+            req.onerror = () => {
+                this.setState({ loading: false });
+                reject(req);
+            };
+            req.open(method, url);
+            req.send();
+        });
+    }
+
+    addFileObj(file) {
+        if (!file.url || file.fileObj) {
+            return Promise.resolve(file);
+        }
+
+        return this.request(
+            'GET', file.url, { responseType: 'blob' }
+        ).then(req => {
+            if (req.status !== 200) {
+                return;
+            }
+
+            if (!(req.response instanceof Blob)) {
+                return;
+            }
+
+            const blob = req.response;
+            const fileObj = new File([blob], file.url, { type: blob.type });
+            file.fileObj = fileObj;
+            file.url = URL.createObjectURL(fileObj);
+            file.hasObjectURL = true;
+            return file;
+        }, () => file);
     }
 
     addFile(file) {
@@ -217,7 +242,7 @@ export default class Player extends Component {
             return state;
         }, () => {
             if (file.hasObjectURL) {
-                window.URL.revokeObjectURL(file.url);
+                URL.revokeObjectURL(file.url);
             }
 
             if (file.stream) {
@@ -268,7 +293,7 @@ export default class Player extends Component {
         Promise.all(Array.prototype.map.call(evt.target.files, fileObj => {
             const file = {
                 fileObj: fileObj,
-                url: window.URL.createObjectURL(fileObj),
+                url: URL.createObjectURL(fileObj),
                 hasObjectURL: true
             };
 
@@ -277,7 +302,7 @@ export default class Player extends Component {
     }
 
     setFile(file) {
-        addFileObj(file).then(addTags).then(() => {
+        this.addFileObj(file).then(addTags).then(() => {
             const { hist } = this.state;
             this.setState({
                 hist: [file].concat(hist),
@@ -333,11 +358,7 @@ export default class Player extends Component {
     }
 
     componentDidMount() {
-        const req = new XMLHttpRequest();
-        req.onreadystatechange = () => {
-            if (req.readyState !== XMLHttpRequest.DONE) {
-                return;
-            }
+        this.request('GET', '/files.json').then(req => {
             if (req.status !== 200) {
                 return;
             }
@@ -353,15 +374,13 @@ export default class Player extends Component {
             }
 
             this.addFile(audio);
-        };
-        req.open('GET', '/files.json');
-        req.send();
+        });
     }
 
     render() {
         const {
             showingHelp, shuffle, repeat, audio, streams,
-            hist, histIndex, updating, playing
+            hist, histIndex, updating, playing, loading
         } = this.state;
 
         const {
@@ -435,8 +454,13 @@ export default class Player extends Component {
             ? <Help onClick={toggleHelp} />
             : null;
 
+        const spinner = loading
+            ? <Spinner />
+            : null;
+
         return <div className={styles.container} onClick={togglePlayback}>
             {keyHandlers}
+            {spinner}
             <Audiovisual className={styles.audiovisual} {...avProps} />
             <div className={styles.info} onClick={stopEventPropagation}>
                 <Files
