@@ -15,10 +15,65 @@ function shuffleIndex(old, n) {
     return (old + 1 + Math.floor(Math.random() * (n - 1))) % n;
 }
 
-function readTags(fileObj) {
-    return new Promise((onSuccess, onError) => {
-        jsmediatags.read(fileObj, { onSuccess, onError });
-    });
+function addTags(file) {
+    const { fileObj } = file;
+
+    if (!(fileObj && /\.(mp3|mp4|m4a)$/.test(fileObj.name))) {
+        return Promise.resolve(file);
+    }
+
+    return new Promise((resolve, reject) => {
+        jsmediatags
+            .setTagsToRead(['artist', 'album', 'title', 'picture'])
+            .read(fileObj, {
+                onSuccess: result => resolve(result.tags),
+                onError: reject
+            });
+    }).then(tags => {
+        ['artist', 'album', 'title'].forEach(key => {
+            if (key in tags) {
+                file[key] = tags[key];
+            }
+        });
+
+        if (!tags.picture) {
+            return file;
+        }
+    }, () => file);
+}
+
+function addFileObj(file) {
+    if (!file.url || file.fileObj) {
+        return Promise.resolve(file);
+    }
+
+    return new Promise((resolve, reject) => {
+        const req = new XMLHttpRequest();
+        req.responseType = 'blob';
+        req.onreadystatechange = () => {
+            if (req.readyState !== XMLHttpRequest.DONE) {
+                return;
+            }
+            if (req.status !== 200) {
+                return;
+            }
+
+            if (!(req.response instanceof Blob)) {
+                return;
+            }
+
+            resolve(req.response);
+        };
+        req.onerror = reject;
+        req.open('GET', file.url);
+        req.send();
+    }).then(blob => {
+        const fileObj = new File([blob], file.url, { type: blob.type });
+        file.fileObj = fileObj;
+        file.url = URL.createObjectURL(fileObj);
+        file.hasObjectURL = true;
+        return file;
+    }, () => file);
 }
 
 function Help(props) {
@@ -115,7 +170,7 @@ export default class Player extends Component {
             return;
         }
 
-        this.setState(({ audio, streams, hist, shuffle }) => {
+        this.setState(({ audio, streams }) => {
             const state = {};
 
             if (file.stream) {
@@ -124,15 +179,11 @@ export default class Player extends Component {
                 state.audio = audio.concat(file);
             }
 
-            if (!hist.length) {
-                state.hist = hist.concat(file.length
-                    ? file[shuffle ? shuffleIndex(0, file.length) : 0]
-                    : file
-                );
-                state.histIndex = 0;
-            }
-
             return state;
+        }, () => {
+            if (this.state.histIndex === null) {
+                this.nextSong();
+            }
         });
     }
 
@@ -157,6 +208,10 @@ export default class Player extends Component {
             }
 
             return state;
+        }, () => {
+            if (file.hasObjectURL) {
+                window.URL.revokeObjectURL(file.url);
+            }
         });
     }
 
@@ -198,60 +253,68 @@ export default class Player extends Component {
     addSongs(evt) {
         Promise.all(Array.prototype.map.call(evt.target.files, fileObj => {
             const file = {
-                url: window.URL.createObjectURL(fileObj)
+                fileObj: fileObj,
+                url: window.URL.createObjectURL(fileObj),
+                hasObjectURL: true
             };
 
-            if (!fileObj.name.match(/\.(mp3|mp4|m4a)$/)) {
-                return file;
-            }
-
-            return readTags(fileObj).then(tag => {
-                file.title = tag.tags.title;
-                file.album = tag.tags.album;
-                file.artist = tag.tags.artist;
-                return file;
-            }, () => file);
+            return addTags(file);
         })).then(this.addFile);
     }
 
     setFile(file) {
-        this.setState(({ hist }) => ({
-            hist: [file].concat(hist),
-            histIndex: 0
-        }));
+        addFileObj(file).then(addTags).then(() => {
+            const { hist } = this.state;
+            this.setState({
+                hist: [file].concat(hist),
+                histIndex: 0
+            });
+        });
     }
 
     nextSong() {
-        this.setState(({
+        const {
             hist, histIndex, repeat, shuffle, audio, streams
-        }) => {
-            if (histIndex === null) {
+        } = this.state;
+
+        if (repeat) {
+            this.setState({ playing: true });
+            return;
+        }
+
+        if (histIndex > 0) {
+            this.setState({ histIndex: histIndex - 1 });
+            return;
+        }
+
+        let file;
+        if (histIndex === null) {
+            const arr = audio.length ? audio : streams;
+            if (!arr.length) {
                 return;
             }
 
-            if (repeat) {
-                return { playing: true };
-            }
-
-            if (histIndex > 0) {
-                return { histIndex: histIndex - 1 };
-            }
-
+            file = arr[shuffle ? shuffleIndex(0, arr.length) : 0];
+        } else {
             const oldFile = hist[histIndex];
             const arr = oldFile.stream ? streams : audio;
             const oldIndex = arr.indexOf(oldFile);
             const index = shuffle
                 ? shuffleIndex(oldIndex, arr.length)
                 : (oldIndex + 1) % arr.length;
-            const file = arr[index];
-            return {
-                hist: [file].concat(hist)
-            };
-        });
+            file = arr[index];
+        }
+
+        this.setFile(file);
     }
 
     prevSong() {
         const { hist, histIndex } = this.state;
+        if (histIndex === null) {
+            this.nextSong();
+            return;
+        }
+
         this.setState({ histIndex: (histIndex + 1) % hist.length });
     }
 
