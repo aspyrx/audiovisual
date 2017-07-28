@@ -7,6 +7,9 @@ import classNames from 'classnames';
 import styles from './files.less';
 
 const fileShape = shape({
+    fileObj: shape({
+        name: string
+    }),
     url: string,
     stream: object,
     title: string,
@@ -14,41 +17,49 @@ const fileShape = shape({
     album: string
 });
 
+function basename(str) {
+    return str.match(/[^/]*$/)[0];
+}
+
+function getTextForFile(file) {
+    if (!file) {
+        return 'No song selected.';
+    }
+
+    const {
+        artist = 'no artist',
+        album = 'no album',
+        title
+    } = file;
+
+    if (title) {
+        return `${artist} - ${album} - ${title}`;
+    }
+
+    const { stream, fileObj, url } = file;
+    if (stream) {
+        return 'Streaming...';
+    } else if (fileObj && fileObj.name) {
+        return basename(fileObj.name);
+    }
+
+    return basename(url);
+}
+
 function FileInfo(props) {
-    const { file, selected, onClick, onRemove } = props;
+    const { text, selected, onClick, onRemove } = props;
     const className = classNames(styles.file, {
         [styles.selected]: selected
     });
 
-    let contents;
-    if (!file) {
-        contents = <span onClick={onClick}>No song selected.</span>;
-    } else {
-        const {
-            artist = 'no artist',
-            album = 'no album',
-            title
-        } = file;
-
-        let text;
-        if (title) {
-            text = `${artist} · ${album} · ${title}`;
-        } else {
-            const { stream, url } = file;
-            text = stream
-                ? 'Streaming...'
-                : url.match(/[^/]*$/)[0];
-        }
-
-        contents = onRemove
-            ? [
-                <span key='contents' onClick={onClick}>{text}</span>,
-                <span key='remove' className={styles.remove} onClick={onRemove}>
-                    ×
-                </span>
-            ]
-            : <span onClick={onClick}>{text}</span>;
-    }
+    const contents = onRemove
+        ? [
+            <span key='contents' onClick={onClick}>{text}</span>,
+            <span key='remove' className={styles.remove} onClick={onRemove}>
+                ×
+            </span>
+        ]
+        : <span onClick={onClick}>{text}</span>;
 
     return <p className={className} title={props.title}>
         {contents}
@@ -56,7 +67,7 @@ function FileInfo(props) {
 }
 
 FileInfo.propTypes = {
-    file: fileShape,
+    text: string.isRequired,
     selected: bool,
     className: string,
     onClick: func,
@@ -138,7 +149,7 @@ export default class Files extends Component {
             return <FileInfo
                 onClick={toggle}
                 title="select a song"
-                file={file}
+                text={getTextForFile(file)}
             />;
         }
 
@@ -154,7 +165,7 @@ export default class Files extends Component {
 
             return <FileInfo
                 key={i}
-                file={f}
+                text={getTextForFile(f)}
                 selected={f === file}
                 onClick={onClick}
                 onRemove={onRemove}
@@ -162,11 +173,8 @@ export default class Files extends Component {
         });
 
         const audioInfo = audio.map((f, i) => {
-            const { url, artist, album, title } = f;
-            const search = (artist || album || title
-                ? [artist, album, title].join(' ')
-                : url
-            ).toLowerCase();
+            const text = getTextForFile(f);
+            const search = text.toLowerCase();
 
             function onClick() {
                 toggle();
@@ -180,7 +188,7 @@ export default class Files extends Component {
             return !filter || search.includes(filter)
                 ? <FileInfo
                     key={i}
-                    file={f}
+                    text={text}
                     selected={f === file}
                     onClick={onClick}
                     onRemove={onRemove}

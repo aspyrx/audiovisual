@@ -16,6 +16,10 @@ function shuffleIndex(old, n) {
 }
 
 function addTags(file) {
+    if (file.hasTags) {
+        return;
+    }
+
     const { fileObj } = file;
 
     if (!(fileObj && /\.(mp3|mp4|m4a)$/.test(fileObj.name))) {
@@ -23,12 +27,10 @@ function addTags(file) {
     }
 
     return new Promise((resolve, reject) => {
-        jsmediatags
-            .setTagsToRead(['artist', 'album', 'title', 'picture'])
-            .read(fileObj, {
-                onSuccess: result => resolve(result.tags),
-                onError: reject
-            });
+        jsmediatags.read(fileObj, {
+            onSuccess: result => resolve(result.tags),
+            onError: reject
+        });
     }).then(tags => {
         ['artist', 'album', 'title'].forEach(key => {
             if (key in tags) {
@@ -36,10 +38,15 @@ function addTags(file) {
             }
         });
 
+        file.hasTags = true;
+
         if (!tags.picture) {
             return file;
         }
-    }, () => file);
+    }, err => {
+        console.error('failed to parse tags', err);
+        return err;
+    });
 }
 
 function addFileObj(file) {
@@ -211,6 +218,13 @@ export default class Player extends Component {
         }, () => {
             if (file.hasObjectURL) {
                 window.URL.revokeObjectURL(file.url);
+            }
+
+            if (file.stream) {
+                file.stream.getTracks().forEach(track => {
+                    track.stop();
+                    file.stream.removeTrack(track);
+                });
             }
         });
     }
