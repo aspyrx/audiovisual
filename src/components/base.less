@@ -1,5 +1,7 @@
 @spacing-x: 8px;
 @spacing-y: 8px;
+@btn-min-height: 64px;
+@btn-min-width: 64px;
 
 @width-sm: 480px;
 @width-md: 768px;
@@ -42,7 +44,7 @@
     @color-bg-active, @color-text-dark, @color-text-light
 );
 
-@box-shadow: 0 @spacing-y / 2 @spacing-y / 2 fadeout(@color-text, 75%);
+@box-shadow: 0 0 @spacing-y fadeout(black, 75%);
 @border: 1px solid fadeout(@color-text, 75%);
 
 @z-index-modal: 1000;

@@ -21,29 +21,47 @@ function basename(str) {
     return str.match(/[^/]*$/)[0];
 }
 
-function getTextForFile(file) {
-    if (!file) {
-        return 'No song selected.';
+function search(filter, file) {
+    if (file.hasTags) {
+        const {
+            artist = 'no artist',
+            album = 'no album',
+            title
+        } = file;
+
+        return artist.includes(filter)
+            || album.includes(filter)
+            || title.includes(filter);
     }
 
-    const {
-        artist = 'no artist',
-        album = 'no album',
-        title
-    } = file;
+    return getTitleForFile(file).includes(filter);
+}
 
-    if (title) {
-        return `${artist} - ${album} - ${title}`;
+function getTitleForFile(file) {
+    if (file.title) {
+        return file.title;
     }
 
-    const { stream, fileObj, url } = file;
-    if (stream) {
+    if (file.stream) {
         return 'Streaming...';
-    } else if (fileObj && fileObj.name) {
+    }
+
+
+    const { fileObj } = file;
+    if (fileObj && fileObj.name) {
         return basename(fileObj.name);
     }
 
-    return basename(url);
+    return basename(file.url);
+}
+
+function getTextForFile(file) {
+    const {
+        artist = 'no artist',
+        album = 'no album'
+    } = file;
+
+    return `${artist} - ${album} - ${getTitleForFile(file)}`;
 }
 
 function FileInfo(props) {
@@ -103,6 +121,55 @@ Actions.propTypes = {
     toggle: func.isRequired
 };
 
+function Compact(props) {
+    const { toggle, file } = props;
+
+    if (!file) {
+        return <div
+            className={styles.compact}
+            onClick={toggle}
+            title="select a song"
+        >
+            <span className={styles.title}>No song selected.</span>
+        </div>;
+    }
+
+    const { artist, album, pictureURL } = file;
+    const title = getTitleForFile(file);
+
+    const pictureElem = pictureURL
+        ? <img className={styles.picture} src={pictureURL} alt="album art" />
+        : <div className={styles.picture}>no album art</div>;
+
+    const artistElem = artist
+        ? <span className={styles.artist}>{artist}</span>
+        : null;
+
+    const albumElem = album
+        ? <span className={styles.album}>{album}</span>
+        : null;
+
+    const titleElem = <span className={styles.title}>{title}</span>;
+
+    return <div
+        className={styles.compact}
+        onClick={toggle}
+        title="select a song"
+    >
+        {pictureElem}
+        <div className={styles.details}>
+            {titleElem}
+            {albumElem}
+            {artistElem}
+        </div>
+    </div>;
+}
+
+Compact.propTypes = {
+    file: fileShape,
+    toggle: func.isRequired
+};
+
 export default class Files extends Component {
     static get propTypes() {
         return {
@@ -139,19 +206,18 @@ export default class Files extends Component {
     }
 
     render() {
-        const {
-            file, audio, streams, setFile, removeFile, addSongs, addMicrophone
-        } = this.props;
-        const { filter, showing } = this.state;
+        const { file } = this.props;
+        const { showing } = this.state;
         const { toggle } = this;
 
         if (!showing) {
-            return <FileInfo
-                onClick={toggle}
-                title="select a song"
-                text={getTextForFile(file)}
-            />;
+            return <Compact file={file} toggle={toggle} />;
         }
+
+        const {
+            audio, streams, setFile, removeFile, addSongs, addMicrophone
+        } = this.props;
+        const { filter } = this.state;
 
         const streamsInfo = streams.map((f, i) => {
             function onClick() {
@@ -174,7 +240,6 @@ export default class Files extends Component {
 
         const audioInfo = audio.map((f, i) => {
             const text = getTextForFile(f);
-            const search = text.toLowerCase();
 
             function onClick() {
                 toggle();
@@ -185,7 +250,7 @@ export default class Files extends Component {
                 removeFile(f);
             }
 
-            return !filter || search.includes(filter)
+            return !filter || search(filter, f)
                 ? <FileInfo
                     key={i}
                     text={text}

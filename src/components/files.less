@@ -9,6 +9,40 @@
     }
 }
 
+.compact {
+    .file();
+
+    display: flex;
+
+    > * {
+        margin: 0 @spacing-x;
+    }
+
+    > .picture {
+        width: @btn-min-width;
+        align-self: center;
+        box-shadow: @box-shadow;
+        text-align: center;
+        font-size: 50%;
+    }
+
+    > div.picture {
+        height: @btn-min-height;
+        display: flex;
+        flex-flow: column nowrap;
+        justify-content: center;
+    }
+
+    > .details {
+        display: flex;
+        flex-flow: column nowrap;
+
+        > .title {
+            font-weight: bolder;
+        }
+    }
+}
+
 .files {
     max-height: 100vh;
 
