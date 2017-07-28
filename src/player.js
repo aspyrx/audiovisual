@@ -16,8 +16,15 @@ function shuffleIndex(old, n) {
     return (old + 1 + Math.floor(Math.random() * (n - 1))) % n;
 }
 
+const formatToMediaType = {
+    jpg: 'image/jpeg',
+    png: 'image/png',
+    'image/jpeg': 'image/jpeg',
+    'image/png': 'image/png'
+};
+
 function addTags(file) {
-    if (file.hasTags) {
+    if (!file || file.hasTags) {
         return;
     }
 
@@ -42,14 +49,13 @@ function addTags(file) {
         file.hasTags = true;
 
         if (tags.picture) {
-            const type = {
-                'jpg': 'image/jpeg',
-                'png': 'image/png',
-                'gif': 'image/gif'
-            }[tags.picture.format.toLowerCase()];
-            const pictureObj = new Blob(tags.picture.data);
+            const { data, format } = tags.picture;
+            const bytes = Uint8Array.from(data);
+            const type = formatToMediaType[format.toLowerCase()];
+
+            const pictureObj = new Blob([bytes], { type });
             file.pictureObj = pictureObj;
-            file.pictureUrl = URL.createObjectURL(pictureObj, { type });
+            file.pictureURL = URL.createObjectURL(pictureObj);
         }
 
         return file;
@@ -245,6 +251,11 @@ export default class Player extends Component {
                 URL.revokeObjectURL(file.url);
             }
 
+            if (file.pictureURL) {
+                URL.revokeObjectURL(file.pictureURL);
+            }
+
+
             if (file.stream) {
                 file.stream.getTracks().forEach(track => {
                     track.stop();
@@ -428,6 +439,7 @@ export default class Player extends Component {
         };
 
         const file = histIndex === null ? null : hist[histIndex];
+        let containerStyle;
         if (file) {
             avProps.src = file.url;
             avProps.stream = file.stream;
@@ -458,7 +470,11 @@ export default class Player extends Component {
             ? <Spinner />
             : null;
 
-        return <div className={styles.container} onClick={togglePlayback}>
+        return <div
+            className={styles.container}
+            onClick={togglePlayback}
+            style={containerStyle}
+        >
             {keyHandlers}
             {spinner}
             <Audiovisual className={styles.audiovisual} {...avProps} />
