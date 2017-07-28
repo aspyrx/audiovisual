@@ -434,7 +434,7 @@ export default class Player extends Component {
 
         const avProps = {
             updating,
-            playing,
+            playing: playing && !loading,
             onEnded: this.nextSong
         };
 
