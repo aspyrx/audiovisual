@@ -12,7 +12,8 @@
   },
   "files": [
     "dist",
-    "bin"
+    "bin",
+    "lib"
   ],
   "bin": {
     "audiovisual": "bin/audiovisual.js"

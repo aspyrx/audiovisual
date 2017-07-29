@@ -12,8 +12,24 @@ import Audiovisual from 'components/audiovisual';
 import Files from 'components/files';
 import styles from './player.less';
 
-function shuffleIndex(old, n) {
-    return (old + 1 + Math.floor(Math.random() * (n - 1))) % n;
+function nextFile(streams, audio, shuffle, oldFile) {
+    let arr, oldIndex;
+    if (!oldFile) {
+        arr = audio.length ? audio : streams;
+        if (!arr.length) {
+            return null;
+        }
+        oldIndex = 0;
+    } else {
+        arr = oldFile.stream ? streams : audio;
+        oldIndex = arr.indexOf(oldFile);
+    }
+
+    const { length } = arr;
+    const incr = shuffle
+        ? Math.floor(Math.random() * (length - 1)) + 1
+        : 1;
+    return arr[(oldIndex + incr) % length];
 }
 
 const formatToMediaType = {
@@ -323,36 +339,25 @@ export default class Player extends Component {
     }
 
     nextSong() {
-        const {
-            hist, histIndex, repeat, shuffle, audio, streams
-        } = this.state;
-
-        if (repeat) {
+        if (this.state.repeat) {
             this.setState({ playing: true });
             return;
         }
 
+        const { histIndex } = this.state;
         if (histIndex > 0) {
             this.setState({ histIndex: histIndex - 1 });
             return;
         }
 
-        let file;
-        if (histIndex === null) {
-            const arr = audio.length ? audio : streams;
-            if (!arr.length) {
-                return;
-            }
+        const { hist, streams, audio, shuffle } = this.state;
 
-            file = arr[shuffle ? shuffleIndex(0, arr.length) : 0];
-        } else {
-            const oldFile = hist[histIndex];
-            const arr = oldFile.stream ? streams : audio;
-            const oldIndex = arr.indexOf(oldFile);
-            const index = shuffle
-                ? shuffleIndex(oldIndex, arr.length)
-                : (oldIndex + 1) % arr.length;
-            file = arr[index];
+        const file = histIndex === null
+            ? nextFile(streams, audio, shuffle)
+            : nextFile(streams, audio, shuffle, hist[histIndex]);
+
+        if (file === null) {
+            return;
         }
 
         this.setFile(file);
@@ -369,7 +374,7 @@ export default class Player extends Component {
     }
 
     componentDidMount() {
-        this.request('GET', '/files.json').then(req => {
+        this.request('GET', '/audio/.audiovisual.json').then(req => {
             if (req.status !== 200) {
                 return;
             }
