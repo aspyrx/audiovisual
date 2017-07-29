@@ -1,6 +1,21 @@
 .audiovisual {
+    @duration-progress: 0.2s;
+    @duration-fade: 0.5s;
+    @duration-fadeOutScale: 0.5s;
+
     position: relative;
     overflow: hidden;
+
+    .bgImage {
+        position: absolute;
+        height: 100%;
+        width: 100%;
+
+        background-repeat: no-repeat;
+        background-size: cover;
+        background-position: center center;
+        filter: brightness(50%) blur(4px);
+    }
 
     .visualiser {
         position: absolute;
@@ -18,7 +33,7 @@
 
         .progress {
             height: 100%;
-            transition: width 0.2s linear;
+            transition: width @duration-progress linear;
         }
     }
 
@@ -26,6 +41,26 @@
         position: absolute;
         left: 0;
         right: 0;
+    }
+
+    .fade {
+        &.fadeIn {
+            opacity: 0;
+
+            &.fadeInActive {
+                opacity: 1;
+                transition: opacity @duration-fade ease;
+            }
+        }
+
+        &.fadeOut {
+            opacity: 1;
+
+            &.fadeOutActive {
+                opacity: 0;
+                transition: opacity @duration-fade ease;
+            }
+        }
     }
 
     .fadeOutScale {
@@ -39,7 +74,7 @@
             &.fadeOutScaleTransitionActive {
                 opacity: 0;
                 transform: scale(1.5, 1.5);
-                transition: all 0.5s ease;
+                transition: all @duration-fadeOutScale ease;
             }
         }
     }

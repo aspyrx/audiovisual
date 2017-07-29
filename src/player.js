@@ -10,7 +10,49 @@ import jsmediatags from 'jsmediatags';
 import Spinner from 'components/spinner';
 import Audiovisual from 'components/audiovisual';
 import Files from 'components/files';
+import Controls from 'components/controls';
 import styles from './player.less';
+
+function stopEventPropagation(evt) {
+    evt.stopPropagation();
+}
+
+function NoItems(props) {
+    const { addMicrophone, addSongs } = props;
+
+    return <div className={styles.container}>
+        <div className={styles.fileInput}>
+            <h1 onClick={addMicrophone}>
+                Click here to use your microphone!
+            </h1>
+            <label>
+                <h1>Click here to select some songs to play!</h1>
+                <input type='file'
+                    accept='audio/*'
+                    multiple
+                    onChange={addSongs} />
+            </label>
+            <h3>(Hint: you can select multiple files)</h3>
+            <h4>
+                (Loading mp3 files can take a while, please be patient!)
+            </h4>
+            <h5>
+                <a href='https://github.com/aspyrx/audiovisual'>
+                    Source code on GitHub
+                </a>
+                <span> made by </span>
+                <a href='https://szz.io/'>
+                    Stan Zhang
+                </a>
+            </h5>
+        </div>
+    </div>;
+}
+
+NoItems.propTypes = {
+    addMicrophone: func.isRequired,
+    addSongs: func.isRequired
+};
 
 function nextFile(streams, audio, shuffle, oldFile) {
     let arr, oldIndex;
@@ -81,48 +123,6 @@ function addTags(file) {
     });
 }
 
-function Help(props) {
-    return <div className={styles.help} onClick={props.onClick}>
-        <table>
-            <tbody>
-                <tr>
-                    <td>V</td>
-                    <td>visualisation on/off</td>
-                </tr>
-                <tr>
-                    <td>S</td>
-                    <td>shuffle on/off</td>
-                </tr>
-                <tr>
-                    <td>R</td>
-                    <td>repeat on/off</td>
-                </tr>
-                <tr>
-                    <td>J, ←</td>
-                    <td>previous song</td>
-                </tr>
-                <tr>
-                    <td>K, space, click</td>
-                    <td>play/pause</td>
-                </tr>
-                <tr>
-                    <td>L, →</td>
-                    <td>next song</td>
-                </tr>
-                <tr>
-                    <td colSpan="2">
-                        Click the song info to select a song.
-                    </td>
-                </tr>
-            </tbody>
-        </table>
-    </div>;
-}
-
-Help.propTypes = {
-    onClick: func
-};
-
 export default class Player extends Component {
     constructor() {
         super();
@@ -144,8 +144,7 @@ export default class Player extends Component {
             'addFile', 'removeFile',
             'addMicrophone', 'addSongs',
             'setFile', 'nextSong', 'prevSong',
-            'togglePlayback', 'toggleShuffle', 'toggleRepeat', 'toggleUpdating',
-            'toggleHelp'
+            'togglePlayback', 'toggleShuffle', 'toggleRepeat', 'toggleUpdating'
         ].forEach(key => {
             this[key] = this[key].bind(this);
         });
@@ -161,10 +160,6 @@ export default class Player extends Component {
 
     toggleShuffle() {
         this.setState({ shuffle: !this.state.shuffle });
-    }
-
-    toggleHelp() {
-        this.setState({ showingHelp: !this.state.showingHelp });
     }
 
     toggleUpdating() {
@@ -395,46 +390,20 @@ export default class Player extends Component {
 
     render() {
         const {
-            showingHelp, shuffle, repeat, audio, streams,
+            shuffle, repeat, audio, streams,
             hist, histIndex, updating, playing, loading
         } = this.state;
 
         const {
             addMicrophone, addSongs, setFile, removeFile, nextSong, prevSong,
-            togglePlayback, toggleShuffle, toggleRepeat, toggleUpdating,
-            toggleHelp
+            togglePlayback, toggleShuffle, toggleRepeat, toggleUpdating
         } = this;
 
-        function stopEventPropagation(evt) {
-            evt.stopPropagation();
-        }
-
         if (!audio.length && !streams.length) {
-            return <div className={styles.container}>
-                <div className={styles.fileInput}>
-                    <h1 onClick={addMicrophone}>
-                        Click here to use your microphone!
-                    </h1>
-                    <label>
-                        <h1>Click here to select some songs to play!</h1>
-                        <input type='file'
-                            accept='audio/*'
-                            multiple
-                            onChange={addSongs} />
-                    </label>
-                    <h3>(Hint: you can select multiple files)</h3>
-                    <h4>
-                        (Loading mp3 files can take a while, please be patient!)
-                    </h4>
-                    <h5>
-                        <a href='https://github.com/aspyrx/audiovisual'>
-                            Source code on GitHub
-                        </a> made by <a href='https://szz.io/'>
-                            Stan Zhang
-                        </a>
-                    </h5>
-                </div>
-            </div>;
+            return <NoItems
+                addMicrophone={addMicrophone}
+                addSongs={addSongs}
+            />;
         }
 
         const avProps = {
@@ -448,6 +417,7 @@ export default class Player extends Component {
         if (file) {
             avProps.src = file.url;
             avProps.stream = file.stream;
+            avProps.bgURL = file.pictureURL;
         }
 
         const keyHandlers = [
@@ -466,10 +436,6 @@ export default class Player extends Component {
             keyValue={key}
             onKeyHandle={handler}
         />);
-
-        const help = showingHelp
-            ? <Help onClick={toggleHelp} />
-            : null;
 
         const spinner = loading
             ? <Spinner />
@@ -494,43 +460,18 @@ export default class Player extends Component {
                     addMicrophone={addMicrophone}
                 />
             </div>
-            <div className={styles.controls} onClick={stopEventPropagation}>
-                <div className={styles.playback}>
-                    <div>
-                        <span
-                            onClick={toggleUpdating}
-                            title="visualisation on/off"
-                        >
-                            { updating ? 'V' : 'v' }
-                        </span>
-                        <span
-                            onClick={toggleShuffle}
-                            title="shuffle on/off"
-                        >
-                            { shuffle ? 'S' : 's' }
-                        </span>
-                        <span
-                            onClick={toggleRepeat}
-                            title="repeat on/off"
-                        >
-                            { repeat ? 'R' : 'r' }
-                        </span>
-                    </div>
-                    <div>
-                        <span onClick={prevSong} title="previous song">
-                            ⏮
-                        </span>
-                        <span onClick={togglePlayback} title="play/pause">
-                            { playing ? '॥' : '►' }
-                        </span>
-                        <span onClick={nextSong} title="next song">
-                            ⏭
-                        </span>
-                        <span onClick={toggleHelp} title="help">?</span>
-                    </div>
-                </div>
-                {help}
-            </div>
+            <Controls
+                repeat={repeat}
+                shuffle={shuffle}
+                updating={updating}
+                playing={playing}
+                toggleRepeat={toggleRepeat}
+                toggleShuffle={toggleShuffle}
+                toggleUpdating={toggleUpdating}
+                prevSong={prevSong}
+                togglePlayback={togglePlayback}
+                nextSong={nextSong}
+            />
         </div>;
     }
 }

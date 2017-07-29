@@ -17,24 +17,22 @@ const fileShape = shape({
     album: string
 });
 
-function basename(str) {
-    return str.match(/[^/]*$/)[0];
+function basename(str, sep = '/') {
+    return str.match(new RegExp(`[^${sep}]*$`))[0];
 }
 
-function search(filter, file) {
-    if (file.hasTags) {
-        const {
-            artist = 'no artist',
-            album = 'no album',
-            title
-        } = file;
-
-        return artist.includes(filter)
-            || album.includes(filter)
-            || title.includes(filter);
+function testFilter(filter, file) {
+    if (!filter) {
+        return true;
     }
 
-    return getTitleForFile(file).includes(filter);
+    const title = getTitleForFile(file).toLowerCase();
+    const {
+        artist = 'no artist',
+        album = 'no album'
+    } = file;
+
+    return filter.test(`${artist} ${album} ${title}`);
 }
 
 function getTitleForFile(file) {
@@ -49,7 +47,7 @@ function getTitleForFile(file) {
 
     const { fileObj } = file;
     if (fileObj && fileObj.name) {
-        return basename(fileObj.name);
+        return basename(fileObj.name, ':');
     }
 
     return basename(file.url);
@@ -61,7 +59,7 @@ function getTextForFile(file) {
         album = 'no album'
     } = file;
 
-    return `${artist} - ${album} - ${getTitleForFile(file)}`;
+    return `${artist} · ${album} · ${getTitleForFile(file)}`;
 }
 
 function FileInfo(props) {
@@ -186,7 +184,7 @@ export default class Files extends Component {
     constructor() {
         super();
         this.state = {
-            filter: '',
+            filter: null,
             showing: false
         };
 
@@ -200,9 +198,8 @@ export default class Files extends Component {
 
     onSearchChange(event) {
         const { value } = event.target;
-        this.setState({
-            filter: value.toLowerCase()
-        });
+        const filter = new RegExp(value.replace(/\s/g, '\\s*'), 'i');
+        this.setState({ filter });
     }
 
     render() {
@@ -238,7 +235,9 @@ export default class Files extends Component {
             />;
         });
 
-        const audioInfo = audio.map((f, i) => {
+        const audioInfo = audio.filter(f =>
+            testFilter(filter, f)
+        ).map(f => {
             const text = getTextForFile(f);
 
             function onClick() {
@@ -250,15 +249,13 @@ export default class Files extends Component {
                 removeFile(f);
             }
 
-            return !filter || search(filter, f)
-                ? <FileInfo
-                    key={i}
-                    text={text}
-                    selected={f === file}
-                    onClick={onClick}
-                    onRemove={onRemove}
-                />
-                : null;
+            return <FileInfo
+                key={f.url}
+                text={text}
+                selected={f === file}
+                onClick={onClick}
+                onRemove={onRemove}
+            />;
         });
 
         return <div className={styles.files}>

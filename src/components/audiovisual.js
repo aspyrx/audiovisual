@@ -45,6 +45,31 @@ function freqStep(i, m, n) {
 
 function FadeTransition(props) {
     const { children, ...rest } = props;
+    const className = classNames(children.props.className, styles.fade);
+    const childWithClass = React.cloneElement(children, { className });
+
+    return  <CSSTransition
+        {...rest}
+        classNames={{
+            appear: styles.fadeIn,
+            appearActive: styles.fadeInActive,
+            enter: styles.fadeIn,
+            enterActive: styles.fadeInActive,
+            exit: styles.fadeOut,
+            exitActive: styles.fadeOutActive
+        }}
+        timeout={500}
+    >
+        {childWithClass}
+    </CSSTransition>;
+}
+
+FadeTransition.propTypes = {
+    children: element
+};
+
+function FadeOutScaleTransition(props) {
+    const { children, ...rest } = props;
     const className = classNames(children.props.className, styles.fadeOutScale);
     const childWithClass = React.cloneElement(children, { className });
     return  <CSSTransition
@@ -61,7 +86,7 @@ function FadeTransition(props) {
     </CSSTransition>;
 }
 
-FadeTransition.propTypes = {
+FadeOutScaleTransition.propTypes = {
     children: element
 };
 
@@ -94,6 +119,25 @@ PlayIcon.propTypes = {
     className: string
 };
 
+function BGImage(props) {
+    const { bgURL } = props;
+
+    const backgroundImage = bgURL ? `url('${bgURL}')` : 'none';
+
+    return <TransitionGroup>
+        <FadeTransition key={backgroundImage}>
+            <div
+                className={styles.bgImage}
+                style={{ backgroundImage }}
+            />
+        </FadeTransition>
+    </TransitionGroup>;
+}
+
+BGImage.propTypes = {
+    bgURL: string
+};
+
 export default class Audiovisual extends Component {
     static get propTypes() {
         return {
@@ -107,6 +151,9 @@ export default class Audiovisual extends Component {
             waveWidth: number,
             freqColor: string,
             waveColor: string,
+            shadowColor: string,
+            shadowBlur: number,
+            bgURL: string,
             bgColor: string,
             textColor: string,
             altColor: string,
@@ -121,6 +168,8 @@ export default class Audiovisual extends Component {
             waveWidth: 3,
             freqColor: 'white',
             waveColor: 'rgb(0%, 50%, 100%)',
+            shadowColor: 'black',
+            shadowBlur: 8,
             bgColor: 'transparent',
             textColor: 'rgba(100%, 100%, 100%, 0.8)',
             altColor: 'rgba(100%, 100%, 100%, 0.1)'
@@ -276,7 +325,9 @@ export default class Audiovisual extends Component {
         spectral.fillWaveform(waveform);
 
         const { waveformSize } = spectral;
-        const { numWave, waveColor, waveWidth } = this.props;
+        const {
+            numWave, waveColor, waveWidth, shadowColor, shadowBlur
+        } = this.props;
         const { offsetHeight: h } = this.state;
 
         const waveStep = waveformSize / numWave;
@@ -288,8 +339,9 @@ export default class Audiovisual extends Component {
 
         canvas.beginPath();
         canvas.strokeStyle = waveColor;
+        canvas.shadowColor = shadowColor;
+        canvas.shadowBlur = shadowBlur;
         canvas.lineWidth = waveWidth;
-        canvas.moveTo(0, h / 2);
         drawBezier(canvas, numWave, waveXs, waveYs);
         canvas.stroke();
     }
@@ -304,7 +356,7 @@ export default class Audiovisual extends Component {
         );
 
         const { spectrumSize } = spectral;
-        const { numFreq, freqColor } = this.props;
+        const { numFreq, freqColor, shadowColor, shadowBlur } = this.props;
         const { offsetWidth: w, offsetHeight: h } = this.state;
 
         const db = -100 / numFreq;
@@ -319,6 +371,8 @@ export default class Audiovisual extends Component {
 
         canvas.beginPath();
         canvas.fillStyle = freqColor;
+        canvas.shadowColor = shadowColor;
+        canvas.shadowBlur = shadowBlur;
         canvas.moveTo(0, h);
         drawBars(canvas, numFreq, 0, freqXs, freqYs);
         canvas.lineTo(w, h);
@@ -372,7 +426,7 @@ export default class Audiovisual extends Component {
     render() {
         const {
             className, waveWidth,
-            bgColor, altColor, textColor,
+            bgURL, bgColor, altColor, textColor,
             src, stream, playing, onEnded
         } = this.props;
 
@@ -402,6 +456,7 @@ export default class Audiovisual extends Component {
             style={style}
             ref={nodeRef}
         >
+            <BGImage bgURL={bgURL} />
             <audio
                 src={stream ? void 0 : src}
                 ref={audioRef}
@@ -425,9 +480,9 @@ export default class Audiovisual extends Component {
                 height={offsetHeight}
             />
             <TransitionGroup>
-                <FadeTransition key={playing ? 'play' : 'pause'}>
+                <FadeOutScaleTransition key={playing ? 'play' : 'pause'}>
                     {playbackIndicator}
-                </FadeTransition>
+                </FadeOutScaleTransition>
             </TransitionGroup>
         </div>;
     }
@@ -464,6 +519,8 @@ function drawBezier(canvas, n, xs, ys) {
     let yn = ys[1];
     let xnn = xs[2];
     let ynn = ys[2];
+
+    canvas.moveTo(x, y);
     drawBezierFromCatmullRom(
         canvas,
         xp, yp,

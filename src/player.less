@@ -49,52 +49,5 @@
 
         user-select: none;
     }
-
-    .controls {
-        position: relative;
-        user-select: none;
-        display: flex;
-        flex-flow: column nowrap;
-
-        .playback {
-            display: flex;
-            flex-flow: row wrap;
-            justify-content: flex-end;
-
-            margin: @spacing-y @spacing-x;
-            text-align: right;
-            span {
-                cursor: pointer;
-                margin: 0 4px;
-                &:hover {
-                    text-decoration: underline;
-                }
-            }
-        }
-
-        .help {
-            margin: 0 @spacing-x @spacing-y;
-            padding: @spacing-y @spacing-x;
-            background-color: fade(black, 50%);
-            border-radius: @spacing-y;
-            overflow: auto;
-            table {
-                border-collapse: collapse;
-
-                tbody {
-                    tr {
-                        &:not(:last-child) {
-                            border-bottom: 1px solid @color-text;
-                        }
-
-                        td {
-                            word-wrap: break-word;
-                            padding: 4px;
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
