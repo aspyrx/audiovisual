@@ -35,3 +35,6 @@ node_modules
 # Build folder
 dist
 
+# Generated documentation
+doc
+
