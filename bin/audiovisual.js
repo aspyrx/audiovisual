@@ -32,10 +32,13 @@ const argvConfig =  {
     }
 };
 
+/**
+ * Prints CLI usage to `stdout`.
+ */
 function usage() {
     const desc = {
         h: 'Print this help message and exit.',
-        m: 'Regular expression to use to match files.',
+        m: 'Regular expression to use to match scanned files.',
         mflags: 'Flags to use in regular expression matching.',
         p: 'Port on which to serve the site.',
         s: 'Scan the files directory for new files.',
