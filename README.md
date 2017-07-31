@@ -52,7 +52,7 @@ Flags:
 
 ```
 
-### Node.js API
+## Node.js API
 
 1. Install as dependency: `npm install audiovisual`
 2. In your code:
@@ -79,17 +79,19 @@ const options = {};
 const app = audiovisual(options);
 ```
 
-### Development
+## Development
 
 Several build-related scripts are included that can be run using
 `npm run <script>`:
 - `doc`: generates HTML documentation and places it into `doc`
+- `lint`: runs [eslint] on all source files
 - `build`: builds the project and places the bundle into `dist`
 - `dist`: same as above, excepts does production-level optimizations
 - `watch`: watches for changes, automatically rebuilding when necessary
 - `live`: starts a [webpack-dev-server] and enables [hot module replacement].
   Access the server at [http://localhost:8080](http://localhost:8080).
 
+[eslint]: https://eslint.org/
 [webpack-dev-server]: https://webpack.js.org/guides/development/#using-webpack-dev-server
 [hot module replacement]: https://webpack.js.org/guides/hot-module-replacement/
 

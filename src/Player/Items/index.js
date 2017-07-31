@@ -1,73 +1,59 @@
+/**
+ * Items UI module.
+ *
+ * @module src/Player/Items
+ */
+
 import React, { Component } from 'react';
 import {
-    bool, string, func, object, shape, arrayOf
+    bool, string, func, instanceOf
 } from 'prop-types';
 import classNames from 'classnames';
 
-import styles from './files.less';
+import PlayHistory from '../PlayHistory';
+import AudioFile from '../AudioFile';
+import styles from './index.less';
 
-const fileShape = shape({
-    fileObj: shape({
-        name: string
-    }),
-    url: string,
-    stream: object,
-    title: string,
-    artist: string,
-    album: string
-});
-
-function basename(str, sep = '/') {
-    return str.match(new RegExp(`[^${sep}]*$`))[0];
-}
-
+/**
+ * Tests if the filter matches the given file.
+ *
+ * @param {RegExp} filter - The filter to use.
+ * @param {AudioFile} file - The file to test.
+ * @returns {boolean} `true` if the filter matches; `false` if not.
+ */
 function testFilter(filter, file) {
-    if (!filter) {
-        return true;
-    }
-
-    const title = getTitleForFile(file).toLowerCase();
-    const {
-        artist = 'no artist',
-        album = 'no album'
-    } = file;
-
+    const { album, artist, title } = file;
     return filter.test(`${artist} ${album} ${title}`);
 }
 
-function getTitleForFile(file) {
-    if (file.title) {
-        return file.title;
-    }
-
-    if (file.stream) {
-        return 'Streaming...';
-    }
-
-
-    const { fileObj } = file;
-    if (fileObj && fileObj.name) {
-        return basename(fileObj.name, ':');
-    }
-
-    return basename(file.url);
-}
-
+/**
+ * Formats text to describe the file.
+ *
+ * @param {AudioFile} file - The file to use.
+ * @returns {string} Text for describing the file.
+ */
 function getTextForFile(file) {
-    const {
-        artist = 'no artist',
-        album = 'no album'
-    } = file;
-
-    return `${artist} · ${album} · ${getTitleForFile(file)}`;
+    const { artist, album, title } = file;
+    return `${artist} · ${album} · ${title}`;
 }
 
+/**
+ * React component that represents information about a file.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} props.file - The file.
+ * @param {boolean} props.selected - Whether or not the file is selected.
+ * @param {Function} props.onClick - Click event handler.
+ * @param {Function} props.onRemove - Remove click event handler.
+ * @returns {ReactElement} The component's elements.
+ */
 function FileInfo(props) {
-    const { text, selected, onClick, onRemove } = props;
+    const { file, selected, onClick, onRemove } = props;
     const className = classNames(styles.file, {
         [styles.selected]: selected
     });
 
+    const text = getTextForFile(file);
     const contents = onRemove
         ? [
             <span key='contents' onClick={onClick}>{text}</span>,
@@ -83,16 +69,25 @@ function FileInfo(props) {
 }
 
 FileInfo.propTypes = {
-    text: string.isRequired,
+    file: instanceOf(AudioFile).isRequired,
     selected: bool,
-    className: string,
     onClick: func,
     onRemove: func,
     title: string
 };
 
+/**
+ * Actions UI React component.
+ *
+ * @param {Object} props - The component's props.
+ * @param {Function} props.addMicrophone - Function to call to add microphone.
+ * @param {Function} props.onInputFiles - Event handler called when songs are
+ * added.
+ * @param {Function} props.toggle - Function to call to toggle the UI.
+ * @returns {ReactElement} The component's elements.
+ */
 function Actions(props) {
-    const { addMicrophone, addSongs, toggle } = props;
+    const { addMicrophone, onInputFiles, toggle } = props;
 
     return <span className={styles.actions}>
         <span onClick={addMicrophone} title="add microphone">
@@ -104,7 +99,7 @@ function Actions(props) {
                 type="file"
                 accept="audio/*"
                 multiple
-                onChange={addSongs}
+                onChange={onInputFiles}
             />
         </label>
         <span onClick={toggle} title="close">
@@ -114,11 +109,19 @@ function Actions(props) {
 }
 
 Actions.propTypes = {
+    onInputFiles: func.isRequired,
     addMicrophone: func.isRequired,
-    addSongs: func.isRequired,
     toggle: func.isRequired
 };
 
+/**
+ * Compact item information UI React element.
+ *
+ * @param {Object} props - The component's props.
+ * @param {Function} props.toggle - Function to call to toggle the UI.
+ * @param {AudioFile} props.file - The current file.
+ * @returns {ReactElement} The component's elements.
+ */
 function Compact(props) {
     const { toggle, file } = props;
 
@@ -132,8 +135,7 @@ function Compact(props) {
         </div>;
     }
 
-    const { artist, album, pictureURL } = file;
-    const title = getTitleForFile(file);
+    const { artist, album, title, pictureURL } = file;
 
     const pictureElem = pictureURL
         ? <img className={styles.picture} src={pictureURL} alt="album art" />
@@ -164,19 +166,23 @@ function Compact(props) {
 }
 
 Compact.propTypes = {
-    file: fileShape,
+    file: instanceOf(AudioFile),
     toggle: func.isRequired
 };
 
-export default class Files extends Component {
+/**
+ * Items UI React component.
+ */
+export default class Items extends Component {
+    /**
+     * The propTypes for the component.
+     */
     static get propTypes() {
         return {
-            file: fileShape,
-            audio: arrayOf(fileShape).isRequired,
-            streams: arrayOf(fileShape).isRequired,
-            setFile: func.isRequired,
+            fileHistory: instanceOf(PlayHistory).isRequired,
+            onInputFiles: func.isRequired,
             removeFile: func.isRequired,
-            addSongs: func.isRequired,
+            setFile: func.isRequired,
             addMicrophone: func.isRequired
         };
     }
@@ -203,43 +209,26 @@ export default class Files extends Component {
     }
 
     render() {
-        const { file } = this.props;
+        const { fileHistory } = this.props;
         const { showing } = this.state;
         const { toggle } = this;
 
+        const file = fileHistory.item;
         if (!showing) {
             return <Compact file={file} toggle={toggle} />;
         }
 
         const {
-            audio, streams, setFile, removeFile, addSongs, addMicrophone
+            onInputFiles, removeFile, setFile,
+            addMicrophone
         } = this.props;
         const { filter } = this.state;
+        const files = fileHistory.items;
 
-        const streamsInfo = streams.map((f, i) => {
-            function onClick() {
-                toggle();
-                setFile(f);
-            }
-
-            function onRemove() {
-                removeFile(f);
-            }
-
-            return <FileInfo
-                key={i}
-                text={getTextForFile(f)}
-                selected={f === file}
-                onClick={onClick}
-                onRemove={onRemove}
-            />;
-        });
-
-        const audioInfo = audio.filter(f =>
-            testFilter(filter, f)
+        const fileInfos = (filter
+            ? files.filter(f => testFilter(filter, f))
+            : files
         ).map(f => {
-            const text = getTextForFile(f);
-
             function onClick() {
                 toggle();
                 setFile(f);
@@ -251,7 +240,7 @@ export default class Files extends Component {
 
             return <FileInfo
                 key={f.url}
-                text={text}
+                file={f}
                 selected={f === file}
                 onClick={onClick}
                 onRemove={onRemove}
@@ -266,14 +255,13 @@ export default class Files extends Component {
                     onChange={this.onSearchChange}
                 />
                 <Actions
-                    addSongs={addSongs}
+                    onInputFiles={onInputFiles}
                     addMicrophone={addMicrophone}
                     toggle={toggle}
                 />
             </div>
             <div className={styles.filesContainer}>
-                {streamsInfo}
-                {audioInfo}
+                {fileInfos}
             </div>
         </div>;
     }

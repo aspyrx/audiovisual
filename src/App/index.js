@@ -1,13 +1,24 @@
+/**
+ * Main app module.
+ *
+ * @module src/App
+ */
+
 import React from 'react';
 import { BrowserRouter, Route, Switch } from 'react-router-dom';
 
-import asyncComponent from 'components/asyncComponent';
-import Spinner from 'components/spinner';
-import NotFound from 'bundle-loader?lazy!./404';
-import Player from 'bundle-loader?lazy!./player';
+import asyncComponent from 'src/async-component';
+import Spinner from 'src/Spinner';
+import Player from 'bundle-loader?lazy!src/Player';
 
-import './app.less';
+import NotFound from 'bundle-loader?lazy!./NotFound';
+import './index.less';
 
+/**
+ * React component for the entire app.
+ *
+ * @returns {ReactElement} The app's elements.
+ */
 export default function App() {
     return <BrowserRouter>
         <Switch>

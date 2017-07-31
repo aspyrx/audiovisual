@@ -1,3 +1,9 @@
+/**
+ * Audio visualiser React component.
+ *
+ * @module src/Audiovisual
+ */
+
 import React, { Component } from 'react';
 import {
     bool, number, string, func, instanceOf, element
@@ -6,8 +12,8 @@ import TransitionGroup from 'react-transition-group/TransitionGroup';
 import CSSTransition from 'react-transition-group/CSSTransition';
 import classNames from 'classnames';
 
-import Spectral from './spectral.js';
-import styles from './audiovisual.less';
+import Spectral from './Spectral';
+import styles from './index.less';
 
 function average(arr, lo, hi) {
     if (hi - lo <= 1) {

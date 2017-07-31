@@ -1,0 +1,11 @@
+{
+    "exec": "jsdoc -c .jsdoc.json README.md bin lib src",
+    "watch": [
+        ".jsdoc.json",
+        "README.md",
+        "bin",
+        "lib",
+        "src"
+    ]
+}
+

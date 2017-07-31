@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+/**
+ * CLI for the `audiovisual` app.
+ *
+ * @module bin/audiovisual
+ */
+
 /* eslint-disable no-console, no-process-exit */
 
 'use strict';

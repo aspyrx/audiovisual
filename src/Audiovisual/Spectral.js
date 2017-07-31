@@ -1,6 +1,8 @@
-/*
- * spectral.js - Uses the Web Audio API to provide frequency and waveform data
- * from the specified HTML5 <audio> element.
+/**
+ * Uses the Web Audio API to provide frequency and waveform data from the
+ * specified HTML5 `<audio>` element.
+ *
+ * @module src/Audiovisual/Spectral
  */
 
 const AudioContext = window.AudioContext || window.webkitAudioContext;

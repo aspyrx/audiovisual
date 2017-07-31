@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { bool, func } from 'prop-types';
 
-import styles from './controls.less';
+import styles from './index.less';
 
 function stopEventPropagation(evt) {
     evt.stopPropagation();
@@ -59,9 +59,9 @@ export default class Controls extends Component {
             toggleUpdating: func.isRequired,
             toggleShuffle: func.isRequired,
             toggleRepeat: func.isRequired,
-            prevSong: func.isRequired,
-            togglePlayback: func.isRequired,
-            nextSong: func.isRequired
+            togglePlaying: func.isRequired,
+            prevFile: func.isRequired,
+            nextFile: func.isRequired
         };
     }
 
@@ -79,8 +79,8 @@ export default class Controls extends Component {
     render() {
         const {
             updating, shuffle, repeat, playing,
-            toggleUpdating, toggleShuffle, toggleRepeat,
-            prevSong, togglePlayback, nextSong
+            toggleUpdating, toggleShuffle, toggleRepeat, togglePlaying,
+            nextFile, prevFile
         } = this.props;
         const { showingHelp } = this.state;
         const { toggleHelp } = this;
@@ -112,13 +112,13 @@ export default class Controls extends Component {
                     </span>
                 </div>
                 <div>
-                    <span onClick={prevSong} title="previous song">
+                    <span onClick={prevFile} title="previous song">
                         ⏮
                     </span>
-                    <span onClick={togglePlayback} title="play/pause">
+                    <span onClick={togglePlaying} title="play/pause">
                         { playing ? '॥' : '►' }
                     </span>
-                    <span onClick={nextSong} title="next song">
+                    <span onClick={nextFile} title="next song">
                         ⏭
                     </span>
                     <span onClick={toggleHelp} title="help">?</span>

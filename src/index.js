@@ -1,11 +1,14 @@
-/*
- * index.js - Entry point for the app.
+/**
+ * Entry point for the app.
+ *
+ * @module src/index
  */
 
 import React from 'react';
 import { render } from 'react-dom';
 import { AppContainer } from 'react-hot-loader';
-import App from './app';
+
+import App from 'src/App';
 
 const appDiv = document.createElement('div');
 
@@ -21,6 +24,9 @@ if (!('flex' in appDiv.style)) {
 appDiv.id = 'app';
 document.body.appendChild(appDiv);
 
+/**
+ * Starts the app by rendering it into the page.
+ */
 function start() {
     render(<AppContainer>
         <App />
