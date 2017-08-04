@@ -339,7 +339,7 @@ export default class Player extends Component {
         const avProps = {
             updating,
             playing: playing && !loading,
-            onEnded: this.nextSong
+            onEnded: nextFile
         };
 
         const file = fileHistory.item;
