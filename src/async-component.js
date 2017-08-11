@@ -36,8 +36,9 @@ import React from 'react';
  * Function to use to fetch the component.
  * @param {Function} [Placeholder=() => null] - React component used as a
  * placeholder while the component is still loading.
- * @returns {Function} React component that renders as the placeholder until
- * the component loads, at which point it is replaced by the actual component.
+ * @returns {module:src/async-component~AsyncComponent} React component that
+ * renders as the placeholder until the component loads, at which point it is
+ * replaced by the actual component.
  */
 export default function asyncComponent(
     getComponent, Placeholder = () => null

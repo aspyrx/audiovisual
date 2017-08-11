@@ -15,6 +15,14 @@ import classNames from 'classnames';
 import Spectral from './Spectral';
 import styles from './index.less';
 
+/**
+ * Averages the values between the given indices.
+ *
+ * @param {number[]} arr - The values.
+ * @param {number} lo - The start index (inclusive).
+ * @param {number} hi - The end index (exclusive).
+ * @returns {number} The average.
+ */
 function average(arr, lo, hi) {
     if (hi - lo <= 1) {
         return arr[lo];
@@ -27,10 +35,25 @@ function average(arr, lo, hi) {
     return sum / (hi - lo);
 }
 
+/**
+ * Normalizes the given frequency value.
+ *
+ * @param {number} f - The frequency value.
+ * @returns {number} The normalized value.
+ */
 function normalizeFreq(f) {
     return 1 - ((f + 30) / -70);
 }
 
+/**
+ * Exponentially scales the frequency value so that it is nicer to look at.
+ *
+ * TODO: better docs and math
+ *
+ * @param {number} f - The frequency value.
+ * @param {number} b - The exponential base.
+ * @returns {number} The scaled frequency value.
+ */
 function calcFreq(f, b) {
     const x = (Math.pow(b, f) - 1) / (b - 1);
     if (x < 0) {
@@ -42,6 +65,17 @@ function calcFreq(f, b) {
     return x;
 }
 
+/**
+ * Calculates the appropriate number of frequency values to include for a target
+ * index.
+ *
+ * TODO: better docs and math
+ *
+ * @param {number} i - The target index.
+ * @param {number} m - The number of frequency values.
+ * @param {number} n - The number of target values.
+ * @returns {number} The number of frequency values to include.
+ */
 function freqStep(i, m, n) {
     return Math.min(
         Math.floor(n / 2 * Math.pow(n / Math.sqrt(m), (i / m) - 1)),
@@ -49,6 +83,14 @@ function freqStep(i, m, n) {
     );
 }
 
+/**
+ * React component for providing a fade in transition on appear/enter, and fade
+ * out on exit.
+ *
+ * @param {Object} props - The component's props.
+ * @param {ReactElement} props.children - Element to transition.
+ * @returns {ReactElement} The component's elements.
+ */
 function FadeTransition(props) {
     const { children, ...rest } = props;
     const className = classNames(children.props.className, styles.fade);
@@ -74,6 +116,13 @@ FadeTransition.propTypes = {
     children: element
 };
 
+/**
+ * React component for providing a fade-out + scale transition on appear/enter.
+ *
+ * @param {Object} props - The component's props.
+ * @param {ReactElement} props.children - Element to transition.
+ * @returns {ReactElement} The component's elements.
+ */
 function FadeOutScaleTransition(props) {
     const { children, ...rest } = props;
     const className = classNames(children.props.className, styles.fadeOutScale);
@@ -96,6 +145,14 @@ FadeOutScaleTransition.propTypes = {
     children: element
 };
 
+/**
+ * React component for displaying a pause icon.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} props.textColor - The color for the icon.
+ * @param {string} [props.className] - Additional class for the icon.
+ * @returns {ReactElement} The component's elements.
+ */
 function PauseIcon(props) {
     const { textColor, className } = props;
     return <div
@@ -112,6 +169,14 @@ PauseIcon.propTypes = {
     className: string
 };
 
+/**
+ * React component for displaying a play icon.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} props.textColor - The color for the icon.
+ * @param {string} [props.className] - Additional class for the icon.
+ * @returns {ReactElement} The component's elements.
+ */
 function PlayIcon(props) {
     const { textColor, className } = props;
     return <div
@@ -125,6 +190,16 @@ PlayIcon.propTypes = {
     className: string
 };
 
+/**
+ * React component for displaying a background image.
+ *
+ * TODO: draw this using the canvas so we can detect the dominant color(s) and
+ * use them.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} [props.bgURL] - The URL for the image, if any.
+ * @returns {ReactElement} The component's elements.
+ */
 function BGImage(props) {
     const { bgURL } = props;
 
@@ -144,7 +219,15 @@ BGImage.propTypes = {
     bgURL: string
 };
 
+/**
+ * Audio visualization React component.
+ */
 export default class Audiovisual extends Component {
+    /**
+     * The component's propTypes.
+     *
+     * @type {Object}
+     */
     static get propTypes() {
         return {
             className: string,
@@ -167,6 +250,11 @@ export default class Audiovisual extends Component {
         };
     }
 
+    /**
+     * The component's default props.
+     *
+     * @type {Object}
+     */
     static get defaultProps() {
         return {
             numFreq: 128,
@@ -182,8 +270,14 @@ export default class Audiovisual extends Component {
         };
     }
 
-    // eslint-disable-next-line max-statements
-    constructor(props) {
+    /**
+     * Initializes the component.
+     *
+     * TODO: add docs here about the props.
+     *
+     * @param {Object} props - The component's props.
+     */
+    constructor(props) { // eslint-disable-line max-statements
         super();
 
         const {

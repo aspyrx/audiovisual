@@ -187,6 +187,9 @@ export default class Items extends Component {
         };
     }
 
+    /**
+     * Initializes the component.
+     */
     constructor() {
         super();
         this.state = {
@@ -198,16 +201,29 @@ export default class Items extends Component {
         this.onSearchChange = this.onSearchChange.bind(this);
     }
 
+    /**
+     * Toggles the item list.
+     */
     toggle() {
         this.setState({ showing: !this.state.showing });
     }
 
+    /**
+     * Event handler called when the search input changes.
+     *
+     * @param {Event} event - The event to handle.
+     */
     onSearchChange(event) {
         const { value } = event.target;
         const filter = new RegExp(value.replace(/\s/g, '\\s*'), 'i');
         this.setState({ filter });
     }
 
+    /**
+     * Renders the component.
+     *
+     * @returns {ReactElement} The component's elements.
+     */
     render() {
         const { fileHistory } = this.props;
         const { showing } = this.state;
@@ -229,11 +245,17 @@ export default class Items extends Component {
             ? files.filter(f => testFilter(filter, f))
             : files
         ).map(f => {
+            /**
+             * Click handler for the file.
+             */
             function onClick() {
                 toggle();
                 setFile(f);
             }
 
+            /**
+             * Remove handler for the file.
+             */
             function onRemove() {
                 removeFile(f);
             }

@@ -1,12 +1,30 @@
+/**
+ * Playback controls UI module.
+ *
+ * @module src/Player/Controls
+ */
+
 import React, { Component } from 'react';
 import { bool, func } from 'prop-types';
 
 import styles from './index.less';
 
+/**
+ * Stops the event from propagating.
+ *
+ * @param {Event} evt - The event to stop propagating.
+ */
 function stopEventPropagation(evt) {
     evt.stopPropagation();
 }
 
+/**
+ * React component for displaying help about playback controls.
+ *
+ * @param {Object} props - The props for the component.
+ * @param {Function} props.onClick - Click handler.
+ * @returns {ReactElement} The component's elements.
+ */
 function Help(props) {
     return <div className={styles.help} onClick={props.onClick}>
         <table>
@@ -49,7 +67,15 @@ Help.propTypes = {
     onClick: func
 };
 
+/**
+ * Playback controls UI React Component.
+ */
 export default class Controls extends Component {
+    /**
+     * The component's propTypes.
+     *
+     * @type {Object}
+     */
     static get propTypes() {
         return {
             updating: bool,
@@ -65,6 +91,9 @@ export default class Controls extends Component {
         };
     }
 
+    /**
+     * Initializes the playback controls component.
+     */
     constructor() {
         super();
 
@@ -72,10 +101,18 @@ export default class Controls extends Component {
         this.toggleHelp = this.toggleHelp.bind(this);
     }
 
+    /**
+     * Toggles the help display.
+     */
     toggleHelp() {
         this.setState({ showingHelp: !this.state.showingHelp });
     }
 
+    /**
+     * Renders the component.
+     *
+     * @returns {ReactElement} The component's elements.
+     */
     render() {
         const {
             updating, shuffle, repeat, playing,
