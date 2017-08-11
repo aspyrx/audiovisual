@@ -318,6 +318,11 @@ export default class Audiovisual extends Component {
         });
     }
 
+    /**
+     * Event handler for `timeupdate` event on `<audio>` element.
+     *
+     * @param {Event} evt - The event.
+     */
     onTimeUpdate(evt) {
         const progress = evt.target.currentTime / evt.target.duration;
         if (this.progress) {
@@ -325,6 +330,9 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Event handler for `resize` event on DOM node.
+     */
     onResize() {
         const { offsetWidth, offsetHeight } = this.node;
         if (offsetWidth !== this.state.offsetWidth) {
@@ -349,6 +357,11 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Initializes the `Spectral` analysis node.
+     *
+     * @param {HTMLAudioElement} audio - The audio element.
+     */
     initSpectral(audio) {
         this.audio = audio;
         audio.addEventListener('timeupdate', this.onTimeUpdate);
@@ -367,6 +380,9 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Destroys the `Spectral` analysis node.
+     */
     destroySpectral() {
         this.stopAnimating();
         this.waveform = null;
@@ -377,6 +393,12 @@ export default class Audiovisual extends Component {
         this.audio = null;
     }
 
+    /**
+     * Ref for `<audio>` element.
+     *
+     * @param {HTMLAudioElement?} audio - The audio element, or `null` if the
+     * element has unmounted.
+     */
     audioRef(audio) {
         this[audio === null
             ? 'destroySpectral'
@@ -384,6 +406,12 @@ export default class Audiovisual extends Component {
         ](audio);
     }
 
+    /**
+     * Ref for the component's top-level DOM node.
+     *
+     * @param {HTMLElement?} node - The DOM node, or `null` if the node has
+     * unmounted.
+     */
     nodeRef(node) {
         this.node = node;
 
@@ -395,6 +423,12 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Ref for the `<canvas>` element.
+     *
+     * @param {HTMLCanvasElement?} canvas - The canvas element, or `null` if the
+     * element has unmounted.
+     */
     canvasRef(canvas) {
         if (canvas) {
             this.canvas = canvas.getContext('2d');
@@ -403,10 +437,19 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Ref for the progress DOM node.
+     *
+     * @param {HTMLElement?} progress - The DOM node, or `null` if the node has
+     * unmounted.
+     */
     progressRef(progress) {
         this.progress = progress;
     }
 
+    /**
+     * Callback for `requestAnimationFrame` that does the drawing work.
+     */
     onAnimFrame() {
         const { canvas } = this;
         if (!canvas) {
@@ -420,6 +463,11 @@ export default class Audiovisual extends Component {
         this.animFrame = requestAnimationFrame(this.onAnimFrame);
     }
 
+    /**
+     * Updates the waveform drawn on the canvas.
+     *
+     * @param {CanvasRenderingContext2D} canvas - The canvas context.
+     */
     updateWave(canvas) {
         const { spectral, waveform, waveXs, waveYs } = this;
         spectral.fillWaveform(waveform);
@@ -446,8 +494,12 @@ export default class Audiovisual extends Component {
         canvas.stroke();
     }
 
-    // eslint-disable-next-line max-statements
-    updateFreq(canvas) {
+    /**
+     * Updates the frequencies drawn on the canvas.
+     *
+     * @param {CanvasRenderingContext2D} canvas - The canvas context.
+     */
+    updateFreq(canvas) { // eslint-disable-line max-statements
         const { spectral, spectrum, freqXs, freqYs } = this;
 
         spectral.fillSpectrum(spectrum);
@@ -480,12 +532,18 @@ export default class Audiovisual extends Component {
         canvas.fill();
     }
 
+    /**
+     * Starts the animation of the visualiser.
+     */
     startAnimating() {
         if (this.animFrame === null) {
             this.animFrame = requestAnimationFrame(this.onAnimFrame);
         }
     }
 
+    /**
+     * Stops the animation of the visualiser.
+     */
     stopAnimating() {
         if (this.animFrame !== null) {
             cancelAnimationFrame(this.animFrame);
@@ -493,6 +551,11 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * React lifecycle handler called when component is receiving new props.
+     *
+     * @param {Object} props - The new props.
+     */
     componentWillReceiveProps(props) {
         const old = this.props;
 
@@ -523,6 +586,11 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Renders the component.
+     *
+     * @returns {ReactElement} The component's elements.
+     */
     render() {
         const {
             className, waveWidth,
@@ -588,8 +656,23 @@ export default class Audiovisual extends Component {
     }
 }
 
-// Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
-// eslint-disable-next-line max-params
+/* eslint-disable max-params, max-statements */
+
+/**
+ * Draws a bezier curve from Catmull-Rom coordinates.
+ *
+ * Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
+ *
+ * @param {CanvasRenderingContext2D} canvas - The canvas context.
+ * @param {number} ax - first x
+ * @param {number} ay - first y
+ * @param {number} bx - second x
+ * @param {number} by - second y
+ * @param {number} cx - third x
+ * @param {number} cy - third y
+ * @param {number} dx - fourth x
+ * @param {number} dy - fourth y
+ */
 function drawBezierFromCatmullRom(canvas, ax, ay, bx, by, cx, cy, dx, dy) {
     // Catmull-Rom to Cubic Bezier conversion matrix
     //    0       1       0       0
@@ -605,7 +688,14 @@ function drawBezierFromCatmullRom(canvas, ax, ay, bx, by, cx, cy, dx, dy) {
     canvas.bezierCurveTo(px, py, qx, qy, cx, cy);
 }
 
-// eslint-disable-next-line max-statements
+/**
+ * Draws a bezier curve passing through the given points.
+ *
+ * @param {CanvasRenderingContext2D} canvas - The canvas context.
+ * @param {number} n - The number of points.
+ * @param {number[]} xs - The x coordinates.
+ * @param {number[]} ys - The y coordinates.
+ */
 function drawBezier(canvas, n, xs, ys) {
     if (n < 3) {
         return;
@@ -657,7 +747,15 @@ function drawBezier(canvas, n, xs, ys) {
     );
 }
 
-// eslint-disable-next-line max-params
+/**
+ * Draws bars for the given points.
+ *
+ * @param {CanvasRenderingContext2D} canvas - The canvas context.
+ * @param {number} n - The number of points.
+ * @param {number} startX - The starting x coordinate.
+ * @param {number[]} xs - The x coordinates.
+ * @param {number[]} ys - The y coordinates.
+ */
 function drawBars(canvas, n, startX, xs, ys) {
     for (let i = 0, x = startX; i < n; i++) {
         const xn = xs[i];
@@ -667,4 +765,6 @@ function drawBars(canvas, n, startX, xs, ys) {
         x = xn;
     }
 }
+
+/* eslint-enable max-params max-statements */
 
