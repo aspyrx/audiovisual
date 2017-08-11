@@ -44,6 +44,17 @@ export default class AudioStream {
     }
 
     /**
+     * Cleans up resources associated with the stream.
+     */
+    cleanup() {
+        const { stream } = this;
+        stream.getTracks().forEach(track => {
+            track.stop();
+            stream.removeTrack(track);
+        });
+    }
+
+    /**
      * Gets the stream's `MediaStream` instance.
      *
      * @returns {MediaStream} The `MediaStream` instance.
@@ -58,7 +69,21 @@ export default class AudioStream {
      * @returns {string} Title.
      */
     get title() {
-        return this._title || `Audio stream ${this.stream.id}`;
+        const { _title } = this;
+        if (_title) {
+            return _title;
+        }
+
+        const { stream } = this;
+        const tracks = stream.getAudioTracks();
+        if (tracks.length) {
+            const { label } = tracks[0];
+            if (label) {
+                return label;
+            }
+        }
+
+        return `Audio stream ${stream.id}`;
     }
 }
 

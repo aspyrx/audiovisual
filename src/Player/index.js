@@ -16,6 +16,7 @@ import Spinner from 'src/Spinner';
 import Audiovisual from 'src/Audiovisual';
 
 import AudioFile from './AudioFile';
+import AudioStream from './AudioStream';
 import PlayHistory from './PlayHistory';
 import Items from './Items';
 import Controls from './Controls';
@@ -109,7 +110,7 @@ export default class Player extends Component {
         // Bind handlers to this instance
         [
             'onInputFiles', 'removeFile', 'setFile', 'nextFile', 'prevFile',
-            'addMicrophone'
+            'addMicrophone', 'removeMicrophone'
         ].forEach(key => {
             this[key] = this[key].bind(this);
         });
@@ -288,7 +289,51 @@ export default class Player extends Component {
      * Attempts to add a microphone stream.
      */
     addMicrophone() {
+        const onSuccess = stream => {
+            const audioStream = new AudioStream({
+                stream
+            });
 
+            const tracks = stream.getAudioTracks();
+            if (!tracks.length) {
+                return;
+            }
+            tracks[0].addEventListener('ended', () => {
+                this.removeMicrophone(audioStream);
+            });
+
+            this.setState(({ streamHistory }) => {
+                streamHistory.addItems(audioStream);
+                return { streamHistory };
+            });
+        };
+
+        try {
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(
+                onSuccess, console.log
+            );
+        } catch (err) {
+            const getUserMedia = navigator.getUserMedia
+                || navigator.webkitGetUserMedia
+                || navigator.mozGetUserMedia;
+            getUserMedia.call(
+                navigator, { audio: true }, onSuccess, console.log
+            );
+        }
+    }
+
+    /**
+     * Removes the given microphone stream.
+     *
+     * @param {module:src/Player/AudioStream} stream - The stream to remove.
+     */
+    removeMicrophone(stream) {
+        this.setState(({ streamHistory }) => {
+            streamHistory.removeItem(stream);
+            return { streamHistory };
+        }, () => {
+            stream.cleanup();
+        });
     }
 
     /**
@@ -320,13 +365,13 @@ export default class Player extends Component {
     render() {
         const {
             shuffle, repeat, updating, playing, loading,
-            fileHistory
+            fileHistory, streamHistory
         } = this.state;
 
         const {
             togglePlaying, toggleShuffle, toggleRepeat, toggleUpdating,
             onInputFiles, removeFile, setFile, nextFile, prevFile,
-            addMicrophone
+            addMicrophone, removeMicrophone
         } = this;
 
         if (!fileHistory.itemsLength) {
@@ -371,7 +416,7 @@ export default class Player extends Component {
 
         const itemsProps = {
             fileHistory, onInputFiles, removeFile, setFile,
-            addMicrophone
+            streamHistory, addMicrophone, removeMicrophone
         };
 
         const controlsProps = {

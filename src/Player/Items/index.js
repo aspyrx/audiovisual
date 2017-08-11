@@ -12,6 +12,7 @@ import classNames from 'classnames';
 
 import PlayHistory from '../PlayHistory';
 import AudioFile from '../AudioFile';
+import AudioStream from '../AudioStream';
 import styles from './index.less';
 
 /**
@@ -54,22 +55,58 @@ function FileInfo(props) {
     });
 
     const text = getTextForFile(file);
-    const contents = onRemove
-        ? [
-            <span key='contents' onClick={onClick}>{text}</span>,
-            <span key='remove' className={styles.remove} onClick={onRemove}>
-                ×
-            </span>
-        ]
-        : <span onClick={onClick}>{text}</span>;
+    const remove = onRemove
+        ? <span key='remove' className={styles.remove} onClick={onRemove}>
+            ×
+        </span>
+        : null;
 
     return <p className={className} title={props.title}>
-        {contents}
+        <span onClick={onClick}>{text}</span>
+        {remove}
     </p>;
 }
 
 FileInfo.propTypes = {
     file: instanceOf(AudioFile).isRequired,
+    selected: bool,
+    onClick: func,
+    onRemove: func,
+    title: string
+};
+
+/**
+ * React component that represents information about a stream.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} props.stream - The stream.
+ * @param {boolean} props.selected - Whether or not the stream is selected.
+ * @param {Function} props.onClick - Click event handler.
+ * @param {Function} props.onRemove - Remove click event handler.
+ * @returns {ReactElement} The component's elements.
+ */
+function StreamInfo(props) {
+    const { stream, selected, onClick, onRemove } = props;
+    const className = classNames(styles.stream, {
+        [styles.selected]: selected
+    });
+
+    const { title } = stream;
+
+    const remove = onRemove
+        ? <span key='remove' className={styles.remove} onClick={onRemove}>
+            ×
+        </span>
+        : null;
+
+    return <p className={className} title={props.title}>
+        <span onClick={onClick}>{title}</span>
+        {remove}
+    </p>;
+}
+
+StreamInfo.propTypes = {
+    stream: instanceOf(AudioStream).isRequired,
     selected: bool,
     onClick: func,
     onRemove: func,
@@ -180,10 +217,12 @@ export default class Items extends Component {
     static get propTypes() {
         return {
             fileHistory: instanceOf(PlayHistory).isRequired,
+            streamHistory: instanceOf(PlayHistory).isRequired,
             onInputFiles: func.isRequired,
             removeFile: func.isRequired,
             setFile: func.isRequired,
-            addMicrophone: func.isRequired
+            addMicrophone: func.isRequired,
+            removeMicrophone: func.isRequired
         };
     }
 
