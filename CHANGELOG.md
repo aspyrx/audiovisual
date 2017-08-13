@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 3.0.1
+
+- Tiny compact item spacing change
+
 ### 3.0.0
 
 - Refactor/reorganize webapp source code

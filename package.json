@@ -1,6 +1,6 @@
 {
   "name": "audiovisual",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "An audio visualizer web app",
   "main": "lib",
   "scripts": {
