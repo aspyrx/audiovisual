@@ -16,6 +16,16 @@ import AudioStream from '../AudioStream';
 import styles from './index.less';
 
 const itemShape = oneOfType([AudioFile, AudioStream].map(instanceOf));
+
+/**
+ * Stops the event from propagating.
+ *
+ * @param {Event} evt - The event to stop propagating.
+ */
+function stopEventPropagation(evt) {
+    evt.stopPropagation();
+}
+
 /**
  * Tests if the filter matches the given file.
  *
@@ -40,7 +50,7 @@ function getTextForFile(file) {
 }
 
 /**
- * React component that represents information about an item.
+ * React component that represents information about a file.
  *
  * @param {Object} props - The component's props.
  * @param {string} props.file - The file.
@@ -49,7 +59,7 @@ function getTextForFile(file) {
  * @param {Function} props.onRemove - Remove click event handler.
  * @returns {ReactElement} The component's elements.
  */
-function FileInfo(props) {
+function FileItem(props) {
     const { file, selected, onClick, onRemove } = props;
     const className = classNames(styles.item, {
         [styles.selected]: selected
@@ -68,7 +78,7 @@ function FileInfo(props) {
     </p>;
 }
 
-FileInfo.propTypes = {
+FileItem.propTypes = {
     file: instanceOf(AudioFile).isRequired,
     selected: bool,
     onClick: func,
@@ -86,7 +96,7 @@ FileInfo.propTypes = {
  * @param {Function} props.onRemove - Remove click event handler.
  * @returns {ReactElement} The component's elements.
  */
-function StreamInfo(props) {
+function StreamItem(props) {
     const { stream, selected, onClick, onRemove } = props;
     const className = classNames(styles.item, {
         [styles.selected]: selected
@@ -106,7 +116,7 @@ function StreamInfo(props) {
     </p>;
 }
 
-StreamInfo.propTypes = {
+StreamItem.propTypes = {
     stream: instanceOf(AudioStream).isRequired,
     selected: bool,
     onClick: func,
@@ -163,10 +173,20 @@ Actions.propTypes = {
 function Compact(props) {
     const { toggle, item } = props;
 
+    /**
+     * Click handler for the component.
+     *
+     * @param {Event} evt - The event to handle.
+     */
+    function onClick(evt) {
+        stopEventPropagation(evt);
+        toggle();
+    }
+
     if (!item) {
         return <div
             className={styles.compact}
-            onClick={toggle}
+            onClick={onClick}
             title="select a song"
         >
             <span className={styles.title}>No song selected.</span>
@@ -191,7 +211,7 @@ function Compact(props) {
 
     return <div
         className={styles.compact}
-        onClick={toggle}
+        onClick={onClick}
         title="select a song"
     >
         {pictureElem}
@@ -299,25 +319,27 @@ export default class Items extends Component {
             }
 
             if (f instanceof AudioFile) {
-                return <FileInfo
+                return <FileItem
                     key={f.url}
                     file={f}
                     selected={f === item}
                     onClick={onClick}
                     onRemove={onRemove}
                 />;
+            } else if (f instanceof AudioStream) {
+                return <StreamItem
+                    key={f.stream.id}
+                    stream={f}
+                    selected={f === item}
+                    onClick={onClick}
+                    onRemove={onRemove}
+                />;
             }
 
-            return <StreamInfo
-                key={f.stream.id}
-                stream={f}
-                selected={f === item}
-                onClick={onClick}
-                onRemove={onRemove}
-            />;
+            throw new Error('Item of unknown type in item list');
         });
 
-        return <div className={styles.items}>
+        return <div className={styles.items} onClick={stopEventPropagation}>
             <div className={styles.search}>
                 <input
                     type="search"

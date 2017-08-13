@@ -2,8 +2,13 @@
 
 .compact {
     display: flex;
+
     margin: @spacing-y @spacing-x;
     cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
 
     > * {
         margin: 0 @spacing-x;

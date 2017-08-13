@@ -23,15 +23,6 @@ import Controls from './Controls';
 import styles from './index.less';
 
 /**
- * Event handler for stopping event propagation.
- *
- * @param {Event} evt - The event to stop propagating.
- */
-function stopEventPropagation(evt) {
-    evt.stopPropagation();
-}
-
-/**
  * React component to render when there are no songs or streams to play.
  *
  * @param {Object} props - Props for the component.
@@ -419,7 +410,7 @@ export default class Player extends Component {
             {keyHandlers}
             {spinner}
             <Audiovisual className={styles.audiovisual} {...avProps} />
-            <div className={styles.info} onClick={stopEventPropagation}>
+            <div className={styles.itemsContainer}>
                 <Items {...itemsProps} />
             </div>
             <Controls {...controlsProps} />
