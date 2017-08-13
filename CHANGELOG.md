@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 3.0.0
+
+- Refactor/reorganize webapp source code
+- Add JSDoc
+
 ### 2.1.0
 
 -  Add album art background, transition, and shadowing
