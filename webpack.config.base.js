@@ -27,9 +27,9 @@ module.exports = {
     },
     resolve: {
         alias: {
+            'src': srcDir,
             'jsmediatags$': 'jsmediatags/dist/jsmediatags.min.js'
-        },
-        modules: [srcDir, 'node_modules']
+        }
     },
     module: {
         rules: [{
@@ -39,9 +39,15 @@ module.exports = {
                 loader: 'style-loader'
             }, {
                 loader: 'css-loader',
-                options: { importLoaders: 1 }
+                options: {
+                    sourceMap: true,
+                    importLoaders: 1
+                }
             }, {
-                loader: 'postcss-loader'
+                loader: 'postcss-loader',
+                options: {
+                    sourceMap: true
+                }
             }]
         }, {
             test: /\.less$/,
@@ -50,11 +56,20 @@ module.exports = {
                 loader: 'style-loader'
             }, {
                 loader: 'css-loader',
-                options: { importLoaders: 2 }
+                options: {
+                    sourceMap: true,
+                    importLoaders: 2
+                }
             }, {
-                loader: 'postcss-loader'
+                loader: 'postcss-loader',
+                options: {
+                    sourceMap: true
+                }
             }, {
-                loader: 'less-loader'
+                loader: 'less-loader',
+                options: {
+                    sourceMap: true
+                }
             }]
         }, {
             test: /\.css$/,
@@ -64,12 +79,16 @@ module.exports = {
             }, {
                 loader: 'css-loader',
                 options: {
+                    sourceMap: true,
                     modules: true,
                     localIdentName: '[local]-[hash:base64:5]',
                     importLoaders: 1
                 }
             }, {
-                loader: 'postcss-loader'
+                loader: 'postcss-loader',
+                options: {
+                    sourceMap: true
+                }
             }]
         }, {
             test: /\.less$/,
@@ -79,14 +98,21 @@ module.exports = {
             }, {
                 loader: 'css-loader',
                 options: {
+                    sourceMap: true,
                     modules: true,
                     localIdentName: '[local]-[hash:base64:5]',
                     importLoaders: 2
                 }
             }, {
-                loader: 'postcss-loader'
+                loader: 'postcss-loader',
+                options: {
+                    sourceMap: true
+                }
             }, {
-                loader: 'less-loader'
+                loader: 'less-loader',
+                options: {
+                    sourceMap: true
+                }
             }]
         }, {
             test: /\.js$/,

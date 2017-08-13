@@ -1,3 +1,9 @@
+/**
+ * Audio visualiser React component.
+ *
+ * @module src/Audiovisual
+ */
+
 import React, { Component } from 'react';
 import {
     bool, number, string, func, instanceOf, element
@@ -6,9 +12,17 @@ import TransitionGroup from 'react-transition-group/TransitionGroup';
 import CSSTransition from 'react-transition-group/CSSTransition';
 import classNames from 'classnames';
 
-import Spectral from './spectral.js';
-import styles from './audiovisual.less';
+import Spectral from './Spectral';
+import styles from './index.less';
 
+/**
+ * Averages the values between the given indices.
+ *
+ * @param {number[]} arr - The values.
+ * @param {number} lo - The start index (inclusive).
+ * @param {number} hi - The end index (exclusive).
+ * @returns {number} The average.
+ */
 function average(arr, lo, hi) {
     if (hi - lo <= 1) {
         return arr[lo];
@@ -21,10 +35,25 @@ function average(arr, lo, hi) {
     return sum / (hi - lo);
 }
 
+/**
+ * Normalizes the given frequency value.
+ *
+ * @param {number} f - The frequency value.
+ * @returns {number} The normalized value.
+ */
 function normalizeFreq(f) {
     return 1 - ((f + 30) / -70);
 }
 
+/**
+ * Exponentially scales the frequency value so that it is nicer to look at.
+ *
+ * TODO: better docs and math
+ *
+ * @param {number} f - The frequency value.
+ * @param {number} b - The exponential base.
+ * @returns {number} The scaled frequency value.
+ */
 function calcFreq(f, b) {
     const x = (Math.pow(b, f) - 1) / (b - 1);
     if (x < 0) {
@@ -36,6 +65,17 @@ function calcFreq(f, b) {
     return x;
 }
 
+/**
+ * Calculates the appropriate number of frequency values to include for a target
+ * index.
+ *
+ * TODO: better docs and math
+ *
+ * @param {number} i - The target index.
+ * @param {number} m - The number of frequency values.
+ * @param {number} n - The number of target values.
+ * @returns {number} The number of frequency values to include.
+ */
 function freqStep(i, m, n) {
     return Math.min(
         Math.floor(n / 2 * Math.pow(n / Math.sqrt(m), (i / m) - 1)),
@@ -43,6 +83,14 @@ function freqStep(i, m, n) {
     );
 }
 
+/**
+ * React component for providing a fade in transition on appear/enter, and fade
+ * out on exit.
+ *
+ * @param {Object} props - The component's props.
+ * @param {ReactElement} props.children - Element to transition.
+ * @returns {ReactElement} The component's elements.
+ */
 function FadeTransition(props) {
     const { children, ...rest } = props;
     const className = classNames(children.props.className, styles.fade);
@@ -68,6 +116,13 @@ FadeTransition.propTypes = {
     children: element
 };
 
+/**
+ * React component for providing a fade-out + scale transition on appear/enter.
+ *
+ * @param {Object} props - The component's props.
+ * @param {ReactElement} props.children - Element to transition.
+ * @returns {ReactElement} The component's elements.
+ */
 function FadeOutScaleTransition(props) {
     const { children, ...rest } = props;
     const className = classNames(children.props.className, styles.fadeOutScale);
@@ -90,6 +145,14 @@ FadeOutScaleTransition.propTypes = {
     children: element
 };
 
+/**
+ * React component for displaying a pause icon.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} props.textColor - The color for the icon.
+ * @param {string} [props.className] - Additional class for the icon.
+ * @returns {ReactElement} The component's elements.
+ */
 function PauseIcon(props) {
     const { textColor, className } = props;
     return <div
@@ -106,6 +169,14 @@ PauseIcon.propTypes = {
     className: string
 };
 
+/**
+ * React component for displaying a play icon.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} props.textColor - The color for the icon.
+ * @param {string} [props.className] - Additional class for the icon.
+ * @returns {ReactElement} The component's elements.
+ */
 function PlayIcon(props) {
     const { textColor, className } = props;
     return <div
@@ -119,6 +190,16 @@ PlayIcon.propTypes = {
     className: string
 };
 
+/**
+ * React component for displaying a background image.
+ *
+ * TODO: draw this using the canvas so we can detect the dominant color(s) and
+ * use them.
+ *
+ * @param {Object} props - The component's props.
+ * @param {string} [props.bgURL] - The URL for the image, if any.
+ * @returns {ReactElement} The component's elements.
+ */
 function BGImage(props) {
     const { bgURL } = props;
 
@@ -138,7 +219,15 @@ BGImage.propTypes = {
     bgURL: string
 };
 
+/**
+ * Audio visualization React component.
+ */
 export default class Audiovisual extends Component {
+    /**
+     * The component's propTypes.
+     *
+     * @type {Object}
+     */
     static get propTypes() {
         return {
             className: string,
@@ -161,6 +250,11 @@ export default class Audiovisual extends Component {
         };
     }
 
+    /**
+     * The component's default props.
+     *
+     * @type {Object}
+     */
     static get defaultProps() {
         return {
             numFreq: 128,
@@ -176,8 +270,14 @@ export default class Audiovisual extends Component {
         };
     }
 
-    // eslint-disable-next-line max-statements
-    constructor(props) {
+    /**
+     * Initializes the component.
+     *
+     * TODO: add docs here about the props.
+     *
+     * @param {Object} props - The component's props.
+     */
+    constructor(props) { // eslint-disable-line max-statements
         super();
 
         const {
@@ -218,6 +318,11 @@ export default class Audiovisual extends Component {
         });
     }
 
+    /**
+     * Event handler for `timeupdate` event on `<audio>` element.
+     *
+     * @param {Event} evt - The event.
+     */
     onTimeUpdate(evt) {
         const progress = evt.target.currentTime / evt.target.duration;
         if (this.progress) {
@@ -225,6 +330,9 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Event handler for `resize` event on DOM node.
+     */
     onResize() {
         const { offsetWidth, offsetHeight } = this.node;
         if (offsetWidth !== this.state.offsetWidth) {
@@ -249,6 +357,11 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Initializes the `Spectral` analysis node.
+     *
+     * @param {HTMLAudioElement} audio - The audio element.
+     */
     initSpectral(audio) {
         this.audio = audio;
         audio.addEventListener('timeupdate', this.onTimeUpdate);
@@ -267,6 +380,9 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Destroys the `Spectral` analysis node.
+     */
     destroySpectral() {
         this.stopAnimating();
         this.waveform = null;
@@ -277,6 +393,12 @@ export default class Audiovisual extends Component {
         this.audio = null;
     }
 
+    /**
+     * Ref for `<audio>` element.
+     *
+     * @param {HTMLAudioElement?} audio - The audio element, or `null` if the
+     * element has unmounted.
+     */
     audioRef(audio) {
         this[audio === null
             ? 'destroySpectral'
@@ -284,6 +406,12 @@ export default class Audiovisual extends Component {
         ](audio);
     }
 
+    /**
+     * Ref for the component's top-level DOM node.
+     *
+     * @param {HTMLElement?} node - The DOM node, or `null` if the node has
+     * unmounted.
+     */
     nodeRef(node) {
         this.node = node;
 
@@ -295,6 +423,12 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Ref for the `<canvas>` element.
+     *
+     * @param {HTMLCanvasElement?} canvas - The canvas element, or `null` if the
+     * element has unmounted.
+     */
     canvasRef(canvas) {
         if (canvas) {
             this.canvas = canvas.getContext('2d');
@@ -303,10 +437,19 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Ref for the progress DOM node.
+     *
+     * @param {HTMLElement?} progress - The DOM node, or `null` if the node has
+     * unmounted.
+     */
     progressRef(progress) {
         this.progress = progress;
     }
 
+    /**
+     * Callback for `requestAnimationFrame` that does the drawing work.
+     */
     onAnimFrame() {
         const { canvas } = this;
         if (!canvas) {
@@ -320,6 +463,11 @@ export default class Audiovisual extends Component {
         this.animFrame = requestAnimationFrame(this.onAnimFrame);
     }
 
+    /**
+     * Updates the waveform drawn on the canvas.
+     *
+     * @param {CanvasRenderingContext2D} canvas - The canvas context.
+     */
     updateWave(canvas) {
         const { spectral, waveform, waveXs, waveYs } = this;
         spectral.fillWaveform(waveform);
@@ -346,8 +494,12 @@ export default class Audiovisual extends Component {
         canvas.stroke();
     }
 
-    // eslint-disable-next-line max-statements
-    updateFreq(canvas) {
+    /**
+     * Updates the frequencies drawn on the canvas.
+     *
+     * @param {CanvasRenderingContext2D} canvas - The canvas context.
+     */
+    updateFreq(canvas) { // eslint-disable-line max-statements
         const { spectral, spectrum, freqXs, freqYs } = this;
 
         spectral.fillSpectrum(spectrum);
@@ -380,12 +532,18 @@ export default class Audiovisual extends Component {
         canvas.fill();
     }
 
+    /**
+     * Starts the animation of the visualiser.
+     */
     startAnimating() {
         if (this.animFrame === null) {
             this.animFrame = requestAnimationFrame(this.onAnimFrame);
         }
     }
 
+    /**
+     * Stops the animation of the visualiser.
+     */
     stopAnimating() {
         if (this.animFrame !== null) {
             cancelAnimationFrame(this.animFrame);
@@ -393,6 +551,11 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * React lifecycle handler called when component is receiving new props.
+     *
+     * @param {Object} props - The new props.
+     */
     componentWillReceiveProps(props) {
         const old = this.props;
 
@@ -423,6 +586,11 @@ export default class Audiovisual extends Component {
         }
     }
 
+    /**
+     * Renders the component.
+     *
+     * @returns {ReactElement} The component's elements.
+     */
     render() {
         const {
             className, waveWidth,
@@ -488,8 +656,23 @@ export default class Audiovisual extends Component {
     }
 }
 
-// Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
-// eslint-disable-next-line max-params
+/* eslint-disable max-params, max-statements */
+
+/**
+ * Draws a bezier curve from Catmull-Rom coordinates.
+ *
+ * Adapted from http://schepers.cc/svg/path/catmullrom2bezier.js
+ *
+ * @param {CanvasRenderingContext2D} canvas - The canvas context.
+ * @param {number} ax - first x
+ * @param {number} ay - first y
+ * @param {number} bx - second x
+ * @param {number} by - second y
+ * @param {number} cx - third x
+ * @param {number} cy - third y
+ * @param {number} dx - fourth x
+ * @param {number} dy - fourth y
+ */
 function drawBezierFromCatmullRom(canvas, ax, ay, bx, by, cx, cy, dx, dy) {
     // Catmull-Rom to Cubic Bezier conversion matrix
     //    0       1       0       0
@@ -505,7 +688,14 @@ function drawBezierFromCatmullRom(canvas, ax, ay, bx, by, cx, cy, dx, dy) {
     canvas.bezierCurveTo(px, py, qx, qy, cx, cy);
 }
 
-// eslint-disable-next-line max-statements
+/**
+ * Draws a bezier curve passing through the given points.
+ *
+ * @param {CanvasRenderingContext2D} canvas - The canvas context.
+ * @param {number} n - The number of points.
+ * @param {number[]} xs - The x coordinates.
+ * @param {number[]} ys - The y coordinates.
+ */
 function drawBezier(canvas, n, xs, ys) {
     if (n < 3) {
         return;
@@ -557,7 +747,15 @@ function drawBezier(canvas, n, xs, ys) {
     );
 }
 
-// eslint-disable-next-line max-params
+/**
+ * Draws bars for the given points.
+ *
+ * @param {CanvasRenderingContext2D} canvas - The canvas context.
+ * @param {number} n - The number of points.
+ * @param {number} startX - The starting x coordinate.
+ * @param {number[]} xs - The x coordinates.
+ * @param {number[]} ys - The y coordinates.
+ */
 function drawBars(canvas, n, startX, xs, ys) {
     for (let i = 0, x = startX; i < n; i++) {
         const xn = xs[i];
@@ -567,4 +765,6 @@ function drawBars(canvas, n, startX, xs, ys) {
         x = xn;
     }
 }
+
+/* eslint-enable max-params max-statements */
 

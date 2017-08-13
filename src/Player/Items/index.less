@@ -1,18 +1,9 @@
-@import '~components/base';
-
-.file {
-    margin: @spacing-y @spacing-x;
-    cursor: pointer;
-
-    &:hover {
-        text-decoration: underline;
-    }
-}
+@import '~src/less/definitions';
 
 .compact {
-    .file();
-
     display: flex;
+    margin: @spacing-y @spacing-x;
+    cursor: pointer;
 
     > * {
         margin: 0 @spacing-x;
@@ -44,7 +35,7 @@
     }
 }
 
-.files {
+.items {
     max-height: 100vh;
 
     display: flex;
@@ -83,7 +74,7 @@
         }
     }
 
-    .filesContainer {
+    .itemsContainer {
         flex: 1;
         overflow: auto;
         margin: 0 @spacing-x @spacing-y;
@@ -92,7 +83,7 @@
         background-color: fade(black, 50%);
         border-radius: @spacing-y;
 
-        .file {
+        .item {
             margin: 4px;
             cursor: pointer;
 

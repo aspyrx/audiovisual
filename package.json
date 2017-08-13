@@ -4,7 +4,9 @@
   "description": "An audio visualizer web app",
   "main": "lib",
   "scripts": {
-    "doc": "jsdoc -c .jsdoc.json README.md bin lib",
+    "doc": "jsdoc -c .jsdoc.json README.md bin lib src",
+    "doc-watch": "nodemon --config .nodemon.doc.json",
+    "lint": "eslint *.js bin lib src",
     "live": "node build.js live",
     "watch": "node build.js watch",
     "build": "node build.js",
@@ -59,6 +61,7 @@
     "jsdoc": "^3.5.3",
     "less": "^2.7.2",
     "less-loader": "^4.0.5",
+    "nodemon": "^1.11.0",
     "normalize.css": "^7.0.0",
     "postcss-loader": "^2.0.6",
     "react": "^15.6.1",
