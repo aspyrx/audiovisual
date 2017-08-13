@@ -86,8 +86,8 @@ export default class Controls extends Component {
             toggleShuffle: func.isRequired,
             toggleRepeat: func.isRequired,
             togglePlaying: func.isRequired,
-            prevFile: func.isRequired,
-            nextFile: func.isRequired
+            prevItem: func.isRequired,
+            nextItem: func.isRequired
         };
     }
 
@@ -117,7 +117,7 @@ export default class Controls extends Component {
         const {
             updating, shuffle, repeat, playing,
             toggleUpdating, toggleShuffle, toggleRepeat, togglePlaying,
-            nextFile, prevFile
+            nextItem, prevItem
         } = this.props;
         const { showingHelp } = this.state;
         const { toggleHelp } = this;
@@ -149,13 +149,13 @@ export default class Controls extends Component {
                     </span>
                 </div>
                 <div>
-                    <span onClick={prevFile} title="previous song">
+                    <span onClick={prevItem} title="previous song">
                         ⏮
                     </span>
                     <span onClick={togglePlaying} title="play/pause">
                         { playing ? '॥' : '►' }
                     </span>
-                    <span onClick={nextFile} title="next song">
+                    <span onClick={nextItem} title="next song">
                         ⏭
                     </span>
                     <span onClick={toggleHelp} title="help">?</span>

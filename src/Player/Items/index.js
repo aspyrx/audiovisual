@@ -6,7 +6,7 @@
 
 import React, { Component } from 'react';
 import {
-    bool, string, func, instanceOf
+    bool, string, func, instanceOf, oneOfType
 } from 'prop-types';
 import classNames from 'classnames';
 
@@ -15,6 +15,7 @@ import AudioFile from '../AudioFile';
 import AudioStream from '../AudioStream';
 import styles from './index.less';
 
+const itemShape = oneOfType([AudioFile, AudioStream].map(instanceOf));
 /**
  * Tests if the filter matches the given file.
  *
@@ -39,7 +40,7 @@ function getTextForFile(file) {
 }
 
 /**
- * React component that represents information about a file.
+ * React component that represents information about an item.
  *
  * @param {Object} props - The component's props.
  * @param {string} props.file - The file.
@@ -50,7 +51,7 @@ function getTextForFile(file) {
  */
 function FileInfo(props) {
     const { file, selected, onClick, onRemove } = props;
-    const className = classNames(styles.file, {
+    const className = classNames(styles.item, {
         [styles.selected]: selected
     });
 
@@ -87,7 +88,7 @@ FileInfo.propTypes = {
  */
 function StreamInfo(props) {
     const { stream, selected, onClick, onRemove } = props;
-    const className = classNames(styles.stream, {
+    const className = classNames(styles.item, {
         [styles.selected]: selected
     });
 
@@ -156,13 +157,13 @@ Actions.propTypes = {
  *
  * @param {Object} props - The component's props.
  * @param {Function} props.toggle - Function to call to toggle the UI.
- * @param {AudioFile} props.file - The current file.
+ * @param {module:src/Player/PlayHistory~Item} props.item - The current item.
  * @returns {ReactElement} The component's elements.
  */
 function Compact(props) {
-    const { toggle, file } = props;
+    const { toggle, item } = props;
 
-    if (!file) {
+    if (!item) {
         return <div
             className={styles.compact}
             onClick={toggle}
@@ -172,7 +173,7 @@ function Compact(props) {
         </div>;
     }
 
-    const { artist, album, title, pictureURL } = file;
+    const { artist, album, title, pictureURL } = item;
 
     const pictureElem = pictureURL
         ? <img className={styles.picture} src={pictureURL} alt="album art" />
@@ -203,7 +204,7 @@ function Compact(props) {
 }
 
 Compact.propTypes = {
-    file: instanceOf(AudioFile),
+    item: itemShape,
     toggle: func.isRequired
 };
 
@@ -216,13 +217,11 @@ export default class Items extends Component {
      */
     static get propTypes() {
         return {
-            fileHistory: instanceOf(PlayHistory).isRequired,
-            streamHistory: instanceOf(PlayHistory).isRequired,
+            history: instanceOf(PlayHistory).isRequired,
             onInputFiles: func.isRequired,
-            removeFile: func.isRequired,
-            setFile: func.isRequired,
-            addMicrophone: func.isRequired,
-            removeMicrophone: func.isRequired
+            removeItem: func.isRequired,
+            setItem: func.isRequired,
+            addMicrophone: func.isRequired
         };
     }
 
@@ -264,51 +263,61 @@ export default class Items extends Component {
      * @returns {ReactElement} The component's elements.
      */
     render() {
-        const { fileHistory } = this.props;
+        const { history } = this.props;
         const { showing } = this.state;
         const { toggle } = this;
 
-        const file = fileHistory.item;
+        const { item } = history;
         if (!showing) {
-            return <Compact file={file} toggle={toggle} />;
+            return <Compact item={item} toggle={toggle} />;
         }
 
         const {
-            onInputFiles, removeFile, setFile,
-            addMicrophone
+            onInputFiles, addMicrophone,
+            removeItem, setItem
         } = this.props;
         const { filter } = this.state;
-        const files = fileHistory.items;
+        const { items } = history;
 
-        const fileInfos = (filter
-            ? files.filter(f => testFilter(filter, f))
-            : files
+        const itemInfos = (filter
+            ? items.filter(f => testFilter(filter, f))
+            : items
         ).map(f => {
             /**
-             * Click handler for the file.
+             * Click handler for the item.
              */
             function onClick() {
                 toggle();
-                setFile(f);
+                setItem(f);
             }
 
             /**
-             * Remove handler for the file.
+             * Remove handler for the item.
              */
             function onRemove() {
-                removeFile(f);
+                removeItem(f);
             }
 
-            return <FileInfo
-                key={f.url}
-                file={f}
-                selected={f === file}
+            if (f instanceof AudioFile) {
+                return <FileInfo
+                    key={f.url}
+                    file={f}
+                    selected={f === item}
+                    onClick={onClick}
+                    onRemove={onRemove}
+                />;
+            }
+
+            return <StreamInfo
+                key={f.stream.id}
+                stream={f}
+                selected={f === item}
                 onClick={onClick}
                 onRemove={onRemove}
             />;
         });
 
-        return <div className={styles.files}>
+        return <div className={styles.items}>
             <div className={styles.search}>
                 <input
                     type="search"
@@ -321,8 +330,8 @@ export default class Items extends Component {
                     toggle={toggle}
                 />
             </div>
-            <div className={styles.filesContainer}>
-                {fileInfos}
+            <div className={styles.itemsContainer}>
+                {itemInfos}
             </div>
         </div>;
     }

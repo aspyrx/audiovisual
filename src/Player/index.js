@@ -92,8 +92,7 @@ export default class Player extends Component {
             repeat: false,
             shuffle: true,
             updating: true,
-            fileHistory: new PlayHistory(),
-            streamHistory: new PlayHistory()
+            history: new PlayHistory()
         };
 
         // Set up toggle instance functions
@@ -109,8 +108,8 @@ export default class Player extends Component {
 
         // Bind handlers to this instance
         [
-            'onInputFiles', 'removeFile', 'setFile', 'nextFile', 'prevFile',
-            'addMicrophone', 'removeMicrophone'
+            'onInputFiles', 'addMicrophone',
+            'removeItem', 'setItem', 'nextItem', 'prevItem'
         ].forEach(key => {
             this[key] = this[key].bind(this);
         });
@@ -195,21 +194,21 @@ export default class Player extends Component {
     }
 
     /**
-     * Adds the given files to the end of the file list.
+     * Adds the given items to the end of the item list.
      *
-     * @param {module:src/Player/AudioFile[]} files - The new files.
+     * @param {module:src/Player/PlayHistory~Item[]} items - The new items.
      */
-    addFiles(files) {
-        if (files.length < 1) {
+    addItems(items) {
+        if (items.length < 1) {
             return;
         }
 
-        this.setState(({ fileHistory }) => {
-            fileHistory.addItems(files);
-            return { fileHistory };
+        this.setState(({ history }) => {
+            history.addItems(items);
+            return { history };
         }, () => {
-            if (!this.state.fileHistory.item) {
-                this.nextFile();
+            if (!this.state.history.item) {
+                this.nextItem();
             }
         });
     }
@@ -225,63 +224,67 @@ export default class Player extends Component {
         const files = await Promise.all(Array.prototype.map.call(
             evt.target.files,
             file => {
-                const f = new File({ file });
+                const f = new AudioFile({ file });
                 return f.addTags();
             }
         ));
-        this.addFiles(files);
+        this.addItems(files);
     }
 
     /**
-     * Removes the given file from the file list.
+     * Removes the given item from the item list.
      *
-     * @param {module:src/Player/AudioFile} file - The file to remove.
+     * @param {module:src/Player/PlayHistory~Item} item - The item to remove.
      */
-    removeFile(file) {
-        this.setState(({ fileHistory }) => {
-            fileHistory.removeItem(file);
-            return { fileHistory };
+    removeItem(item) {
+        this.setState(({ history }) => {
+            history.removeItem(item);
+            return { history };
         }, () => {
-            file.cleanup();
+            item.cleanup();
         });
     }
 
     /**
-     * Sets the currently-playing file.
+     * Sets the currently-playing item.
      *
-     * @param {module:src/Player/AudioFile} file - The file to use.
+     * @param {module:src/Player/PlayHistory~Item} item - The item to use.
      */
-    async setFile(file) {
-        try {
+    async setItem(item) {
+        if (item instanceof AudioFile) {
+            try {
+                await this.requestAudioFile(item);
+                await item.addTags();
+            } catch (err) {
+                return;
+            }
+        }
+        this.setState(({ history }) => {
+            history.item = item;
+            return { history };
+        });
+    }
+
+    /**
+     * Attempts to move to the next item.
+     */
+    async nextItem() {
+        const { history, shuffle } = this.state;
+        const file = history.nextItem(shuffle);
+        if (file instanceof AudioFile) {
             await this.requestAudioFile(file);
             await file.addTags();
-        } catch (err) {
-            return;
         }
-        this.setState(({ fileHistory }) => {
-            fileHistory.item = file;
-            return { fileHistory };
-        });
+        this.setState({ history });
     }
 
     /**
-     * Attempts to move to the next file.
+     * Attempts to move to the previous item.
      */
-    async nextFile() {
-        const { fileHistory, shuffle } = this.state;
-        const file = fileHistory.nextItem(shuffle);
-        await this.requestAudioFile(file);
-        await file.addTags();
-        this.setState({ fileHistory });
-    }
-
-    /**
-     * Attempts to move to the previous file.
-     */
-    prevFile() {
-        this.setState(({ fileHistory }) => {
-            fileHistory.prevItem();
-            return { fileHistory };
+    prevItem() {
+        this.setState(({ history }) => {
+            history.prevItem();
+            return { history };
         });
     }
 
@@ -299,13 +302,10 @@ export default class Player extends Component {
                 return;
             }
             tracks[0].addEventListener('ended', () => {
-                this.removeMicrophone(audioStream);
+                this.removeItem(audioStream);
             });
 
-            this.setState(({ streamHistory }) => {
-                streamHistory.addItems(audioStream);
-                return { streamHistory };
-            });
+            this.addItems([audioStream]);
         };
 
         try {
@@ -320,20 +320,6 @@ export default class Player extends Component {
                 navigator, { audio: true }, onSuccess, console.log
             );
         }
-    }
-
-    /**
-     * Removes the given microphone stream.
-     *
-     * @param {module:src/Player/AudioStream} stream - The stream to remove.
-     */
-    removeMicrophone(stream) {
-        this.setState(({ streamHistory }) => {
-            streamHistory.removeItem(stream);
-            return { streamHistory };
-        }, () => {
-            stream.cleanup();
-        });
     }
 
     /**
@@ -354,7 +340,7 @@ export default class Player extends Component {
         }
 
         const newFiles = configs.map(config => new AudioFile(config));
-        this.addFiles(newFiles);
+        this.addItems(newFiles);
     }
 
     /**
@@ -364,17 +350,16 @@ export default class Player extends Component {
      */
     render() {
         const {
-            shuffle, repeat, updating, playing, loading,
-            fileHistory, streamHistory
+            shuffle, repeat, updating, playing, loading, history
         } = this.state;
 
         const {
             togglePlaying, toggleShuffle, toggleRepeat, toggleUpdating,
-            onInputFiles, removeFile, setFile, nextFile, prevFile,
-            addMicrophone, removeMicrophone
+            onInputFiles, addMicrophone,
+            removeItem, setItem, nextItem, prevItem
         } = this;
 
-        if (!fileHistory.itemsLength) {
+        if (!history.itemsLength) {
             return <NoItems
                 addMicrophone={addMicrophone}
                 onInputFiles={onInputFiles}
@@ -384,22 +369,24 @@ export default class Player extends Component {
         const avProps = {
             updating,
             playing: playing && !loading,
-            onEnded: nextFile
+            onEnded: nextItem
         };
 
-        const file = fileHistory.item;
-        if (file) {
-            avProps.src = file.src;
-            avProps.bgURL = file.pictureURL;
+        const { item } = history;
+        if (item instanceof AudioFile) {
+            avProps.src = item.src;
+            avProps.bgURL = item.pictureURL;
+        } else if (item instanceof AudioStream) {
+            avProps.stream = item.stream;
         }
 
         const keyHandlers = [
             [' ', togglePlaying],
-            ['ArrowLeft', prevFile],
-            ['ArrowRight', nextFile],
-            ['j', prevFile],
+            ['ArrowLeft', prevItem],
+            ['ArrowRight', nextItem],
+            ['j', prevItem],
             ['k', togglePlaying],
-            ['l', nextFile],
+            ['l', nextItem],
             ['r', toggleRepeat],
             ['s', toggleShuffle],
             ['v', toggleUpdating]
@@ -415,14 +402,14 @@ export default class Player extends Component {
             : null;
 
         const itemsProps = {
-            fileHistory, onInputFiles, removeFile, setFile,
-            streamHistory, addMicrophone, removeMicrophone
+            history, onInputFiles, addMicrophone,
+            removeItem, setItem
         };
 
         const controlsProps = {
             repeat, shuffle, updating, playing,
             toggleRepeat, toggleShuffle, toggleUpdating, togglePlaying,
-            prevFile, nextFile
+            prevItem, nextItem
         };
 
         return <div
