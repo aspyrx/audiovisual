@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 3.0.2
+
+- Add `prop-types` to `devDependencies`
+- Bump `jsmediatags@^3.7.0`
+
 ### 3.0.1
 
 - Tiny compact item spacing change
