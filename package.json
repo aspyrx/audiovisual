@@ -36,7 +36,7 @@
   },
   "dependencies": {
     "express": "^4.15.3",
-    "jsmediatags": "^3.6.2",
+    "jsmediatags": "^3.7.0",
     "minimist": "^1.2.0",
     "progress": "^2.0.0"
   },
