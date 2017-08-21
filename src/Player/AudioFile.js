@@ -43,7 +43,7 @@ export default class AudioFile {
          * The file's URL.
          *
          * @private
-         * @type {string}
+         * @type {string?}
          */
         this._url = data.url || null;
 
@@ -55,6 +55,15 @@ export default class AudioFile {
          * @default null
          */
         this._file = null;
+
+        /**
+         * The URL for the `File` instance, or `null` if there is none.
+         *
+         * @private
+         * @type {string?}
+         * @default null
+         */
+        this._fileURL = null;
 
         /**
          * The file's media tag state.
@@ -89,15 +98,6 @@ export default class AudioFile {
          */
         this._title = data.title;
 
-        /**
-         * The file's picture Blob, or `null` if there is none.
-         *
-         * @private
-         * @type {Blob?}
-         * @default null
-         */
-        this._picture = null;
-
         this.file = data.file || null;
     }
 
@@ -105,12 +105,12 @@ export default class AudioFile {
      * Cleans up resources associated with the file.
      */
     cleanup() {
-        if (this._file) {
-            URL.revokeObjectURL(this.url);
+        if (this._fileURL) {
+            URL.revokeObjectURL(this._fileURL);
         }
 
-        if (this._picture) {
-            URL.revokeObjectURL(this.pictureURL);
+        if (this._pictureURL) {
+            URL.revokeObjectURL(this._pictureURL);
         }
     }
 
@@ -124,13 +124,13 @@ export default class AudioFile {
     }
 
     /**
-     * Gets the src URL for playback. Will be `null` until a `File` instance is
+     * Gets the file URL for playback. Will be `null` until a `File` instance is
      * added.
      *
-     * @returns {string?} The src URL for playback.
+     * @returns {string?} The file URL for playback.
      */
-    get src() {
-        return this._file ? this.url : null;
+    get fileURL() {
+        return this._fileURL;
     }
 
     /**
@@ -143,8 +143,8 @@ export default class AudioFile {
             return;
         }
 
-        if (this._file) {
-            URL.revokeObjectURL(this.url);
+        if (this._fileURL) {
+            URL.revokeObjectURL(this._fileURL);
             this._url = null;
         }
 
@@ -160,7 +160,7 @@ export default class AudioFile {
         }
 
         this._file = file;
-        this._url = URL.createObjectURL(file);
+        this._fileURL = URL.createObjectURL(file);
     }
 
     /**
@@ -243,7 +243,6 @@ export default class AudioFile {
         const type = formatToMediaType[format.toLowerCase()];
 
         const blob = new Blob([bytes], { type });
-        this._picture = blob;
         this._pictureURL = URL.createObjectURL(blob);
     }
 

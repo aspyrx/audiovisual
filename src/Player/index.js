@@ -365,7 +365,7 @@ export default class Player extends Component {
 
         const { item } = history;
         if (item instanceof AudioFile) {
-            avProps.src = item.src;
+            avProps.src = item.fileURL;
             avProps.bgURL = item.pictureURL;
         } else if (item instanceof AudioStream) {
             avProps.stream = item.stream;
