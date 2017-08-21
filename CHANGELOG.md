@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 3.0.3
+
+- Remove `picture` field, add `fileURL` field to `AudioFile`
+
 ### 3.0.2
 
 - Add `prop-types` to `devDependencies`
