@@ -120,7 +120,7 @@ export default class AudioFile {
      * @returns {string?} The file's URL, or `null` if there is none.
      */
     get url() {
-        return this._url;
+        return this._url || this._fileURL;
     }
 
     /**
