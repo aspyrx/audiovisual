@@ -9,5 +9,11 @@
         "browser": true,
         "commonjs": true,
         "es6": true
+    },
+    "settings": {
+        "react": {
+            "version": "detect"
+        }
     }
 }
+

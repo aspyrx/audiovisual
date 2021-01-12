@@ -59,10 +59,9 @@ export default function asyncComponent(
         }
 
         /**
-         * React lifecycle handler called when the component is about to be
-         * mounted.
+         * React lifecycle handler called when the component has mounted.
          */
-        componentWillMount() {
+        componentDidMount() {
             if (this.state.Component) {
                 return;
             }

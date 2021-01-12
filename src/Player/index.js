@@ -314,9 +314,9 @@ export default class Player extends Component {
     }
 
     /**
-     * React lifecycle handler called when component is about to mount.
+     * React lifecycle handler called when component has finished mounting.
      */
-    async componentWillMount() {
+    async componentDidMount() {
         let req;
         try {
             req = await this.request('GET', '/audio/.audiovisual.json');

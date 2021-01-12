@@ -1,8 +1,9 @@
 'use strict';
 
 const path = require('path');
-const webpack = require('webpack');
+const ESLintPlugin = require('eslint-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 
 const ctxDir = path.resolve(__dirname);
 const srcDir = path.resolve(ctxDir, 'src');
@@ -10,12 +11,12 @@ const outDir = path.resolve(ctxDir, 'dist');
 const publicPath = '/';
 
 module.exports = {
+    mode: 'development',
     devtool: 'cheap-module-source-map',
     context: ctxDir,
     entry: {
         main: ['normalize.css', srcDir],
-        lib: [
-            'babel-polyfill',
+        react: [
             'react', 'react-dom',
             'react-router', 'react-router-dom'
         ]
@@ -36,71 +37,24 @@ module.exports = {
             test: /\.css$/,
             include: [/node_modules/],
             use: [{
-                loader: 'style-loader'
+                loader: MiniCssExtractPlugin.loader
             }, {
-                loader: 'css-loader',
-                options: {
-                    sourceMap: true,
-                    importLoaders: 1
-                }
-            }, {
-                loader: 'postcss-loader',
-                options: {
-                    sourceMap: true
-                }
-            }]
-        }, {
-            test: /\.less$/,
-            include: [/node_modules/],
-            use: [{
-                loader: 'style-loader'
-            }, {
-                loader: 'css-loader',
-                options: {
-                    sourceMap: true,
-                    importLoaders: 2
-                }
-            }, {
-                loader: 'postcss-loader',
-                options: {
-                    sourceMap: true
-                }
-            }, {
-                loader: 'less-loader',
-                options: {
-                    sourceMap: true
-                }
-            }]
-        }, {
-            test: /\.css$/,
-            include: [srcDir],
-            use: [{
-                loader: 'style-loader'
-            }, {
-                loader: 'css-loader',
-                options: {
-                    sourceMap: true,
-                    modules: true,
-                    localIdentName: '[local]-[hash:base64:5]',
-                    importLoaders: 1
-                }
-            }, {
-                loader: 'postcss-loader',
-                options: {
-                    sourceMap: true
-                }
+                loader: 'css-loader'
             }]
         }, {
             test: /\.less$/,
             include: [srcDir],
             use: [{
-                loader: 'style-loader'
+                loader: MiniCssExtractPlugin.loader
             }, {
                 loader: 'css-loader',
                 options: {
                     sourceMap: true,
-                    modules: true,
-                    localIdentName: '[local]-[hash:base64:5]',
+                    modules: {
+                        mode: 'local',
+                        localIdentName: '[local]-[hash:base64:5]',
+                        context: ctxDir
+                    },
                     importLoaders: 2
                 }
             }, {
@@ -116,18 +70,26 @@ module.exports = {
             }]
         }, {
             test: /\.js$/,
-            exclude: /node_modules/,
+            include: [srcDir],
             use: [{
                 loader: 'babel-loader'
             }]
         }]
     },
+    optimization: {
+        splitChunks: {
+            chunks: 'all'
+        }
+    },
     plugins: [
-        new webpack.optimize.CommonsChunkPlugin({
-            name: ['lib', 'manifest']
-        }),
+        new ESLintPlugin(),
         new HtmlWebpackPlugin({
-            template: 'src/index.html'
+            template: 'src/index.html',
+            cache: false,
+            hash: true
+        }),
+        new MiniCssExtractPlugin({
+            filename: '[name].[chunkhash].css'
         })
     ]
 };

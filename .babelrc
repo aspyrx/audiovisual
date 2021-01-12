@@ -1,16 +1,15 @@
 {
     "presets": [
-        ["env", {
+        ["@babel/env", {
             "targets": {
                 "browsers": ["defaults"]
             },
             "modules": false
         }],
-        "react"
+        "@babel/react"
     ],
     "plugins": [
-        "react-hot-loader/babel",
-        "transform-object-rest-spread"
+        ["@babel/transform-runtime"]
     ]
 }
 

@@ -552,16 +552,14 @@ export default class Audiovisual extends Component {
     }
 
     /**
-     * React lifecycle handler called when component is receiving new props.
+     * React lifecycle handler called when component has updated.
      *
-     * @param {Object} props - The new props.
+     * @param {Object} old - The old props.
      */
-    componentWillReceiveProps(props) {
-        const old = this.props;
-
+    componentDidUpdate(old) {
         const {
             playing, numFreq, numWave, updating, stream
-        } = props;
+        } = this.props;
 
         if (numFreq !== old.numFreq) {
             this.freqPoints = new Float32Array(numFreq);
@@ -766,5 +764,5 @@ function drawBars(canvas, n, startX, xs, ys) {
     }
 }
 
-/* eslint-enable max-params max-statements */
+/* eslint-enable max-params, max-statements */
 

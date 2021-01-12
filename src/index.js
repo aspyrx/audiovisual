@@ -6,7 +6,6 @@
 
 import React from 'react';
 import { render } from 'react-dom';
-import { AppContainer } from 'react-hot-loader';
 
 import App from 'src/App';
 
@@ -28,9 +27,7 @@ document.body.appendChild(appDiv);
  * Starts the app by rendering it into the page.
  */
 function start() {
-    render(<AppContainer>
-        <App />
-    </AppContainer>, appDiv);
+    render(<App />, appDiv);
 }
 
 start();

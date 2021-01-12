@@ -1,11 +1,11 @@
 {
     "extends": ["eslint:recommended"],
     "parserOptions": {
-        "ecmaVersion": 2015
+        "ecmaVersion": 2017
     },
     "env": {
-        "node": true,
-        "es6": true
+        "es6": true,
+        "node": true
     },
     "rules": {
         "no-console": 0,
@@ -36,7 +36,6 @@
         "max-depth": [2, 5],
         "max-nested-callbacks": [2, 4],
         "max-params": [2, 4],
-        "max-statements": [1, 15],
         "max-len": [1, 80, 2],
         "new-parens": 2,
         "no-alert": 2,
@@ -47,7 +46,6 @@
         "no-dupe-class-members": 2,
         "no-class-assign": 2,
         "no-cond-assign": [2, "always"],
-        "no-continue": 1,
         "no-const-assign": 2,
         "no-debugger": 2,
         "no-dupe-args": 2,
@@ -111,13 +109,6 @@
         "no-with": 2,
         "quotes": [2, "single"],
         "radix": 2,
-        "require-jsdoc": [2, {
-            "require": {
-                "FunctionDeclaration": true,
-                "MethodDefinition": true,
-                "ClassDeclaration": true
-            }
-        }],
         "object-curly-spacing": [2, "always"],
         "array-bracket-spacing": [2, "never"],
         "computed-property-spacing": 2,
@@ -136,7 +127,8 @@
                 "Boolean": "boolean",
                 "Number": "number",
                 "String": "string",
-                "object": "Object"
+                "object": "Object",
+                "function": "Function"
             },
             "requireReturn": false,
             "requireReturnType": true,
@@ -148,3 +140,4 @@
         "yoda": [2, "never"]
     }
 }
+

@@ -1,35 +1,41 @@
+#!/usr/bin/env node
+
 'use strict';
 
 const path = require('path');
-const process = require('process');
 const webpack = require('webpack');
 const ProgressPlugin = require('webpack/lib/ProgressPlugin');
 const ProgressBar = require('progress');
 
-const webpackCompiler = webpack(function getWebpackConfig(action) {
-    switch (action) {
+const action = process.argv[2];
+const port = process.argv[3] || 10102;
+
+const webpackCompiler = webpack(function getWebpackConfig(act) {
+    switch (act) {
         case 'production':
             return require('./webpack.config.production.js');
         case 'live':
             return require('./webpack.config.live.js');
         default:
-            return require('./webpack.config.js');
+            throw new Error(`Unknown action "${act}"`);
     }
-}(process.argv[2]));
+}(action));
 
-const webpackBuildFinished = (err, stats) => {
+/**
+ * Callback for when the webpack build completes.
+ *
+ * @param {Object?} err - The build error, if any.
+ * @param {Object?} stats - The build statistics, upon success.
+ */
+function webpackBuildFinished(err, stats) {
     if (err) {
         console.log('\n\n===== WEBPACK BUILD FAILED =====');
         throw err;
-    } else {
-        console.log('\n\n===== WEBPACK BUILD FINISHED =====');
-        console.log(stats.toString({
-            colors: true,
-            timings: true,
-            cached: false
-        }));
     }
-};
+
+    console.log('\n\n===== WEBPACK BUILD FINISHED =====');
+    console.log(stats.toString({ colors: true, timings: true, cached: false }));
+}
 
 const webpackProgress = new ProgressBar(
     '[:bar] :percent eta :etas  :msg', {
@@ -37,14 +43,11 @@ const webpackProgress = new ProgressBar(
     }
 );
 
-webpackCompiler.apply(new ProgressPlugin((percent, msg) => {
-    webpackProgress.update(percent, { 'msg': msg });
-}));
+new ProgressPlugin(function(percent, msg) {
+    webpackProgress.update(percent, { msg });
+}).apply(webpackCompiler);
 
-switch (process.argv[2]) {
-    case 'watch':
-        webpackCompiler.watch({}, webpackBuildFinished);
-        return;
+switch (action) {
     case 'live': {
         const webpackDevServer = require('webpack-dev-server');
         const server = new webpackDevServer(webpackCompiler, {
@@ -53,11 +56,13 @@ switch (process.argv[2]) {
                 path.join(__dirname, 'public')
             ],
             hot: true,
+            injectHot: true,
+            injectClient: true,
             compress: true,
             historyApiFallback: true,
             stats: { colors: true, timings: true, cached: false }
         });
-        server.listen(8080, 'localhost');
+        server.listen(port, 'localhost');
         return;
     }
     default:
