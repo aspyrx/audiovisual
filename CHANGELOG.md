@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 4.0.1
+
+- Remove unnecessary `onPlayChanged` from `Spectral`
+
 ### 4.0.0
 
 - Update dependencies to 2021 state-of-the-art
