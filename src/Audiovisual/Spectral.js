@@ -19,7 +19,6 @@ export default class Spectral {
      * @param {number} options.bufsize - Analyser buffer size.
      * @param {number} options.smoothing - Analysier smoothing constant.
      * @param {number} options.delay - Delay (seconds) before output.
-     * @param {Function} options.onPlayChanged - Callback for play-state change.
      */
     constructor(audio, options = {}) {
         if (!(audio instanceof HTMLMediaElement)) {
@@ -31,8 +30,7 @@ export default class Spectral {
         const {
             bufsize = 2048,
             smoothing = 0.8,
-            delay = 0.25,
-            onPlayChanged
+            delay = 0.25
         } = options;
 
         const context = new AudioContext();
@@ -55,14 +53,8 @@ export default class Spectral {
             delay: {
                 value: context.createDelay(1.0)
             },
-            onPlayChanged: {
-                value: onPlayChanged
-            },
             _onCanPlay: {
                 value: this._onCanPlay.bind(this)
-            },
-            _onPlayChanged: {
-                value: this._onPlayChanged.bind(this)
             },
             _audioPlaying: {
                 value: false,
@@ -82,18 +74,14 @@ export default class Spectral {
         this.setupConnections();
 
         audio.addEventListener('canplay', this._onCanPlay);
-        audio.addEventListener('play', this._onPlayChanged);
-        audio.addEventListener('pause', this._onPlayChanged);
     }
 
     /**
      * Closes the audio context.
      */
     close() {
-        const { _audio, context, _onCanPlay, _onPlayChanged } = this;
+        const { _audio, context, _onCanPlay } = this;
         _audio.removeEventListener('canplay', _onCanPlay);
-        _audio.removeEventListener('play', _onPlayChanged);
-        _audio.removeEventListener('pause', _onPlayChanged);
         if (context.close) {
             context.close();
         }
@@ -156,19 +144,6 @@ export default class Spectral {
             this._audio.play();
         }
     }
-
-    /**
-     * `play`/`pause` event handler.
-     *
-     * @private
-     */
-    _onPlayChanged() {
-        const { _audio, onPlayChanged } = this;
-        const { paused } = _audio;
-        this._audioPlaying = !paused;
-        onPlayChanged && onPlayChanged(!paused);
-    }
-
 
     /**
      * Whether or not the audio is streaming.
@@ -273,8 +248,6 @@ export default class Spectral {
      * Pauses playback.
      */
     async pause() {
-        await this.context.suspend();
-
         if (this.paused) {
             return;
         }
@@ -282,6 +255,8 @@ export default class Spectral {
         this._stopStream();
         this._audio.pause();
         this._audioPlaying = false;
+
+        await this.context.suspend();
     }
 
     /**

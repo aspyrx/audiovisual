@@ -246,7 +246,6 @@ export default class Audiovisual extends Component {
             bgColor: string,
             textColor: string,
             altColor: string,
-            onPlayChanged: func,
             onEnded: func
         };
     }
@@ -364,14 +363,12 @@ export default class Audiovisual extends Component {
      * @param {HTMLAudioElement} audio - The audio element.
      */
     initSpectral(audio) {
-        const { playing, updating, stream, onPlayChanged } = this.props;
+        const { playing, updating, stream } = this.props;
 
         this.audio = audio;
         audio.addEventListener('timeupdate', this.onTimeUpdate);
 
-        const spectral = this.spectral = new Spectral(audio, {
-            onPlayChanged
-        });
+        const spectral = this.spectral = new Spectral(audio);
         this.waveform = new Float32Array(spectral.waveformSize);
         this.spectrum = new Float32Array(spectral.spectrumSize);
 

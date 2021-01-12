@@ -99,7 +99,7 @@ export default class Player extends Component {
 
         // Bind handlers to this instance
         [
-            'onPlayChanged', 'onInputFiles', 'addMicrophone',
+            'onInputFiles', 'addMicrophone',
             'removeItem', 'setItem', 'nextItem', 'prevItem'
         ].forEach(key => {
             this[key] = this[key].bind(this);
@@ -202,15 +202,6 @@ export default class Player extends Component {
                 this.nextItem();
             }
         });
-    }
-
-    /**
-     * Event handler for play-state changes.
-     *
-     * @param {boolean} playing - `true` if playing; `false` if paused.
-     */
-    onPlayChanged(playing) {
-        this.setState({ playing });
     }
 
     /**
@@ -417,7 +408,7 @@ export default class Player extends Component {
 
         const {
             togglePlaying, toggleShuffle, toggleRepeat, toggleUpdating,
-            onPlayChanged, onInputFiles, addMicrophone,
+            onInputFiles, addMicrophone,
             removeItem, setItem, nextItem, prevItem
         } = this;
 
@@ -431,7 +422,6 @@ export default class Player extends Component {
         const avProps = {
             updating,
             playing: playing && !loading,
-            onPlayChanged: onPlayChanged,
             onEnded: nextItem
         };
 
