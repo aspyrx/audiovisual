@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### 4.0.0
+
+- Update dependencies to 2021 state-of-the-art
+- Use MediaSession API where available
+- Compatibility fixes for update to React 17.x
+
 ### 3.0.3
 
 - Remove `picture` field, add `fileURL` field to `AudioFile`
