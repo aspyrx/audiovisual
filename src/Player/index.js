@@ -99,7 +99,7 @@ export default class Player extends Component {
 
         // Bind handlers to this instance
         [
-            'onInputFiles', 'addMicrophone',
+            'onPlayChanged', 'onInputFiles', 'addMicrophone',
             'removeItem', 'setItem', 'nextItem', 'prevItem'
         ].forEach(key => {
             this[key] = this[key].bind(this);
@@ -202,6 +202,15 @@ export default class Player extends Component {
                 this.nextItem();
             }
         });
+    }
+
+    /**
+     * Event handler for play-state changes.
+     *
+     * @param {boolean} playing - `true` if playing; `false` if paused.
+     */
+    onPlayChanged(playing) {
+        this.setState({ playing });
     }
 
     /**
@@ -317,6 +326,22 @@ export default class Player extends Component {
      * React lifecycle handler called when component has finished mounting.
      */
     async componentDidMount() {
+        if ('mediaSession' in navigator) {
+            const { mediaSession } = navigator;
+            for (const [key, handler] of [
+                ['play', () => this.setState({ playing: true })],
+                ['pause', () => this.setState({ playing: false })],
+                ['previoustrack', this.prevItem],
+                ['nexttrack', this.nextItem]
+            ]) {
+                try {
+                    mediaSession.setActionHandler(key, handler);
+                } catch (e) {
+                    void e;     // Ignore error.
+                }
+            }
+        }
+
         let req;
         try {
             req = await this.request('GET', '/audio/.audiovisual.json');
@@ -330,8 +355,54 @@ export default class Player extends Component {
             return;
         }
 
+        // Avoid auto-play if a playlist was fetched.
+        this.setState({ playing: false });
+
         const newFiles = configs.map(config => new AudioFile(config));
         this.addItems(newFiles);
+    }
+
+    /**
+     * React lifecycle handler called when component has finished updating.
+     */
+    async componentDidUpdate() {
+        if (!('mediaSession' in navigator)) {
+            return;     // Experimental Media Session API not available.
+        }
+
+        const { history, playing } = this.state;
+        const { item } = history;
+        let meta = null;
+
+        if (item instanceof AudioFile) {
+            const {
+                artist, album, title,
+                pictureURL, pictureType, pictureSizes
+            } = item;
+            meta = { artist, album, title };
+            if (pictureURL) {
+                meta.artwork = [{
+                    src: pictureURL,
+                    sizes: pictureSizes,
+                    type: pictureType
+                }];
+            }
+        } else if (item instanceof AudioStream) {
+            const { title } = item;
+            meta = { title };
+        }
+
+        const { mediaSession } = navigator;
+
+        if (meta) {
+            mediaSession.metadata = new window.MediaMetadata(meta);
+            mediaSession.playbackState = (playing)
+                ? 'playing'
+                : 'paused';
+        } else {
+            mediaSession.metadata = null;
+            mediaSession.playbackState = 'none';
+        }
     }
 
     /**
@@ -346,7 +417,7 @@ export default class Player extends Component {
 
         const {
             togglePlaying, toggleShuffle, toggleRepeat, toggleUpdating,
-            onInputFiles, addMicrophone,
+            onPlayChanged, onInputFiles, addMicrophone,
             removeItem, setItem, nextItem, prevItem
         } = this;
 
@@ -360,6 +431,7 @@ export default class Player extends Component {
         const avProps = {
             updating,
             playing: playing && !loading,
+            onPlayChanged: onPlayChanged,
             onEnded: nextItem
         };
 

@@ -227,11 +227,30 @@ export default class AudioFile {
     }
 
     /**
+     * Gets the file's picture type.
+     *
+     * @returns {string} Picture type.
+     */
+    get pictureType() {
+        return this._pictureType;
+    }
+
+    /**
+     * Gets the picture's sizes ('WxH').
+     *
+     * @returns {string} Picture sizes.
+     */
+    get pictureSizes() {
+        return this._pictureSizes;
+    }
+
+    /**
      * Attempts to add a picture from a parsed tag.
      *
      * @param {Object} [picture] - The picture tag.
      * @param {number[]} picture.data - The picture's data.
      * @param {string} picture.format - The picture's format.
+     * @returns {Promise} Resolves when the picture has been added.
      */
     addPictureFromTag(picture) {
         if (!picture) {
@@ -243,7 +262,23 @@ export default class AudioFile {
         const type = formatToMediaType[format.toLowerCase()];
 
         const blob = new Blob([bytes], { type });
-        this._pictureURL = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
+
+        return new Promise((resolve, reject) => {
+            const img = document.createElement('img');
+            img.onload = () => {
+                const { width, height } = img;
+                this._pictureType = type;
+                this._pictureURL = url;
+                this._pictureSizes = `${width}x${height}`;
+                resolve();
+            };
+            img.onerror = (event) => {
+                URL.revokeObjectURL(url);
+                reject(event);
+            };
+            img.src = url;
+        });
     }
 
     /**
@@ -281,7 +316,7 @@ export default class AudioFile {
             }
         });
 
-        this.addPictureFromTag(tags.picture);
+        await this.addPictureFromTag(tags.picture);
         this._parsedTags = true;
         return this;
     }
