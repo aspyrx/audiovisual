@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 4.0.2
+
+- Improve spectrum frequency scaling
+- Fix live-reloading
+
 ### 4.0.1
 
 - Remove unnecessary `onPlayChanged` from `Spectral`
