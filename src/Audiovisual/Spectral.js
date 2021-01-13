@@ -296,6 +296,24 @@ export default class Spectral {
     }
 
     /**
+     * The minimum decibel value returned in the spectrum.
+     *
+     * @returns {number} The value.
+     */
+    get spectrumMin() {
+        return this.analyser.minDecibels;
+    }
+
+    /**
+     * The maximum decibel value returned in the spectrum.
+     *
+     * @returns {number} The value.
+     */
+    get spectrumMax() {
+        return this.analyser.maxDecibels;
+    }
+
+    /**
      * Fills the given array with waveform (time-domain) data.
      *
      * @param {Array} out - The array to fill.

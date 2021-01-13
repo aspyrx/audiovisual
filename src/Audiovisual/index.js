@@ -36,51 +36,27 @@ function average(arr, lo, hi) {
 }
 
 /**
- * Normalizes the given frequency value.
+ * Applies an exponential scale to a value between [0, 1].
  *
- * @param {number} f - The frequency value.
- * @returns {number} The normalized value.
+ * @param {number} b - The base for exponentiation.
+ * @param {number} x - The value (exponent).
+ * @returns {number} The scaled value.
  */
-function normalizeFreq(f) {
-    return 1 - ((f + 30) / -70);
+function expScale(b, x) {
+    return (Math.pow(b, x) - 1) / (b - 1);
 }
 
 /**
- * Exponentially scales the frequency value so that it is nicer to look at.
+ * Calculates the index of the frequency values to include for a target index.
  *
- * TODO: better docs and math
- *
- * @param {number} f - The frequency value.
- * @param {number} b - The exponential base.
- * @returns {number} The scaled frequency value.
- */
-function calcFreq(f, b) {
-    const x = (Math.pow(b, f) - 1) / (b - 1);
-    if (x < 0) {
-        return 0;
-    } else if (x > 1) {
-        return 1;
-    }
-
-    return x;
-}
-
-/**
- * Calculates the appropriate number of frequency values to include for a target
- * index.
- *
- * TODO: better docs and math
- *
- * @param {number} i - The target index.
  * @param {number} m - The number of frequency values.
  * @param {number} n - The number of target values.
- * @returns {number} The number of frequency values to include.
+ * @param {number} i - The target index.
+ * @returns {number} The index to include.
  */
-function freqStep(i, m, n) {
-    return Math.min(
-        Math.floor(n / 2 * Math.pow(n / Math.sqrt(m), (i / m) - 1)),
-        n
-    );
+function freqStep(m, n, i) {
+    const b = 50;
+    return Math.min(Math.floor(expScale(b, i / n) * m), m);
 }
 
 /**
@@ -257,7 +233,7 @@ export default class Audiovisual extends Component {
      */
     static get defaultProps() {
         return {
-            numFreq: 128,
+            numFreq: 256,
             numWave: 1024,
             waveWidth: 3,
             freqColor: 'white',
@@ -370,7 +346,10 @@ export default class Audiovisual extends Component {
 
         const spectral = this.spectral = new Spectral(audio);
         this.waveform = new Float32Array(spectral.waveformSize);
-        this.spectrum = new Float32Array(spectral.spectrumSize);
+
+        // The upper part of the frequency domain isn't very interesting, so
+        // just discard it when fetching spectrum data.
+        this.spectrum = new Float32Array(spectral.spectrumSize / 2);
 
         if (playing) {
             this.spectral.play(stream);
@@ -502,24 +481,30 @@ export default class Audiovisual extends Component {
      */
     updateFreq(canvas) { // eslint-disable-line max-statements
         const { spectral, spectrum, freqXs, freqYs } = this;
+        const spectrumLen = spectrum.length;
 
         spectral.fillSpectrum(spectrum);
-        Array.prototype.forEach.call(
-            spectrum, (f, i) => (spectrum[i] = normalizeFreq(f))
-        );
 
-        const { spectrumSize } = spectral;
+        const { spectrumMin, spectrumMax } = spectral;
         const { numFreq, freqColor, shadowColor, shadowBlur } = this.props;
         const { offsetWidth: w, offsetHeight: h } = this.state;
+        const range = spectrumMax - spectrumMin;
 
-        const db = -100 / numFreq;
+        // Normalize to [0, 1], apply frequency-based scaling, and clip.
+        for (let j = 0; j < spectrumLen; j++) {
+            const norm = (spectrum[j] - spectrumMin) / range;
+            const dB = (spectrumLen - j) / spectrumLen * range;
+            const scale = expScale(dB, norm);
+            spectrum[j] = Math.min(Math.max(scale, 0), 1);
+        }
+
         const barHeight = h / 3;
-        for (let i = 0, b = 100; i < numFreq; i++, b += db) {
-            freqYs[i] = h - calcFreq(average(
+        for (let i = 0; i < numFreq; i++) {
+            freqYs[i] = h - average(
                 spectrum,
-                freqStep(i, numFreq, spectrumSize),
-                freqStep(i + 1, numFreq, spectrumSize)
-            ), b) * barHeight;
+                freqStep(spectrumLen, numFreq, i),
+                freqStep(spectrumLen, numFreq, i + 1)
+            ) * barHeight;
         }
 
         canvas.beginPath();
