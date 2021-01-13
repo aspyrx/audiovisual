@@ -1,9 +1,11 @@
 'use strict';
 
-const webpack = require('webpack');
 const config = require('./webpack.config.base.js');
 const ReactRefreshWebpackPlugin =
     require('@pmmmwh/react-refresh-webpack-plugin');
+
+config.entry.react.push('react-refresh/runtime');
+config.optimization.runtimeChunk = 'single';
 
 if (!config.performance) {
     config.performance = {};
@@ -32,7 +34,6 @@ for (let rule of config.module.rules) {
 }
 
 config.plugins.push(
-    new webpack.HotModuleReplacementPlugin(),
     new ReactRefreshWebpackPlugin()
 );
 

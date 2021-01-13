@@ -32,11 +32,3 @@ function start() {
 
 start();
 
-if (module.hot) {
-    module.hot.accept('src/App', start);
-
-    module.hot.dispose(() =>
-        document.body.removeChild(appDiv)
-    );
-}
-
