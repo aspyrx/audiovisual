@@ -55,7 +55,7 @@ function expScale(b, x) {
  * @returns {number} The index to include.
  */
 function freqStep(m, n, i) {
-    const b = 50;
+    const b = 100;
     return Math.min(Math.floor(expScale(b, i / n) * m), m);
 }
 
@@ -233,7 +233,7 @@ export default class Audiovisual extends Component {
      */
     static get defaultProps() {
         return {
-            numFreq: 256,
+            numFreq: 128,
             numWave: 1024,
             waveWidth: 3,
             freqColor: 'white',
@@ -741,11 +741,14 @@ function drawBezier(canvas, n, xs, ys) {
  * @param {number[]} ys - The y coordinates.
  */
 function drawBars(canvas, n, startX, xs, ys) {
+    const h = canvas.canvas.height;
     for (let i = 0, x = startX; i < n; i++) {
         const xn = xs[i];
         const y = ys[i];
+        canvas.lineTo(x, h);
         canvas.lineTo(x, y);
-        canvas.lineTo(xn, y);
+        canvas.lineTo(xn - 0.5, y);
+        canvas.lineTo(xn - 0.5, h);
         x = xn;
     }
 }

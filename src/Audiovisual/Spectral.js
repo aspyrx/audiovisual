@@ -28,7 +28,7 @@ export default class Spectral {
         audio.pause();
 
         const {
-            bufsize = 2048,
+            bufsize = 8192,
             smoothing = 0.8,
             delay = 0.25
         } = options;

@@ -251,12 +251,14 @@ export default class Items extends Component {
     constructor() {
         super();
         this.state = {
+            search: '',
             filter: null,
             showing: false
         };
 
         this.toggle = this.toggle.bind(this);
         this.onSearchChange = this.onSearchChange.bind(this);
+        this.searchRef = React.createRef();
     }
 
     /**
@@ -274,7 +276,23 @@ export default class Items extends Component {
     onSearchChange(event) {
         const { value } = event.target;
         const filter = new RegExp(value.replace(/\s/g, '\\s*'), 'i');
-        this.setState({ filter });
+        this.setState({ search: value, filter });
+    }
+
+    /**
+     * React lifecycle handler called when component has finished updating.
+     *
+     * @param {Object} prevProps - The previous props.
+     * @param {Object} prevState - The previous state.
+     */
+    componentDidUpdate(prevProps, prevState) {
+        if (this.state.showing && !prevState.showing) {
+            // Items list became visible.
+            // Assume user wishes to search; focus and select all text.
+            const searchInput = this.searchRef.current;
+            searchInput.focus();
+            searchInput.select();
+        }
     }
 
     /**
@@ -296,7 +314,7 @@ export default class Items extends Component {
             onInputFiles, addMicrophone,
             removeItem, setItem
         } = this.props;
-        const { filter } = this.state;
+        const { search, filter } = this.state;
         const { items } = history;
 
         const itemInfos = (filter
@@ -344,7 +362,9 @@ export default class Items extends Component {
                 <input
                     type="search"
                     placeholder="search"
+                    value={search}
                     onChange={this.onSearchChange}
+                    ref={this.searchRef}
                 />
                 <Actions
                     onInputFiles={onInputFiles}
