@@ -1,5 +1,15 @@
 # CHANGELOG
 
+### 4.0.3
+
+- Adjust constants for better frequency visualization
+    - Increase Spectral bufsize from 2048 to 8192 (more samples)
+    - Make frequency index scaling curve more powerful (emphasize low/mid-range)
+    - Decrease frequency bars from 256 to 128 (less busy)
+- Leave a gap between each frequency bar
+- Fix search text not appearing after re-opening the items list
+- Focus and select search input upon opening the items list
+
 ### 4.0.2
 
 - Improve spectrum frequency scaling
