@@ -50,19 +50,19 @@ new ProgressPlugin(function(percent, msg) {
 switch (action) {
     case 'live': {
         const webpackDevServer = require('webpack-dev-server');
-        const server = new webpackDevServer(webpackCompiler, {
-            contentBase: [
-                path.join(__dirname, 'dist'),
-                path.join(__dirname, 'public')
-            ],
+        const server = new webpackDevServer({
             hot: true,
-            injectHot: true,
-            injectClient: true,
-            compress: true,
             historyApiFallback: true,
-            stats: { colors: true, timings: true, cached: false }
-        });
-        server.listen(port, 'localhost');
+            static: [{
+                directory: path.join(__dirname, 'dist')
+            }, {
+                directory: path.join(__dirname, 'public')
+            }],
+            devMiddleware: {
+                stats: { colors: true, timings: true, cached: false }
+            }
+        }, webpackCompiler);
+        server.listen(port);
         return;
     }
     default:

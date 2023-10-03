@@ -222,7 +222,9 @@ export default class Audiovisual extends Component {
             bgColor: string,
             textColor: string,
             altColor: string,
-            onEnded: func
+            onEnded: func,
+            onKeyDown: func,
+            tabIndex: number
         };
     }
 
@@ -579,7 +581,7 @@ export default class Audiovisual extends Component {
         const {
             className, waveWidth,
             bgURL, bgColor, altColor, textColor,
-            src, stream, playing, onEnded
+            src, stream, playing, onEnded, onKeyDown, tabIndex
         } = this.props;
 
         const classes = classNames(styles.audiovisual, className);
@@ -606,6 +608,8 @@ export default class Audiovisual extends Component {
         return <div
             className={classes}
             style={style}
+            onKeyDown={onKeyDown}
+            tabIndex={tabIndex}
             ref={nodeRef}
         >
             <BGImage bgURL={bgURL} />

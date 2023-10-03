@@ -9,7 +9,6 @@
  */
 
 import React, { Component } from 'react';
-import KeyHandler, { KEYDOWN } from 'react-key-handler';
 import { func } from 'prop-types';
 
 import Spinner from 'src/Spinner';
@@ -99,11 +98,24 @@ export default class Player extends Component {
 
         // Bind handlers to this instance
         [
-            'onInputFiles', 'addMicrophone',
+            'onInputFiles', 'onKeyDown', 'addMicrophone',
             'removeItem', 'setItem', 'nextItem', 'prevItem'
         ].forEach(key => {
             this[key] = this[key].bind(this);
         });
+
+        // Set up keyboard handlers.
+        this.keyHandlers = {
+            ' ': this.togglePlaying,
+            'ArrowLeft': this.prevItem,
+            'ArrowRight': this.nextItem,
+            'j': this.prevItem,
+            'k': this.togglePlaying,
+            'l': this.nextItem,
+            'r': this.toggleRepeat,
+            's': this.toggleShuffle,
+            'v': this.toggleUpdating
+        };
     }
 
     /**
@@ -220,6 +232,21 @@ export default class Player extends Component {
             }
         ));
         this.addItems(files);
+    }
+
+    /**
+     * Event handler for key-down events.
+     *
+     * @param {KeyboardEvent} evt - The event.
+     * @param {string} evt.key - The key for the event.
+     * @param {EventTarget} event.target - The target element of the event.
+     * @param {EventTarget} event.currentTarget - The current target.
+     */
+    onKeyDown(evt) {
+        const handler = this.keyHandlers[evt.key];
+        if (handler) {
+            handler(evt);
+        }
     }
 
     /**
@@ -408,7 +435,7 @@ export default class Player extends Component {
 
         const {
             togglePlaying, toggleShuffle, toggleRepeat, toggleUpdating,
-            onInputFiles, addMicrophone,
+            onInputFiles, onKeyDown, addMicrophone,
             removeItem, setItem, nextItem, prevItem
         } = this;
 
@@ -422,7 +449,9 @@ export default class Player extends Component {
         const avProps = {
             updating,
             playing: playing && !loading,
-            onEnded: nextItem
+            onEnded: nextItem,
+            onKeyDown,
+            tabIndex: -1    // Required for key-down events.
         };
 
         const { item } = history;
@@ -432,23 +461,6 @@ export default class Player extends Component {
         } else if (item instanceof AudioStream) {
             avProps.stream = item.stream;
         }
-
-        const keyHandlers = [
-            [' ', togglePlaying],
-            ['ArrowLeft', prevItem],
-            ['ArrowRight', nextItem],
-            ['j', prevItem],
-            ['k', togglePlaying],
-            ['l', nextItem],
-            ['r', toggleRepeat],
-            ['s', toggleShuffle],
-            ['v', toggleUpdating]
-        ].map(([key, handler], i) => <KeyHandler
-            key={i}
-            keyEventName={KEYDOWN}
-            keyValue={key}
-            onKeyHandle={handler}
-        />);
 
         const spinner = loading
             ? <Spinner />
@@ -469,7 +481,6 @@ export default class Player extends Component {
             className={styles.container}
             onClick={togglePlaying}
         >
-            {keyHandlers}
             {spinner}
             <Audiovisual className={styles.audiovisual} {...avProps} />
             <div className={styles.itemsContainer}>
