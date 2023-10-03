@@ -1,5 +1,12 @@
 # CHANGELOG
 
+### 4.1.0
+
+- Remove deprecated `react-key-handler`
+    - Replace with new Audiovisual props: `onKeyDown`, `tabIndex`
+    - Use these new props in the Player for keyboard controls
+- Upgrade various dev-dependencies
+
 ### 4.0.3
 
 - Adjust constants for better frequency visualization
