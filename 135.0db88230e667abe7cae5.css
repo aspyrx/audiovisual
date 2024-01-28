@@ -1,0 +1,264 @@
+.audiovisual-8UjC8 {
+  position: relative;
+  overflow: hidden;
+}
+.audiovisual-8UjC8 .bgImage-pEOlE {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+  filter: brightness(50%) blur(4px);
+}
+.audiovisual-8UjC8 .visualiser-Uiw3M {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  bottom: 0;
+}
+.audiovisual-8UjC8 .progressContainer-3qf8q {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 0.5%;
+}
+.audiovisual-8UjC8 .progressContainer-3qf8q .progress-2sBX5 {
+  height: 100%;
+  transition: width 0.2s linear;
+}
+.audiovisual-8UjC8 .waveZero-1aDFx {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.audiovisual-8UjC8 .fade-3KsYt.fadeIn-3Un7n {
+  opacity: 0;
+}
+.audiovisual-8UjC8 .fade-3KsYt.fadeIn-3Un7n.fadeInActive-_yFpd {
+  opacity: 1;
+  transition: opacity 0.5s ease;
+}
+.audiovisual-8UjC8 .fade-3KsYt.fadeOut-2jsXF {
+  opacity: 1;
+}
+.audiovisual-8UjC8 .fade-3KsYt.fadeOut-2jsXF.fadeOutActive-2e2xS {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+.audiovisual-8UjC8 .fadeOutScale-2x9x2 {
+  visibility: hidden;
+}
+.audiovisual-8UjC8 .fadeOutScale-2x9x2.fadeOutScaleTransition-2gvg9 {
+  visibility: visible;
+  opacity: 1;
+  transform: scale(1, 1);
+}
+.audiovisual-8UjC8 .fadeOutScale-2x9x2.fadeOutScaleTransition-2gvg9.fadeOutScaleTransitionActive-3kaGX {
+  opacity: 0;
+  transform: scale(1.5, 1.5);
+  transition: all 0.5s ease;
+}
+.audiovisual-8UjC8 .play-2ig42 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -5vh;
+  margin-left: -4.333vh;
+  width: 0;
+  height: 0;
+  border-top: 5vh solid transparent;
+  border-bottom: 5vh solid transparent;
+  border-left: 8.666vh solid;
+}
+.audiovisual-8UjC8 .pause-3Yiy0 {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  margin-top: -5vh;
+  margin-left: -5vh;
+  width: 2.5vh;
+  height: 10vh;
+  border-left: 2.5vh solid;
+  border-right: 2.5vh solid;
+}
+
+.compact-2kqga {
+  display: flex;
+  margin: 8px 0;
+  cursor: pointer;
+}
+.compact-2kqga:hover {
+  text-decoration: underline;
+}
+.compact-2kqga > * {
+  margin: 0 8px;
+}
+.compact-2kqga > .picture-KTKyS {
+  width: 64px;
+  align-self: center;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.25);
+  text-align: center;
+  font-size: 50%;
+}
+.compact-2kqga > div.picture-KTKyS {
+  height: 64px;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  background-color: #262626;
+}
+.compact-2kqga > .details-3H3Bd {
+  display: flex;
+  flex-flow: column nowrap;
+}
+.compact-2kqga > .details-3H3Bd > .title-1PXLc {
+  font-weight: bolder;
+}
+.items-1hza1 {
+  max-height: 100vh;
+  display: flex;
+  flex-flow: column nowrap;
+}
+.items-1hza1 .search-1I94F {
+  margin: 8px 8px;
+  border-bottom: 1px solid #e6e6e6;
+}
+.items-1hza1 .search-1I94F input[type="search"] {
+  width: 100%;
+  background: none;
+  color: #e6e6e6;
+  border: none;
+}
+.items-1hza1 .search-1I94F input[type="search"]:focus {
+  outline: none;
+}
+.items-1hza1 .search-1I94F .actions-1RY1k {
+  position: absolute;
+  right: 0;
+}
+.items-1hza1 .search-1I94F .actions-1RY1k input {
+  display: none;
+}
+.items-1hza1 .search-1I94F .actions-1RY1k span,
+.items-1hza1 .search-1I94F .actions-1RY1k label {
+  cursor: pointer;
+  margin: 8px 8px;
+}
+.items-1hza1 .search-1I94F .actions-1RY1k span:hover,
+.items-1hza1 .search-1I94F .actions-1RY1k label:hover {
+  text-decoration: underline;
+}
+.items-1hza1 .itemsContainer-3-WNW {
+  flex: 1;
+  overflow: auto;
+  margin: 0 8px 8px;
+  padding: 8px 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+}
+.items-1hza1 .itemsContainer-3-WNW .item-3Z-Fn {
+  margin: 4px;
+  cursor: pointer;
+}
+.items-1hza1 .itemsContainer-3-WNW .item-3Z-Fn .remove-15UMC {
+  display: none;
+}
+.items-1hza1 .itemsContainer-3-WNW .item-3Z-Fn:hover,
+.items-1hza1 .itemsContainer-3-WNW .item-3Z-Fn.selected-c41-h {
+  text-decoration: underline;
+}
+.items-1hza1 .itemsContainer-3-WNW .item-3Z-Fn:hover .remove-15UMC,
+.items-1hza1 .itemsContainer-3-WNW .item-3Z-Fn.selected-c41-h .remove-15UMC {
+  display: unset;
+  float: right;
+}
+
+.controls-2HV_S {
+  position: relative;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+  display: flex;
+  flex-flow: column nowrap;
+}
+.controls-2HV_S .playback-BBxig {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-end;
+  margin: 8px 8px;
+  text-align: right;
+}
+.controls-2HV_S .playback-BBxig span {
+  cursor: pointer;
+  margin: 0 4px;
+}
+.controls-2HV_S .playback-BBxig span:hover {
+  text-decoration: underline;
+}
+.controls-2HV_S .help-380JC {
+  margin: 0 8px 8px;
+  padding: 8px 8px;
+  background-color: rgba(0, 0, 0, 0.5);
+  border-radius: 8px;
+  overflow: auto;
+}
+.controls-2HV_S .help-380JC table {
+  border-collapse: collapse;
+}
+.controls-2HV_S .help-380JC table tbody tr:not(:last-child) {
+  border-bottom: 1px solid #e6e6e6;
+}
+.controls-2HV_S .help-380JC table tbody tr td {
+  word-wrap: break-word;
+  padding: 4px;
+}
+
+.container-2_MO3 {
+  height: 100vh;
+  position: relative;
+  display: flex;
+  flex-flow: row nowrap;
+  align-items: flex-start;
+  background-color: #1a1a1a;
+  color: #e6e6e6;
+}
+.container-2_MO3 .fileInput-3msGY {
+  flex: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+}
+.container-2_MO3 .fileInput-3msGY h1 {
+  cursor: pointer;
+}
+.container-2_MO3 .fileInput-3msGY h1:hover,
+.container-2_MO3 .fileInput-3msGY h1:active {
+  text-decoration: underline;
+}
+.container-2_MO3 .fileInput-3msGY input[type="file"] {
+  position: absolute;
+  display: none;
+}
+.container-2_MO3 .audiovisual-2Lv-x {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+}
+.container-2_MO3 .itemsContainer-3SjhO {
+  position: relative;
+  flex: 1;
+  -webkit-user-select: none;
+     -moz-user-select: none;
+          user-select: none;
+}
+
+
+/*# sourceMappingURL=135.0db88230e667abe7cae5.css.map*/
