@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render } from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import App from 'src/App';
 
@@ -23,11 +23,13 @@ if (!('flex' in appDiv.style)) {
 appDiv.id = 'app';
 document.body.appendChild(appDiv);
 
+const root = createRoot(appDiv);
+
 /**
  * Starts the app by rendering it into the page.
  */
 function start() {
-    render(<App />, appDiv);
+    root.render(<App />);
 }
 
 start();

@@ -3,7 +3,7 @@
         "react"
     ],
     "extends": ["plugin:react/recommended"],
-    "parser": "babel-eslint",
+    "parser": "@babel/eslint-parser",
     "env": {
         "node": false,
         "browser": true,

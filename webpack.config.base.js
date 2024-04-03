@@ -52,8 +52,7 @@ module.exports = {
                     sourceMap: true,
                     modules: {
                         mode: 'local',
-                        localIdentName: '[local]-[hash:base64:5]',
-                        context: ctxDir
+                        localIdentName: '[local]-[hash:base64:5]'
                     },
                     importLoaders: 2
                 }
