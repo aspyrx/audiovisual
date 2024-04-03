@@ -348,7 +348,7 @@ template {
   display: none;
 }
 
-.spinner-1Rg_8 {
+.spinner-KAicc {
   position: fixed;
   top: 0;
   left: 0;
@@ -356,9 +356,9 @@ template {
   height: 2px;
   opacity: 0.5;
   background-color: #0080ff;
-  animation: spin-2ohnB 2s linear infinite;
+  animation: spin-ZOAJU 2s linear infinite;
 }
-@keyframes spin-2ohnB {
+@keyframes spin-ZOAJU {
   0% {
     transform: translateX(-100%);
   }
@@ -389,4 +389,4 @@ a[href]:active {
 }
 
 
-/*# sourceMappingURL=main.682587d52f5ad2b445b9.css.map*/
+/*# sourceMappingURL=main.0a19d14aa45aaa5995f4.css.map*/
