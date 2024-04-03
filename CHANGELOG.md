@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 4.2.0
+
+- Fix key handler propagation
+- Upgrade various dev-dependencies
+
 ### 4.1.0
 
 - Remove deprecated `react-key-handler`

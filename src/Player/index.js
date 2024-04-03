@@ -344,6 +344,9 @@ export default class Player extends Component {
      * React lifecycle handler called when component has finished mounting.
      */
     async componentDidMount() {
+        // Respond to keydown on the whole document (not just the player).
+        window.document.addEventListener('keydown', this.onKeyDown);
+
         if ('mediaSession' in navigator) {
             const { mediaSession } = navigator;
             for (const [key, handler] of [
@@ -378,6 +381,14 @@ export default class Player extends Component {
 
         const newFiles = configs.map(config => new AudioFile(config));
         this.addItems(newFiles);
+    }
+
+    /**
+     * React lifecycle handler called when component is about to unmount.
+     */
+    componentWillUnmount() {
+        // Clean up keydown handler.
+        window.document.removeEventListener('keydown', this.onKeyDown);
     }
 
     /**
@@ -435,7 +446,7 @@ export default class Player extends Component {
 
         const {
             togglePlaying, toggleShuffle, toggleRepeat, toggleUpdating,
-            onInputFiles, onKeyDown, addMicrophone,
+            onInputFiles, addMicrophone,
             removeItem, setItem, nextItem, prevItem
         } = this;
 
@@ -450,7 +461,6 @@ export default class Player extends Component {
             updating,
             playing: playing && !loading,
             onEnded: nextItem,
-            onKeyDown,
             tabIndex: -1    // Required for key-down events.
         };
 
