@@ -13,10 +13,5 @@ config.performance.hints = false;
 
 config.output.filename = '[name].js';
 
-config.entry.main.unshift(
-    'webpack-dev-server/client?http://localhost:8080/',
-    'webpack/hot/dev-server'
-);
-
 module.exports = config;
 
