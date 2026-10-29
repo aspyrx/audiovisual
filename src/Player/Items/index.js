@@ -363,6 +363,7 @@ export default class Items extends Component {
                     type="search"
                     placeholder="search"
                     value={search}
+                    onKeyDown={stopEventPropagation}
                     onChange={this.onSearchChange}
                     ref={this.searchRef}
                 />
