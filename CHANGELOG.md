@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 4.2.1
+
+- Stop search keydown propagation
+- Upgrade various dev-dependencies
+
 ### 4.2.0
 
 - Fix key handler propagation
